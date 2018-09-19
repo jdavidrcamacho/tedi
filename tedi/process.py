@@ -4,6 +4,7 @@ import numpy as np
 from tedi import kernels
 from scipy.linalg import cho_factor, cho_solve, LinAlgError
 
+##### Gaussian processes #######################################################
 class GP(object):
     """ 
         Class to create our Gaussian process.
@@ -171,12 +172,139 @@ class GP(object):
         return log_like
 
 
+##### marginal likelihood gradient functions
+    def _compute_matrix_derivative(self, kernel_derivative, nugget = False):
+        """ 
+            Creates the covariance matrices of dK/dOmega, the derivatives of the
+        kernels.
+            Parameters:
+                kernel_derivative = derivatives we want to use this round
+                nugget = True if K is not positive definite, False otherwise
+            Return:
+                k = final covariance matrix
+        """
+        #our matrix starts empty
+        A = np.zeros((self.time.size, self.time.size))
+
+        #measurement errors, should I add the errors in the derivatives???
+        diag = self.yerr * np.identity(self.time.size)
+
+        #derivative
+        k = self._kernel_matrix(kernel_derivative, self.time)
+
+        #final matrix
+        A = A + k + diag
+        #to avoid a ill-conditioned matrix
+        if nugget:
+            nugget_value = 0.01
+            A = (1 - nugget_value) * A + nugget_value * np.diag(np.diag(A))
+        return A
+
+    def _log_like_grad(self, kernel_derivative, kernel, mean = False,
+                       nugget = False):
+        """ 
+            Calculates the gradient of the marginal log likelihood for a given
+        kernel derivative. 
+        See Rasmussen & Williams (2006), page 114.
+            Parameters:
+                kernel_derivative = derivative we want to use this round
+                kernel = covariance function
+                nugget = True if K is not positive definite, False otherwise
+            Returns:
+                log_like  = Marginal log likelihood
+        """
+        #calculates the  covariance matrix of K and its inverse Kinv
+        K = self.compute_matrix(kernel, self.time)
+        Kinv = np.linalg.inv(K)
+        #calculates the  covariance matrix of dK/dOmega
+        dK = self._compute_matrix_derivative(kernel_derivative, nugget)
+
+        #mean funtion
+        if mean:
+            y = self.y - mean(self.time)
+        else:
+            y = self.y
+
+        #d(log marginal likelihood)/dOmega calculation
+        try:
+            alpha = np.dot(Kinv, y) #gives an array
+            A = np.einsum('i,j',alpha, alpha) - Kinv #= alpha @ alpha.T - Kinv
+            log_like_grad = 0.5 * np.einsum('ij,ij', A, dK) #= trace(a @ dK)
+
+        except LinAlgError:
+            return -np.inf
+        return log_like_grad
+
+    def log_likelihood_gradient(self, kernel, mean = False, nugget = False):
+        """ 
+            Returns the marginal log likelihood gradients for a given 
+        gprn "branch". 
+            Parameters:
+                kernel = covariance funtion
+                mean = mean function
+                nugget = True if K is not positive definite, False otherwise
+            Returns:
+                grads  = array of gradients
+        """
+        #First we derive the node
+        parameters = kernel.pars #kernel parameters to use
+        k = type(kernel).__subclasses__() #derivatives list
+        derivatives_array = [] #its a list and not an array but thats ok
+        for _, j in enumerate(k):
+            derivative = j(*parameters)
+            loglike = self._log_like_grad(derivative, kernel, nugget)
+            derivatives_array.append(loglike)
+
+        #To finalize we merge it into an array
+        grads = np.array(derivatives_array)
+        return grads
 
 
+##### GP prediction funtions
+    def predict_gp(self, kernel = False, mean = False, time = None):
+        """ 
+            Conditional predictive distribution of the Gaussian process
+            Parameters:
+                kernel = covariance function
+                mean = mean function being used
+                time = time  
+        Returns:
+            mean vector, covariance matrix, standard deviation vector
+        """
+        if kernel:
+            #To use a new kernel
+            kernel = kernel
+        else:
+            #To use the one we defined earlier 
+            kernel = self.kernel
+
+        #calculate mean and residuals
+        if mean:
+            r = self.y - mean(self.time)
+        else:
+            r = self.y
+
+        #K
+        cov = self._kernel_matrix(kernel, self.time)
+        L1 = cho_factor(cov)
+        sol = cho_solve(L1, r)
+
+        #Kstar calculation
+        Kstar = self._predict_kernel_matrix(kernel, time, self.time)
+        #Kstarstar
+        Kstarstar =  self._kernel_matrix(kernel, time)
+
+        y_mean = np.dot(Kstar, sol) #mean
+        kstarT_k_kstar = []
+        for i, e in enumerate(time):
+            kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
+        y_cov = Kstarstar - kstarT_k_kstar
+        y_var = np.diag(y_cov) #variance
+        y_std = np.sqrt(y_var) #standard deviation
+        return y_mean, y_std, y_cov
 
 
-
-
+##### t-Student processes ######################################################
 class TP(object):
     """ 
         Class to create our t-student process.

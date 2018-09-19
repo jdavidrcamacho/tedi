@@ -75,7 +75,6 @@ class Product(_operator):
         return self.k1(r) * self.k2(r)
 
 
-
 ##### Constant kernel ##########################################################
 class Constant(kernel):
     """
@@ -224,9 +223,13 @@ class Periodic(kernel):
         self.params_number = 4  #number of hyperparameters
 
     def __call__(self, r):
-        return self.amplitude**2 * \
-                exp( -2 * sine(pi*np.abs(r)/self.P)**2 /self.ell**2) \
-                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        try:
+            return self.amplitude**2 * \
+                    exp( -2 * sine(pi*np.abs(r)/self.P)**2 /self.ell**2) \
+                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * \
+                    exp( -2 * sine(pi*np.abs(r)/self.P)**2 /self.ell**2) 
 
 class dPeriodic_damplitude(Periodic):
     """
@@ -319,9 +322,13 @@ class QuasiPeriodic(kernel):
         self.params_number = 5  #number of hyperparameters
 
     def __call__(self, r):
-        return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
-                                      /self.ell_p**2 - r**2/(2*self.ell_e**2)) \
-                                      +self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        try:
+            return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                          /self.ell_p**2 - r**2/(2*self.ell_e**2)) \
+                                          +self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                          /self.ell_p**2 - r**2/(2*self.ell_e**2))
 
 class dQuasiPeriodic_damplitude(Periodic):
     """
@@ -431,8 +438,11 @@ class RationalQuadratic(kernel):
         self.params_number = 4  #number of hyperparameters
 
     def __call__(self, r):
-        return self.amplitude**2 / (1+ r**2/ (2*self.alpha*self.ell**2))**self.alpha \
-                + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        try: 
+            return self.amplitude**2 / (1+ r**2/ (2*self.alpha*self.ell**2))**self.alpha \
+                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 / (1+ r**2/ (2*self.alpha*self.ell**2))**self.alpha
 
 class dRationalQuadratic_damplitude(RationalQuadratic):
     """
@@ -528,10 +538,15 @@ class RQP(kernel):
         self.params_number = 6  #number of hyperparameters
 
     def __call__(self, r):
-        return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
-                                    / self.ell_p**2) \
-                    /(1+ r**2/ (2*self.alpha*self.ell_e**2))**self.alpha \
-                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        try:
+            return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                        / self.ell_p**2) \
+                        /(1+ r**2/ (2*self.alpha*self.ell_e**2))**self.alpha \
+                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                        / self.ell_p**2) \
+                        /(1+ r**2/ (2*self.alpha*self.ell_e**2))**self.alpha
 
 class dRQP_damplitude(RQP):
     """
@@ -665,8 +680,11 @@ class Cosine(kernel):
         self.params_number = 3  #number of hyperparameters
 
     def __call__(self, r):
-        return self.amplitude**2 * cosine(2*pi*np.abs(r) / self.P) \
-                + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        try:
+            return self.amplitude**2 * cosine(2*pi*np.abs(r) / self.P) \
+                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * cosine(2*pi*np.abs(r) / self.P)
 
 class dCosine_damplitude(Cosine):
     """
@@ -730,9 +748,13 @@ class Exponential(kernel):
         self.derivatives = 3    #number of derivatives in this kernel
         self.params_number = 3  #number of hyperparameters
 
-    def __call__(self, r): 
-        return self.amplitude**2 * exp(- np.abs(r)/self.ell) \
-                + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+    def __call__(self, r):
+        try:
+            return self.amplitude**2 * exp(- np.abs(r)/self.ell) \
+                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * exp(- np.abs(r)/self.ell)
+
 
 class dExponential_damplitude(Exponential):
     """
@@ -798,9 +820,13 @@ class Matern32(kernel):
         self.params_number = 3  #number of hyperparameters
 
     def __call__(self, r):
-        return self.amplitude**2 *(1 + np.sqrt(3)*np.abs(r)/self.ell) \
-                    * np.exp(-np.sqrt(3)*np.abs(r) / self.ell) \
-                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        try:
+            return self.amplitude**2 *(1 + np.sqrt(3)*np.abs(r)/self.ell) \
+                        * np.exp(-np.sqrt(3)*np.abs(r) / self.ell) \
+                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 *(1 + np.sqrt(3)*np.abs(r)/self.ell) \
+                        * np.exp(-np.sqrt(3)*np.abs(r) / self.ell)
 
 class dMatern32_damplitude(Matern32):
     """
@@ -869,10 +895,15 @@ class Matern52(kernel):
         self.params_number = 3    #number of hyperparameters
 
     def __call__(self, r):
-        return self.amplitude**2 * (1 + (3*np.sqrt(5)*self.ell*np.abs(r) \
-                                           +5*np.abs(r)**2)/(3*self.ell**2) ) \
-                                          *exp(-np.sqrt(5.0)*np.abs(r)/self.ell) \
-                                + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        try:
+            return self.amplitude**2 * (1 + (3*np.sqrt(5)*self.ell*np.abs(r) \
+                                               +5*np.abs(r)**2)/(3*self.ell**2) ) \
+                                              *exp(-np.sqrt(5.0)*np.abs(r)/self.ell) \
+                                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * (1 + (3*np.sqrt(5)*self.ell*np.abs(r) \
+                                               +5*np.abs(r)**2)/(3*self.ell**2) ) \
+                                              *exp(-np.sqrt(5.0)*np.abs(r)/self.ell) 
 
 class dMatern52_damplitude(Matern52):
     """
