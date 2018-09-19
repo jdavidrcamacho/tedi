@@ -304,10 +304,10 @@ class GP(object):
         return y_mean, y_std, y_cov
 
 
-##### t-Student processes ######################################################
+##### Student-t processes ######################################################
 class TP(object):
     """ 
-        Class to create our t-student process.
+        Class to create our student-t process.
         Parameters:
             kernel = covariance funtion
             means = mean function 
@@ -338,7 +338,7 @@ class TP(object):
             Returns the covariance matrix created by evaluating a given kernel 
         at inputs time.
         """
-        #if time is None we use the time of our GP class
+        #if time is None we use the time of our TP class
         if time is None:
             r = self.time[:, None] - self.time[None, :]
         #if we define a new time we will use it

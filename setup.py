@@ -4,7 +4,7 @@ from setuptools import setup
 
 setup(name='tedi',
       version='0.1',
-      description='Implementation of Gaussian and t-Student processes regression',
+      description='Implementation of Gaussian and Student-t processes regression',
       author='João Camacho',
       author_email='joao.camacho@astro.up.pt',
       license='MIT',
