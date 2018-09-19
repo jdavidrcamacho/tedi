@@ -6,5 +6,5 @@
 """
 
 #covariance functions
-from tedi import kernels
+from tedi import kernels, means, process
 
