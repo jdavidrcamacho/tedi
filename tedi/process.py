@@ -261,7 +261,7 @@ class GP(object):
 
 
 ##### GP prediction funtions
-    def predict_gp(self, kernel = False, mean = False, time = None):
+    def prediction(self, kernel = False, mean = False, time = None):
         """ 
             Conditional predictive distribution of the Gaussian process
             Parameters:
