@@ -26,6 +26,7 @@ new_hyperparms = np.array([20.0, 3.0 ,1.0])
 kernel1 = gpOBJ.new_kernel(kernel, new_hyperparms)
 print(kernel1)
 
-mean, std, cov = gpOBJ.predict_gp(time = np.linspace(1,10,10))
+mean, std, cov = gpOBJ.prediction(time = np.linspace(1,10,10))
 
 tpOBJ = process.TP(kernel,mean,time,y,yerr)
+print(tpOBJ.log_likelihood(kernel,5))
