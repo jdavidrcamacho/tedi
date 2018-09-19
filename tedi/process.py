@@ -3,7 +3,8 @@
 import numpy as np
 from tedi import kernels
 from scipy.linalg import cho_factor, cho_solve, LinAlgError
-from math import lgamma
+from scipy.special import loggamma, digamma
+
 
 ##### Gaussian processes #######################################################
 class GP(object):
@@ -311,6 +312,7 @@ class TP(object):
         Class to create our student-t process.
         Parameters:
             kernel = covariance funtion
+            degrees = degrees of freedom
             means = mean function 
             time = time array
             y = measurements array
@@ -417,7 +419,7 @@ class TP(object):
             Note:
                 To understand the nugget and shift parameters see 
             http://mathworld.wolfram.com/Ill-ConditionedMatrix.html for more 
-            information about ill-conditioned matrices and 
+            information about ill-conditioned matrices, and 
             http://mathworld.wolfram.com/PositiveDefiniteMatrix.html for more
             information about positive defined matrices.
         """
@@ -468,11 +470,11 @@ class TP(object):
         try:
             L1 = cho_factor(K, overwrite_a=True, lower=False)
             beta = np.dot(y.T, cho_solve(L1, y))
-            log_like = lgamma(0.5 * (degrees + y.size)) \
+            log_like = loggamma(0.5 * (degrees + y.size)) \
                         - 0.5 * y.size * np.log((degrees - 2) * np.pi) \
                         - np.sum(np.log(np.diag(L1[0]))) \
                         - 0.5 * (degrees + y.size)*np.log(1 + beta/(degrees-2)) \
-                        - lgamma(0.5 * degrees)
+                        - loggamma(0.5 * degrees)
         except LinAlgError:
             return -np.inf
-        return log_like
+        return np.real(log_like)
