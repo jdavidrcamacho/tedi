@@ -256,8 +256,7 @@ class GP(object):
 
     def log_likelihood_gradient(self, kernel, mean = False, nugget = False):
         """ 
-            Returns the marginal log likelihood gradients for a given 
-        gprn "branch". 
+            Returns the marginal log likelihood gradients of a kernel
             Parameters:
                 kernel = covariance funtion
                 mean = mean function
@@ -592,8 +591,7 @@ class TP(object):
 
     def log_likelihood_gradient(self, kernel, degrees, mean = False, nugget = False):
         """ 
-            Returns the marginal log likelihood gradients for a given 
-        gprn "branch". 
+            Returns the marginal log likelihood gradients of a kernel.
             Parameters:
                 kernel = covariance funtion
                 degrees = degrees of freedom
@@ -623,5 +621,5 @@ class TP(object):
                                         / ((degrees-2)*(degrees-2 + beta))]
 
         #To finalize we merge it into an array
-        grads = np.array(derivatives_array+ degree_derivative)
+        grads = np.array(derivatives_array + degree_derivative)
         return grads
