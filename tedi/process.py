@@ -623,3 +623,57 @@ class TP(object):
         #To finalize we merge it into an array
         grads = np.array(derivatives_array + degree_derivative)
         return grads
+    
+
+##### TP predition funtion
+    def prediction(self, kernel = False, degrees = False, 
+                   mean = False, time = None):
+        """ 
+            Conditional predictive distribution of the Gaussian process
+            Parameters:
+                kernel = covariance function
+                degrees = degrees of freedom
+                mean = mean function being used
+                time = time  
+        Returns:
+            mean vector, covariance matrix, standard deviation vector
+        """
+        if kernel:
+            #To use a new kernel
+            kernel = kernel
+        else:
+            #To use the one we defined earlier 
+            kernel = self.kernel
+        if degrees:
+            #To use a new degree of freedom
+            degrees = degrees
+        else:
+            
+            degrees = self.degrees
+        #calculate mean and residuals
+        if mean:
+            r = self.y - mean(self.time)
+        else:
+            r = self.y
+
+        #K
+        cov = self._kernel_matrix(kernel, self.time)
+        L1 = cho_factor(cov)
+        sol = cho_solve(L1, r)
+
+        #Kstar calculation
+        Kstar = self._predict_kernel_matrix(kernel, time, self.time)
+        #Kstarstar
+        Kstarstar =  self._kernel_matrix(kernel, time)
+
+        y_mean = np.dot(Kstar, sol) #mean
+        kstarT_k_kstar = []
+        for i, e in enumerate(time):
+            kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
+        y_cov = Kstarstar - kstarT_k_kstar
+
+        var1 = degrees -2 + np.dot(r.T, sol)
+        var2 = (degrees -2 + r.size)
+        y_var =  var1 * np.diag(y_cov) / var2 #variance
+        y_std = np.sqrt(y_var) #standard deviation
+        return y_mean, y_std, y_cov
