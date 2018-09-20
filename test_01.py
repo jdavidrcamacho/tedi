@@ -6,11 +6,13 @@ Created on Wed Sep 19 08:44:28 2018
 @author: joaocamacho
 """
 import numpy as np
+import matplotlib.pylab as plt
+plt.close('all')
 from tedi import process, kernels
 
 #Data
 time = np.linspace(1,10,50)
-y = np.sin(time)
+y = 10*np.sin(time)
 yerr = np.random.uniform(0,0.5,time.size)
 
 
@@ -29,4 +31,12 @@ print(kernel1)
 mean, std, cov = gpOBJ.prediction(time = np.linspace(1,10,10))
 
 tpOBJ = process.TP(kernel,mean,time,y,yerr)
-print(tpOBJ.log_likelihood(kernel,5))
+print(tpOBJ.log_likelihood(kernel, 5))
+print(tpOBJ.log_likelihood_gradient(kernel, 5))
+
+plt.figure()
+for i in range(3):
+    plt.plot(time, y, 'k-')
+    plt.plot(time,  gpOBJ.sample(kernel, time), 'b:')
+    plt.plot(time,  tpOBJ.sample(kernel, 5, time), 'r-')
+    i +=1
