@@ -4,6 +4,7 @@ import numpy as np
 from tedi import kernels
 from scipy.linalg import cho_factor, cho_solve, LinAlgError
 from scipy.special import loggamma, digamma
+from scipy.stats import multivariate_normal
 
 
 ##### Gaussian processes #######################################################
@@ -174,6 +175,22 @@ class GP(object):
         return log_like
 
 
+##### GP sample funtion
+    def sample(self, kernel, time):
+        """ 
+            Returns samples from the kernel
+            Parameters:
+                kernel = covariance funtion
+                time = time array
+            Returns:
+                Sample of K 
+        """
+        mean = np.zeros_like(time)
+        cov = self.compute_matrix(kernel, time)
+        norm = multivariate_normal(mean, cov, allow_singular=True)
+        return norm.rvs()
+
+
 ##### marginal likelihood gradient functions
     def _compute_matrix_derivative(self, kernel_derivative, nugget = False):
         """ 
@@ -183,7 +200,7 @@ class GP(object):
                 kernel_derivative = derivatives we want to use this round
                 nugget = True if K is not positive definite, False otherwise
             Return:
-                k = final covariance matrix
+                k = final covariance matrix of dK/dOmega
         """
         #our matrix starts empty
         A = np.zeros((self.time.size, self.time.size))
@@ -248,7 +265,7 @@ class GP(object):
             Returns:
                 grads  = array of gradients
         """
-        #First we derive the node
+        #First we derive the kernels
         parameters = kernel.pars #kernel parameters to use
         k = type(kernel).__subclasses__() #derivatives list
         derivatives_array = [] #its a list and not an array but thats ok
@@ -262,7 +279,7 @@ class GP(object):
         return grads
 
 
-##### GP prediction funtions
+##### GP prediction funtion
     def prediction(self, kernel = False, mean = False, time = None):
         """ 
             Conditional predictive distribution of the Gaussian process
@@ -478,3 +495,133 @@ class TP(object):
         except LinAlgError:
             return -np.inf
         return np.real(log_like)
+
+
+##### TP sample funtion
+    def sample(self, kernel, degrees, time):
+        """ 
+            Sample from the kernel
+            Parameters:
+                kernel = covariance funtion
+                degrees_freedom = degrees of freedom
+                time = time array
+            Returns:
+                Sample of K 
+                
+            Note:
+                Adapted from https://github.com/statsmodels/statsmodels
+        """
+        mean = np.zeros_like(self.time)
+        if degrees == np.inf:
+            x = 1
+        else:
+            x = np.random.chisquare(degrees, time.size)/degrees
+        cov = self.compute_matrix(kernel, time)
+        z = np.random.multivariate_normal(mean, cov, 1)
+        sample = mean + z/np.sqrt(x)
+        sample = (sample.T).reshape(-1)
+        return sample
+
+
+##### marginal likelihood gradient functions
+    def _compute_matrix_derivative(self, kernel_derivative, nugget = False):
+        """ 
+            Creates the covariance matrices of dK/dOmega, the derivatives of the
+        kernels.
+            Parameters:
+                kernel_derivative = derivatives we want to use this round
+                nugget = True if K is not positive definite, False otherwise
+            Return:
+                k = final covariance matrix of dK/dOmega
+        """
+        #our matrix starts empty
+        A = np.zeros((self.time.size, self.time.size))
+
+        #measurement errors, should I add the errors in the derivatives???
+        diag = self.yerr * np.identity(self.time.size)
+
+        #derivative
+        k = self._kernel_matrix(kernel_derivative, self.time)
+
+        #final matrix
+        A = A + k + diag
+        #to avoid a ill-conditioned matrix
+        if nugget:
+            nugget_value = 0.01
+            A = (1 - nugget_value) * A + nugget_value * np.diag(np.diag(A))
+        return A
+
+    def _log_like_grad(self, kernel_derivative, kernel, degrees, mean = False,
+                       nugget = False):
+        """ 
+            Calculates the gradient of the marginal log likelihood for a given
+        kernel derivative. 
+        See Rasmussen & Williams (2006), page 114.
+            Parameters:
+                kernel_derivative = derivative we want to use this round
+                kernel = covariance function
+                degrees = degrees of freedom
+                nugget = True if K is not positive definite, False otherwise
+            Returns:
+                log_like  = Marginal log likelihood
+        """
+        #calculates the  covariance matrix of K and its inverse Kinv
+        K = self.compute_matrix(kernel, self.time)
+        Kinv = np.linalg.inv(K)
+        #calculates the  covariance matrix of dK/dOmega
+        dK = self._compute_matrix_derivative(kernel_derivative, nugget)
+
+        #mean funtion
+        if mean:
+            y = self.y - mean(self.time)
+        else:
+            y = self.y
+
+        #d(log marginal likelihood)/dOmega calculation
+        try:
+            L1 = cho_factor(K, overwrite_a=True, lower=False)
+            alpha = np.dot(Kinv, y) #gives an array
+            beta = np.dot(y.T, cho_solve(L1, y))
+            alphaTalpha = np.einsum('i,j',alpha, alpha)
+            log_like_grad = 0.5 * np.einsum('ij,ij', Kinv, dK) \
+                            + 0.5*(degrees + y.size)/(degrees - 2 + beta) \
+                            * np.einsum('ij,ij', alphaTalpha, dK)
+        except LinAlgError:
+            return -np.inf
+        return log_like_grad
+
+    def log_likelihood_gradient(self, kernel, degrees, mean = False, nugget = False):
+        """ 
+            Returns the marginal log likelihood gradients for a given 
+        gprn "branch". 
+            Parameters:
+                kernel = covariance funtion
+                degrees = degrees of freedom
+                mean = mean function
+                nugget = True if K is not positive definite, False otherwise
+            Returns:
+                grads  = array of gradients
+        """
+        #First we derive the kernels
+        parameters = kernel.pars #kernel parameters to use
+        k = type(kernel).__subclasses__() #derivatives list
+        derivatives_array = [] #its a list and not an array but thats ok
+        for _, j in enumerate(k):
+            derivative = j(*parameters)
+            loglike = self._log_like_grad(derivative, kernel, degrees, nugget)
+            derivatives_array.append(loglike)
+
+        #Then the derivative of the degrees of freedom
+        K = self.compute_matrix(kernel, self.time)
+        L1 = cho_factor(K, overwrite_a=True, lower=False)
+        beta = np.dot(self.y.T, cho_solve(L1, self.y))
+        degree_derivative = [0.5 * self.y.size / (degrees-2) \
+                            - 0.5 * digamma(0.5*(degrees + self.y.size)) \
+                            + 0.5 * digamma(0.5*degrees) \
+                            + 0.5 * np.log(1 + beta/(degrees-2)) \
+                            - 0.5 * ((degrees+self.y.size) + beta) \
+                                        / ((degrees-2)*(degrees-2 + beta))]
+
+        #To finalize we merge it into an array
+        grads = np.array(derivatives_array+ degree_derivative)
+        return grads
