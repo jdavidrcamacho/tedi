@@ -56,7 +56,7 @@ plt.show()
 
 #samples
 plt.figure()
-for i in range(3):
+for i in range(30):
     plt.plot(time, y, 'k-')
     plt.plot(time,  gpOBJ.sample(kernel, time), 'b:')
     plt.plot(time,  tpOBJ.sample(kernel, 5, time), 'r-')

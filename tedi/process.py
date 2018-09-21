@@ -555,7 +555,7 @@ class TP(object):
         """ 
             Calculates the gradient of the marginal log likelihood for a given
         kernel derivative. 
-        See Rasmussen & Williams (2006), page 114.
+        See Solin and Särkkä (2015) supplementary material.
             Parameters:
                 kernel_derivative = derivative we want to use this round
                 kernel = covariance function
