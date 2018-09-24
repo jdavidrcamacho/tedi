@@ -174,7 +174,7 @@ class Keplerian(MeanModel):
         M0 = E0 - e*np.sin(E0)
 
         niter=0
-        while niter < 100:
+        while niter < 1000:
             aux = Mean_anom - M0
             E1 = E0 + aux/(1 - e*np.cos(E0))
             M1 = E0 - e*np.sin(E0)
@@ -186,5 +186,6 @@ class Keplerian(MeanModel):
         nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
         RV = K*(e*np.cos(w)+np.cos(w+nu))
         return RV
+
 
 ### END

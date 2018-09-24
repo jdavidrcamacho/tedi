@@ -652,7 +652,7 @@ class TP(object):
             degrees = self.degrees
         #calculate mean and residuals
         if mean:
-            r = self.y - mean(self.time)
+            r = self.y - mean(time)
         else:
             r = self.y
 
