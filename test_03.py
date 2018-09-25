@@ -29,7 +29,7 @@ GPobj = process.GP(kernel, mean, time, rv, rverr)
 
 
 ### Preparing our MCMC
-burns, runs= 25000, 25000
+burns, runs= 5000, 5000
 
 
 #/* GP parameters */
@@ -51,7 +51,7 @@ def logprob(p):
     global kernel
     if any([p[0] < np.log(0.1), p[0] > np.log(50), 
             p[1] < np.log(1), p[1] > np.log(100),
-            p[2] < 10, p[2] > 40,
+            p[2] < np.log(10), p[2] > np.log(40),
             p[3] < np.log(0.1), p[3] > np.log(10),
             
             p[5] < -10, p[5] > np.log(50),
@@ -75,12 +75,12 @@ def logprob(p):
     new_mean = means.Keplerian(p[5], p[6], p[7], p[8] ,p[9]) \
                 + means.Keplerian(p[10], p[11], p[12], p[13] ,p[14])
     new_likelihood = GPobj.log_likelihood(new_kernel, new_mean)
-    print(new_likelihood)
+
     return logprior + new_likelihood
 
 amp_prior = stats.uniform(0.1, 50 - 0.1)            #amplitude
 eta2_prior= stats.uniform(1, 100 - 1)              # le
-eta3_prior= stats.uniform(np.exp(10), np.exp(40) - np.exp(10))     # period
+eta3_prior= stats.uniform(10, 40 - 10)     # period
 eta4_prior= stats.uniform(0.1, 10 - 0.1)                              # lp
 wn_prior= stats.halfcauchy(0,1)             # White noise
 
