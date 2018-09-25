@@ -1,0 +1,28 @@
+language: python
+python:
+  - 3.6
+
+notifications:
+  email: false
+
+sudo: required
+
+env:
+  global:
+    # List package dependencies for conda
+    - CONDA_DEPS="pytest numpy"
+    # package name for test invocation
+    - PACKAGENAME="tedi"
+
+before_install:
+ - sudo apt-get update
+
+install: 
+  - pip install numpy
+  - pip install scipy
+
+  # and now the Gedi package
+  - python setup.py install
+
+script:
+  - pytest travis_test.py
