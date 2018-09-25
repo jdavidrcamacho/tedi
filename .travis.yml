@@ -25,4 +25,4 @@ install:
   - python setup.py install
 
 script:
-  - pytest travis_test.py
+  - pytest test.py
