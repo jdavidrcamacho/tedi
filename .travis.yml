@@ -33,4 +33,4 @@ install:
 
 script:
 - python -c "import tedi"
-- pytest $PACKAGENAME
+
