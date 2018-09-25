@@ -21,8 +21,10 @@ install:
   - pip install numpy
   - pip install scipy
 
-  # and now the Gedi package
+  # and now the tedi package
   - python setup.py install
 
 script:
-  - pytest test.py
+script:
+- python -c "import tedi"
+- pytest $PACKAGENAME
