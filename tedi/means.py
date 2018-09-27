@@ -43,10 +43,15 @@ class MeanModel(object):
     def __radd__(self, b):
         return self.__add__(b)
 
+    def __mul__(self, b):
+        return Multiplication(self, b)
+    def __rmul__(self, b):
+        return self.__mult__(b)
+
 
 class Sum(MeanModel):
     """
-        Sum of two mean functions. Not sure if we will need it...
+        Sum of two mean functions.
     """
     def __init__(self, m1, m2):
         self.m1, self.m2 = m1, m2
@@ -68,6 +73,32 @@ class Sum(MeanModel):
     @array_input
     def __call__(self, t):
         return self.m1(t) + self.m2(t)
+
+
+class Multiplication(MeanModel):
+    """
+        Product of two mean functions. Not sure if we will need it...
+    """
+    def __init__(self, m1, m2):
+        self.m1, self.m2 = m1, m2
+
+    @property
+    def _parsize(self):
+        return self.m1._parsize * self.m2._parsize
+
+    @property
+    def pars(self):
+        return self.m1.pars * self.m2.pars
+
+    def initialize(self):
+        return
+
+    def __repr__(self):
+        return "{0} * {1}".format(self.m1, self.m2)
+
+    @array_input
+    def __call__(self, t):
+        return self.m1(t) * self.m2(t)
 
 
 ##### Constant mean ############################################################

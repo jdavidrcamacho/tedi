@@ -298,7 +298,7 @@ class GP(object):
 
         #calculate mean and residuals
         if mean:
-            r = self.y - mean(self.time)
+            r = self.y - mean(time)
         else:
             r = self.y
 
@@ -642,16 +642,16 @@ class TP(object):
             #To use a new kernel
             kernel = kernel
         else:
-            #To use the one we defined earlier 
+            #To use the one defined earlier 
             kernel = self.kernel
         if degrees:
             #To use a new degree of freedom
             degrees = degrees
         else:
-            
+            #To use the one defined earlier 
             degrees = self.degrees
-        #calculate mean and residuals
         if mean:
+            #If we are using a mean
             r = self.y - mean(time)
         else:
             r = self.y

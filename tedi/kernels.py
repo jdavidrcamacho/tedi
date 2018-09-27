@@ -34,7 +34,7 @@ class kernel(object):
         return self.__add__(b)
 
     def __mul__(self, b):
-        return Product(self, b)
+        return Multiplication(self, b)
     def __rmul__(self, b):
         return self.__mul__(b)
 
@@ -64,7 +64,7 @@ class Sum(_operator):
         return self.k1(r) + self.k2(r)
 
 
-class Product(_operator):
+class Multiplication(_operator):
     """ 
         To allow the multiplication of kernels 
     """
