@@ -5,6 +5,11 @@
     To import everything
 """
 
-#covariance functions
-from tedi import kernels, means, process
+#covariance and mean functions
+from tedi import kernels, means
 
+#Gaussian and Student-t processes
+from tedi import process
+
+#useful function to have
+from tedi import astro
