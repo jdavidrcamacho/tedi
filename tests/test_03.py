@@ -18,11 +18,19 @@ from tedi import process, kernels, means
 time, rv, rverr = np.loadtxt("corot7.txt", skiprows=112-3,
                              usecols=(0, 1, 2), unpack=True)
 
+#removinhg 'planets'
+from tedi import astro
+_, p1 = astro.keplerian(P = 0.85359165, K = 3.42, e = 0.12, w = 105*np.pi/180, 
+                        T = 4398.21, t = time)
+_, p2 = astro.keplerian(P = 3.70, K = 6.01, e = 0.12, w = 140*np.pi/180, 
+                        T = 5953.3, t=time)
+rv = rv - p1 -p2
+
+
 
 #because we need to define a "initial" kernel and mean
 kernel = kernels.QuasiPeriodic(1, 1, 1, 1, 1)
-mean = means.Keplerian(P = 0.85359165, K = 3.42, e = 0.12, w = 105*np.pi/180, T0 = 4398.21) \
-                    + means.Keplerian(P = 3.70, K = 6.01, e = 0.12, w = 140*np.pi/180, T0 = 5953.3)
+mean = None
 
 GPobj = process.GP(kernel, mean, time, rv, rverr)
 
@@ -115,12 +123,12 @@ for i in range(samples[:,0].size):
 #plt.hist(likes, bins = 15, label='likelihood')
 
 datafinal = np.vstack([samples.T,np.array(likes).T]).T
-np.save('samples_corot7_tediGP.npy', datafinal)
+np.save('samples_corot7_tediGP_2.npy', datafinal)
 
 
 ##### checking the likelihood that matters to us #####
 samples = datafinal
-values = np.where(samples[:,-1] > -600)
+values = np.where(samples[:,-1] > -220)
 #values = np.where(samples[:,-1] < -300)
 likelihoods = samples[values,-1].T
 plt.figure()
