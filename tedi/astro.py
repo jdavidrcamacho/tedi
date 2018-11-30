@@ -93,6 +93,10 @@ def phase_folding(t, y, yerr, period):
     foldtimes = t / period
     #remove the whole number part of the phase
     foldtimes = foldtimes % 1
+    
+    if yerr is None:
+        yerr = 0 * y
+    
     #sort everything
     phase, folded_y, folded_yerr = zip(*sorted(zip(foldtimes, y, yerr)))
     return phase, folded_y, folded_yerr
