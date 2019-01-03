@@ -15,5 +15,5 @@ Remember [gedi](https://github.com/jdavidrcamacho/Gedi)? This is its newest brot
 
 
 -------------------------
-2018 [João Camacho](https://github.com/jdavidrcamacho)
+2018-2019 [João Camacho](https://github.com/jdavidrcamacho)
 
