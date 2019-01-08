@@ -56,16 +56,24 @@ class GP(object):
         K = kernel(r)
         return K
 
-    def _mean_function(self, mean):
+    def _mean_function(self, mean, time = None):
         """
             Returns the value of the mean function
         """
-        #if we have a zero mean GP
-        if mean is None:
-            m = np.zeros_like(self.time)
-        #if we defined a mean function to be used
+        if time is None:
+            #if we have a zero mean GP
+            if mean is None:
+                m = np.zeros_like(self.time)
+            #if we defined a mean function to be used
+            else:
+                m = mean(self.time)
         else:
-            m = mean(self.time)
+            #if we have a zero mean GP
+            if mean is None:
+                m = np.zeros_like(time)
+            #if we defined a mean function to be used
+            else:
+                m = mean(time)
         return m
 
     def new_kernel(self, kernel, new_pars):
@@ -312,7 +320,7 @@ class GP(object):
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
-        y_mean = np.dot(Kstar, sol) #mean
+        y_mean = np.dot(Kstar, sol) + self._mean(mean, time) #mean
         kstarT_k_kstar = []
         for i, e in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
@@ -373,16 +381,24 @@ class TP(object):
         K = kernel(r)
         return K
 
-    def _mean_function(self, mean):
+    def _mean_function(self, mean, time = None):
         """
             Returns the value of the mean function
         """
-        #if we have a zero mean GP
-        if mean is None:
-            m = np.zeros_like(self.time)
-        #if we defined a mean function to be used
+        if time is None:
+            #if we have a zero mean GP
+            if mean is None:
+                m = np.zeros_like(self.time)
+            #if we defined a mean function to be used
+            else:
+                m = mean(self.time)
         else:
-            m = mean(self.time)
+            #if we have a zero mean GP
+            if mean is None:
+                m = np.zeros_like(time)
+            #if we defined a mean function to be used
+            else:
+                m = mean(time)
         return m
 
     def new_kernel(self, kernel, new_pars):
@@ -666,7 +682,7 @@ class TP(object):
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
-        y_mean = np.dot(Kstar, sol) #mean
+        y_mean = np.dot(Kstar, sol) + self._mean(mean, time) #mean
         kstarT_k_kstar = []
         for i, e in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
