@@ -666,7 +666,7 @@ class Cosine(kernel):
     """
         Definition of the cosine kernel.
         Parameters:
-            amplitude = amplitude/amplitude of the kernel
+            amplitude = amplitude of the kernel
             P = period
             wn = white noise amplitude
     """
@@ -735,7 +735,7 @@ class Exponential(kernel):
         Definition of the exponential kernel. This kernel arises when 
     setting v=1/2 in the matern family of kernels
         Parameters:
-            amplitude = amplitude/amplitude of the kernel
+            amplitude = amplitude of the kernel
             ell = characteristic lenght scale
             wn = white noise amplitude
     """
@@ -805,8 +805,7 @@ class Matern32(kernel):
         Definition of the Matern 3/2 kernel. This kernel arise when setting 
     v=3/2 in the matern family of kernels
         Parameters:
-            amplitude = amplitude/amplitude of the kernel
-            theta = amplitude of the kernel
+            amplitude = amplitude of the kernel
             ell = characteristic lenght scale
             wn = white noise amplitude
     """
@@ -881,7 +880,6 @@ class Matern52(kernel):
     v=5/2 in the matern family of kernels
         Parameters:
             amplitude = amplitude/amplitude of the kernel
-            theta = amplitude of the kernel
             ell = characteristic lenght scale
             wn = white noise amplitude
     """
@@ -953,6 +951,73 @@ class dMatern52_dwn(Matern52):
             return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
         except ValueError:
             return np.zeros_like(r)
+
+#### Wave kernel #########################################################
+class Wave(kernel):
+    """
+        Definition of the wave kernel. Still don't understand how this is a 
+    valid kernel since np.abs(r) needs to be different than 0
+        Parameters:
+            amplitude = amplitude/amplitude of the kernel
+            theta = parameter that still don't know what it does
+            wn = white noise amplitude
+    """
+    def __init__(self, amplitude, theta, wn):
+        super(Wave, self).__init__(amplitude, theta, wn)
+        self.amplitude = amplitude
+        self.theta = theta
+        self.wn = wn
+        self.type = 'unknown'
+        self.derivatives = 3    #number of derivatives in this kernel
+        self.params_number = 3    #number of hyperparameters
+
+    def __call__(self, r):
+        try:
+            return self.amplitude**2 * self.theta/np.abs(r) \
+                                * np.sin(-np.abs(r)/self.theta) \
+                                + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * self.theta/np.abs(r) \
+                                * np.sin(-np.abs(r)/self.theta)
+
+class dWave_damplitude(Wave):
+    """
+        Log-derivative in order to the amplitude
+    """
+    def __init__(self, amplitude, theta, wn):
+        super(dWave_damplitude, self).__init__(amplitude, theta, wn)
+        self.amplitude = amplitude
+        self.theta = theta
+        self.wn = wn
+
+    def __call__(self, r):
+        raise NotImplementedError
+
+class dWave_dtheta(Wave):
+    """
+        Log-derivative in order to theta
+    """
+    def __init__(self, amplitude, theta, wn):
+        super(dWave_dtheta, self).__init__(amplitude, theta, wn)
+        self.amplitude = amplitude
+        self.theta = theta
+        self.wn = wn
+
+    def __call__(self, r):
+        raise NotImplementedError
+
+class dWave_dwn(Wave):
+    """
+        Log-derivative in order to the white noise amplitude
+    """
+    def __init__(self, amplitude, theta, wn):
+        super(dWave_dwn, self).__init__(amplitude, theta, wn)
+        self.amplitude = amplitude
+        self.theta = theta
+        self.wn = wn
+
+    def __call__(self, r):
+        raise NotImplementedError
 
 
 ### END
