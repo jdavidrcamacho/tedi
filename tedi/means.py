@@ -176,9 +176,9 @@ class Sine(MeanModel):
 
 
 ##### Keplerian mean ###########################################################
-class Keplerian(MeanModel):
+class oldKeplerian(MeanModel):
     """
-        Keplerian function
+        Keplerian function with T0
         tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
         E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
         M(t) = (2*pi*t/tau) + M0 = Mean anomaly
@@ -192,7 +192,7 @@ class Keplerian(MeanModel):
     """
     _parsize = 5
     def __init__(self, P, K, e, w, T0):
-        super(Keplerian, self).__init__(P, K, e, w, T0)
+        super(oldKeplerian, self).__init__(P, K, e, w, T0)
 
     @array_input
     def __call__(self, t):
@@ -203,20 +203,80 @@ class Keplerian(MeanModel):
         E0 = Mean_anom + e*np.sin(Mean_anom) + 0.5*(e**2)*np.sin(2*Mean_anom)
         #mean anomaly -> M0=E0 - e*sin(E0)
         M0 = E0 - e*np.sin(E0)
-
         niter=0
-        while niter < 1000:
+        while niter < 500:
             aux = Mean_anom - M0
             E1 = E0 + aux/(1 - e*np.cos(E0))
             M1 = E0 - e*np.sin(E0)
-
             niter += 1
             E0 = E1
             M0 = M1
-
         nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
         RV = K*(e*np.cos(w)+np.cos(w+nu))
         return RV
+
+
+##### Keplerian mean ###########################################################
+class Keplerian(MeanModel):
+    """
+        Keplerian function with phi
+        tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
+        E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
+        M(t) = (2*pi*t/tau) + M0 = Mean anomaly
+        P  = period in days
+        e = eccentricity
+        K = RV amplitude in m/s 
+        w = longitude of the periastron
+        phi = orbital phase
+
+        RV = K[cos(w+v) + e*cos(w)]
+    """
+    _parsize = 5
+    def __init__(self, P, K, e, w, phi):
+        super(Keplerian, self).__init__(P, K, e, w, phi)
+
+    @array_input
+    def __call__(self, t):
+        P, K, e, w, phi = self.pars
+        #mean anomaly
+        T0 = t[0] - (P*phi)/(2.*np.pi)
+        Mean_anom = 2*np.pi*(t-T0)/P
+        #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
+        E0 = Mean_anom + e*np.sin(Mean_anom) + 0.5*(e**2)*np.sin(2*Mean_anom)
+        #mean anomaly -> M0=E0 - e*sin(E0)
+        M0 = E0 - e*np.sin(E0)
+        niter=0
+        while niter < 500:
+            aux = Mean_anom - M0
+            E1 = E0 + aux/(1 - e*np.cos(E0))
+            M1 = E0 - e*np.sin(E0)
+            niter += 1
+            E0 = E1
+            M0 = M1
+        nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
+        RV = K*(e*np.cos(w)+np.cos(w+nu))
+        return RV
+
+
+##### Damped harmonic oscillator mean ##########################################
+class UdHO(MeanModel):
+    """
+        Underdamped harmonic oscillator mean function
+        m(t) = A * exp(-b*t) * cos(w*t + phi)
+        A = kinda of an amplitude
+        b = damping coefficient
+        w = kinda of an angular frequency, w**2 = sqrt(w0**2 - b**2), where w0
+            is the angular frequency
+        phi = phase, determines the starting point of the "wave"
+    """
+    _parsize = 4
+    def __init__(self, A, b, w, phi):
+        super(UdHO, self).__init__(A, b, w, phi)
+
+    @array_input
+    def __call__(self, t):
+        return self.pars[0]**2 * np.exp(-self.pars[1]*t) \
+                    * np.cos(self.pars[2]*t + self.pars[3])
 
 
 ### END

@@ -287,7 +287,7 @@ class GP(object):
 
 
 ##### GP prediction funtion
-    def prediction(self, kernel = False, mean = False, time = None):
+    def prediction(self, kernel = False, mean = False, time = False):
         """ 
             Conditional predictive distribution of the Gaussian process
             Parameters:
@@ -306,13 +306,14 @@ class GP(object):
 
         #calculate mean and residuals
         if mean:
-            r = self.y - mean(time)
+            r = self.y - mean(self.time)
         else:
             r = self.y
 
         #K
         cov = self._kernel_matrix(kernel, self.time)
         L1 = cho_factor(cov)
+
         sol = cho_solve(L1, r)
 
         #Kstar calculation
@@ -320,7 +321,8 @@ class GP(object):
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
-        y_mean = np.dot(Kstar, sol) + self._mean(mean, time) #mean
+
+        y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
         kstarT_k_kstar = []
         for i, e in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
@@ -642,8 +644,7 @@ class TP(object):
     
 
 ##### TP predition funtion
-    def prediction(self, kernel = False, degrees = False, 
-                   mean = False, time = None):
+    def prediction(self, kernel = None, degrees = None, mean = None, time = None):
         """ 
             Conditional predictive distribution of the Gaussian process
             Parameters:
@@ -682,12 +683,11 @@ class TP(object):
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
-        y_mean = np.dot(Kstar, sol) + self._mean(mean, time) #mean
+        y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
         kstarT_k_kstar = []
         for i, e in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
         y_cov = Kstarstar - kstarT_k_kstar
-
         var1 = degrees -2 + np.dot(r.T, sol)
         var2 = (degrees -2 + r.size)
         y_var =  var1 * np.diag(y_cov) / var2 #variance
