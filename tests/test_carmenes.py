@@ -13,10 +13,8 @@ plt.close('all')
 from scipy import stats
 from tedi import process, kernels, means
 
-
-
 ### Data
-time, rv, rverr = np.loadtxt("barnardsStar_carmenes.dat", skiprows=1,
+time, rv, rverr = np.loadtxt("barnardsStar_HARPSpre.dat", skiprows=1,
                              usecols=(0, 1, 2), unpack=True)
 
 
@@ -178,7 +176,7 @@ plt.figure()
 plt.hist(likes, bins = 15, label='likelihood')
 
 datafinal = np.vstack([samples.T,np.array(likes).T]).T
-np.save('samples_carmenes.npy', datafinal)
+np.save('samples_harpspre.npy', datafinal)
 
 ##### checking the likelihood that matters to us #####
 samples = datafinal
