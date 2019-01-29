@@ -95,7 +95,7 @@ class GP(object):
             new_k2 = type(kernel.k2)(*k2_params)
             return new_k1+new_k2
         #if we are working with the product of kernels
-        elif isinstance(kernel, kernels.Product):
+        elif isinstance(kernel, kernels.Multiplication):
             k1_params = []
             for i, e in enumerate(kernel.k1.pars):
                 k1_params.append(new_pars[i])
@@ -321,8 +321,10 @@ class GP(object):
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
-
-        y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
+        if mean:
+            y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
+        else:
+            y_mean = np.dot(Kstar, sol)
         kstarT_k_kstar = []
         for i, e in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
@@ -683,7 +685,10 @@ class TP(object):
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
-        y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
+        if mean:
+            y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
+        else:
+            y_mean = np.dot(Kstar, sol)
         kstarT_k_kstar = []
         for i, e in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
