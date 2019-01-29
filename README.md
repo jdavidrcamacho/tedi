@@ -13,7 +13,9 @@
 \
 Remember [gedi](https://github.com/jdavidrcamacho/Gedi)? This is its newest brother.
 
+Check our [wiki page](https://github.com/jdavidrcamacho/tedi/wiki) to learn a bit more about it!
 
 -------------------------
 2018-2019 [João Camacho](https://github.com/jdavidrcamacho)
+
 
