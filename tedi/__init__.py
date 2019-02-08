@@ -12,4 +12,4 @@ from tedi import kernels, means
 from tedi import process
 
 #useful function to have
-from tedi import astro
+from tedi import utils
