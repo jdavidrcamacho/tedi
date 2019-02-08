@@ -973,11 +973,17 @@ class Wave(kernel):
 
     def __call__(self, r):
         try:
-            return self.amplitude**2 * self.theta/np.abs(r) \
+            if r == 0:
+                return 0
+            else:
+                return self.amplitude**2 * self.theta/np.abs(r) \
                                 * np.sin(-np.abs(r)/self.theta) \
                                 + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
         except ValueError:
-            return self.amplitude**2 * self.theta/np.abs(r) \
+            if r == 0:
+                return 0
+            else:
+                return self.amplitude**2 * self.theta/np.abs(r) \
                                 * np.sin(-np.abs(r)/self.theta)
 
 class dWave_damplitude(Wave):
