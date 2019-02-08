@@ -3,7 +3,7 @@
 import numpy as np
 from functools import wraps
 
-__all__ = ['Constant', 'Linear', 'Parabola', 'Cubic', 'Keplerian']
+__all__ = ['Constant', 'Linear', 'Parabola', 'Cubic', 'Keplerian', 'UdHO']
 
 def array_input(f):
     """

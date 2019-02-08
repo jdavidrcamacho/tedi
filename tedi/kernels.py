@@ -4,6 +4,10 @@ import numpy as np
 #because it makes my life easier down the line
 pi, exp, sine, cosine, sqrt = np.pi, np.exp, np.sin, np.cos, np.sqrt
 
+__all__ = ['Constant', 'WhiteNoise', 'SquaredExponential' , 'Periodic', 
+            'QuasiPeriodic', 'RationalQuadratic', 'Cosine', 'Exponential',
+            'Matern32', 'Matern52']
+
 class kernel(object):
     """
         Definition the kernels that will be used. To simplify my life all the
@@ -102,6 +106,7 @@ class dConstant_dc(Constant):
 
     def __call__(self, r):
         return self.c * np.ones_like(r)
+
 
 ##### White noise kernel #######################################################
 class WhiteNoise(kernel):
