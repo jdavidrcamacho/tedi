@@ -24,7 +24,8 @@ class MeanModel(object):
     
     _parsize = 0
     def __init__(self, *pars):
-        self.pars = list(pars)
+        #self.pars = list(pars)
+        self.pars = np.array(pars, dtype=float)
 
     def __repr__(self):
         """ Representation of each instance """
