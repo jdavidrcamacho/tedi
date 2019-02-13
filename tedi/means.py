@@ -24,8 +24,8 @@ class MeanModel(object):
     
     _parsize = 0
     def __init__(self, *pars):
-        #self.pars = list(pars)
-        self.pars = np.array(pars, dtype=float)
+        self.pars = list(pars)
+        #self.pars = np.array(pars, dtype=float)
 
     def __repr__(self):
         """ Representation of each instance """
@@ -259,7 +259,7 @@ class Keplerian(MeanModel):
         return RV
 
 
-##### Damped harmonic oscillator mean ##########################################
+##### Underdamped harmonic oscillator mean #####################################
 class UdHO(MeanModel):
     """
         Underdamped harmonic oscillator mean function
@@ -280,4 +280,4 @@ class UdHO(MeanModel):
                     * np.cos(self.pars[2]*t + self.pars[3])
 
 
-### END
+##### END

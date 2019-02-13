@@ -81,7 +81,9 @@ class GP(object):
             Updates the parameters of a kernel.
             Parameters:
                 kernel = original kernel
-                new_pars = new hyperparameters 
+                new_pars = new hyperparameters
+            Returns:
+                updated kernel
         """
         #if we are working with the sum of kernels
         if isinstance(kernel, kernels.Sum):
@@ -207,7 +209,7 @@ class GP(object):
             Parameters:
                 kernel_derivative = derivatives we want to use this round
                 nugget = True if K is not positive definite, False otherwise
-            Return:
+            Returns:
                 k = final covariance matrix of dK/dOmega
         """
         #our matrix starts empty
@@ -294,8 +296,8 @@ class GP(object):
                 kernel = covariance function
                 mean = mean function being used
                 time = time  
-        Returns:
-            mean vector, covariance matrix, standard deviation vector
+            Returns:
+                mean vector, covariance matrix, standard deviation vector
         """
         if kernel:
             #To use a new kernel
@@ -550,7 +552,7 @@ class TP(object):
             Parameters:
                 kernel_derivative = derivatives we want to use this round
                 nugget = True if K is not positive definite, False otherwise
-            Return:
+            Returns:
                 k = final covariance matrix of dK/dOmega
         """
         #our matrix starts empty
@@ -654,8 +656,8 @@ class TP(object):
                 degrees = degrees of freedom
                 mean = mean function being used
                 time = time  
-        Returns:
-            mean vector, covariance matrix, standard deviation vector
+            Returns:
+                mean vector, covariance matrix, standard deviation vector
         """
         if kernel:
             #To use a new kernel
@@ -698,3 +700,6 @@ class TP(object):
         y_var =  var1 * np.diag(y_cov) / var2 #variance
         y_std = np.sqrt(y_var) #standard deviation
         return y_mean, y_std, y_cov
+
+
+##### END
