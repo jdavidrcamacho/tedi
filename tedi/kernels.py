@@ -561,7 +561,7 @@ class dRQP_damplitude(RQP):
         super(dRQP_damplitude, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
         self.amplitude = amplitude
         self.alpha = alpha
-        self.RQP_ell_e = ell_e
+        self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
         self.wn = wn
@@ -579,7 +579,7 @@ class dRQP_dalpha(RQP):
         super(dRQP_dalpha, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
         self.amplitude = amplitude
         self.alpha = alpha
-        self.RQP_ell_e = ell_e
+        self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
         self.wn = wn
@@ -599,7 +599,7 @@ class dRQP_delle(RQP):
         super(dRQP_delle, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
         self.amplitude = amplitude
         self.alpha = alpha
-        self.RQP_ell_e = ell_e
+        self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
         self.wn = wn
@@ -617,7 +617,7 @@ class dRQP_dP(RQP):
         super(dRQP_dP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
         self.amplitude = amplitude
         self.alpha = alpha
-        self.RQP_ell_e = ell_e
+        self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
         self.wn = wn
@@ -636,7 +636,7 @@ class dRQP_dellp(RQP):
         super(dRQP_dellp, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
         self.amplitude = amplitude
         self.alpha = alpha
-        self.RQP_ell_e = ell_e
+        self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
         self.wn = wn
@@ -654,7 +654,7 @@ class dRQP_dwn(RQP):
         super(dRQP_dwn, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
         self.amplitude = amplitude
         self.alpha = alpha
-        self.RQP_ell_e = ell_e
+        self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
         self.wn = wn
