@@ -534,7 +534,7 @@ class RQP(kernel):
         super(RQP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
         self.amplitude = amplitude
         self.alpha = alpha
-        self.RQP_ell_e = ell_e
+        self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
         self.wn = wn

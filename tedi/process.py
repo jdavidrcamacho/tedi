@@ -48,10 +48,12 @@ class GP(object):
         K = kernel(r)
         return K
 
-    def _predict_kernel_matrix(self, kernel, time, tstar):
+    def _predict_kernel_matrix(self, kernel, time):
         """
             To be used in prediction()
         """
+#        if isinstance(kernel.k2, kernels.WhiteNoise):
+#            kernel = kernel.k1
         r = time[:, None] - self.time[None, :]
         K = kernel(r)
         return K
@@ -166,7 +168,7 @@ class GP(object):
         """
         #covariance matrix calculation
         K = self.compute_matrix(kernel, self.time, 
-                                nugget = False, shift = False)
+                                nugget = nugget, shift = shift)
 
         #calculation of y having into account the mean funtion
         if mean:
@@ -315,18 +317,18 @@ class GP(object):
         #K
         cov = self._kernel_matrix(kernel, self.time)
         L1 = cho_factor(cov)
-
+        
         sol = cho_solve(L1, r)
 
-        #Kstar calculation
-        Kstar = self._predict_kernel_matrix(kernel, time, self.time)
+        #Kstar
+        Kstar = self._predict_kernel_matrix(kernel, time)
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
         if mean:
             y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
         else:
-            y_mean = np.dot(Kstar, sol)
+            y_mean = np.dot(Kstar, sol) #mean
         kstarT_k_kstar = []
         for i, e in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
@@ -379,7 +381,7 @@ class TP(object):
         K = kernel(r)
         return K
 
-    def _predict_kernel_matrix(self, kernel, time, tstar):
+    def _predict_kernel_matrix(self, kernel, time):
         """
             To be used in prediction()
         """
@@ -683,7 +685,7 @@ class TP(object):
         sol = cho_solve(L1, r)
 
         #Kstar calculation
-        Kstar = self._predict_kernel_matrix(kernel, time, self.time)
+        Kstar = self._predict_kernel_matrix(kernel, time)
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
 
