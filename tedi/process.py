@@ -140,7 +140,7 @@ class GP(object):
         k = self._kernel_matrix(kernel, self.time)
         
         #addition of the measurement errors
-        diag = self.yerr * np.identity(self.time.size)
+        diag = self.yerr**2 * np.identity(self.time.size)
         K = k + diag
 
         #more "weight" to the diagonal to avoid a ill-conditioned matrix
@@ -169,7 +169,6 @@ class GP(object):
         #covariance matrix calculation
         K = self.compute_matrix(kernel, self.time, 
                                 nugget = nugget, shift = shift)
-
         #calculation of y having into account the mean funtion
         if mean:
             y = self.y - mean(self.time)

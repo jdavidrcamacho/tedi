@@ -102,4 +102,50 @@ def phase_folding(t, y, yerr, period):
     return phase, folded_y, folded_yerr
 
 
+##### MCMC with dynesty or emcee ###############################################
+import dynesty, emcee
+from multiprocessing import Pool
+
+def run_mcmc(prior_func, loglike_func, iterations = 1000, sampler = 'emcee'):
+    """
+        run_mcmc() allow the user to run emcee or dynesty automatically
+        Parameters:
+            prior_func = function that return an array with the priors
+            loglike_func = function that calculates the log-likelihood 
+            iterations = number of iterations; in emcee half of it will be used
+                        as burn-in
+            sampler = 'emcee' or 'dynesty'
+        Returns:
+            result = return the sampler's results accordingly to the sampler
+    """
+    if sampler == 'emcee':
+        ndim = prior_func().size
+        burns, runs = int(iterations/2), int(iterations/2)
+        #defining emcee properties
+        nwalkers = 2*ndim
+        sampler = emcee.EnsembleSampler(nwalkers, ndim, 
+                                        loglike_func, threads= 4)
+
+        #Initialize the walkers
+        p0=[prior_func() for i in range(nwalkers)]
+        #running burns and runs
+        print("Running burn-in")
+        p0, _, _ = sampler.run_mcmc(p0, burns)
+        print("Running production chain")
+        sampler.run_mcmc(p0, runs)
+        #preparing samples to return
+        samples = sampler.chain[:, burns:, :].reshape((-1, ndim))
+        lnprob = sampler.lnprobability[:, burns:].reshape(nwalkers*burns, 1)
+        results = np.vstack([samples.T,np.array(lnprob).T]).T
+
+    if sampler == 'dynesty':
+        ndim = prior_func(0).size
+        dsampler = dynesty.DynamicNestedSampler(loglike_func, prior_func, 
+                                        ndim=ndim, nlive = 1000, sample='rwalk',
+                                        queue_size=4, pool=Pool(4))
+        dsampler.run_nested(nlive_init = 1000, maxiter = iterations)
+        results = dsampler.results
+    return results
+
+
 ### END

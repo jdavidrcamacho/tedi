@@ -444,10 +444,10 @@ class RationalQuadratic(kernel):
 
     def __call__(self, r):
         try: 
-            return self.amplitude**2 / (1+ r**2/ (2*self.alpha*self.ell**2))**self.alpha \
+            return self.amplitude**2 * (1+ 0.5*r**2/ (self.alpha*self.ell**2))**(-self.alpha) \
                     + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
         except ValueError:
-            return self.amplitude**2 / (1+ r**2/ (2*self.alpha*self.ell**2))**self.alpha
+            return self.amplitude**2 * (1+ 0.5*r**2/ (self.alpha*self.ell**2))**(-self.alpha)
 
 class dRationalQuadratic_damplitude(RationalQuadratic):
     """
@@ -546,12 +546,12 @@ class RQP(kernel):
         try:
             return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
                                         / self.ell_p**2) \
-                        /(1+ r**2/ (2*self.alpha*self.ell_e**2))**self.alpha \
+                        *(1+ r**2/ (2*self.alpha*self.ell_e**2))**(-self.alpha) \
                         + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
         except ValueError:
             return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
                                         / self.ell_p**2) \
-                        /(1+ r**2/ (2*self.alpha*self.ell_e**2))**self.alpha
+                        *(1+ r**2/ (2*self.alpha*self.ell_e**2))**(-self.alpha)
 
 class dRQP_damplitude(RQP):
     """
