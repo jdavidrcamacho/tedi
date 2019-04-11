@@ -191,7 +191,7 @@ class GP(object):
         """ 
             Returns samples from the kernel
             Parameters:
-                kernel = covariance funtion
+                kernel = covariance function
                 time = time array
             Returns:
                 Sample of K 
