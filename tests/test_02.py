@@ -24,3 +24,8 @@ print(kernel)
 gpOBJ = process.GP(kernel,mean,time,y,yerr)
 print(gpOBJ.log_likelihood(kernel))
 print(gpOBJ.log_likelihood_gradient(kernel))
+
+#ST processes
+tpOBJ = process.TP(kernel,mean,time,y,yerr)
+print(tpOBJ.log_likelihood(kernel, degrees=3))
+print(tpOBJ.log_likelihood_gradient(kernel, degrees=3))

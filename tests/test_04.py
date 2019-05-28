@@ -22,14 +22,14 @@ time, rv, rverr = np.loadtxt("corot7.txt", skiprows=2,
 #because we need to define a "initial" kernel and mean
 kernel = kernels.QuasiPeriodic(1, 1, 1, 1, 1)
 degrees = 5
-mean = means.Keplerian(P = 0.85359165, K = 3.42, e = 0.12, w = 105*np.pi/180, T0 = 4398.21) \
-                    + means.Keplerian(P = 3.70, K = 6.01, e = 0.12, w = 140*np.pi/180, T0 = 5953.3)
+mean = means.oldKeplerian(P = 0.85359165, K = 3.42, e = 0.12, w = 105*np.pi/180, T0 = 4398.21) \
+                    + means.oldKeplerian(P = 3.70, K = 6.01, e = 0.12, w = 140*np.pi/180, T0 = 5953.3)
 
 TPobj = process.TP(kernel, degrees, mean, time, rv, rverr)
 
 
 ### Preparing our MCMC
-burns, runs= 50000, 50000
+burns, runs= 50, 50
 
 
 #/* GP parameters */
@@ -104,7 +104,7 @@ samples = sampler.chain[:, burnin:, :].reshape((-1, ndim))
 samples = np.exp(samples)
 
 #median and quantiles
-amp1,l1,p1,l2,wn1, deg1,t02 = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
+amp1,l1,p1,l2,wn1, deg1 = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                              zip(*np.percentile(samples, [16, 50, 84],axis=0)))
 
 #printing results
@@ -150,7 +150,7 @@ plt.xlabel("Value")
 plt.ylabel("Samples")
 
 samples = samples[values,:]
-samples = samples.reshape(-1, 17)
+samples = samples.reshape(-1, 7)
 
 amp1,l1,p1,l2,wn1, deg1, likes = map(lambda v: (v[1], v[2]-v[1], v[1]-v[0]),
                              zip(*np.percentile(samples, [16, 50, 84],axis=0)))

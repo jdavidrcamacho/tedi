@@ -36,7 +36,7 @@ GPobj = process.GP(kernel, mean, time, rv, rverr)
 
 
 ### Preparing our MCMC
-burns, runs= 50000, 50000
+burns, runs= 50, 50
 
 #defining our priors
 def logprob(p):

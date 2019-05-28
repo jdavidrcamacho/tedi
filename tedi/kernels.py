@@ -330,7 +330,7 @@ class QuasiPeriodic(kernel):
         try:
             return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
                                           /self.ell_p**2 - r**2/(2*self.ell_e**2)) \
-                                          +self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+                                          + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
         except ValueError:
             return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
                                           /self.ell_p**2 - r**2/(2*self.ell_e**2))
