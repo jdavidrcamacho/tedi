@@ -514,158 +514,6 @@ class dRationalQuadratic_dwn(RationalQuadratic):
             return np.zeros_like(r)
 
 
-
-##### RQP kernel ###############################################################
-class RQP(kernel):
-    """
-        Definition of the product between the exponential sine squared kernel 
-    and the rational quadratic kernel that we called RQP kernel.
-        If I am thinking this correctly then this kernel should tend to the
-    QuasiPeriodic kernel as alpha increases, although I am not sure if we can
-    say that it tends to the QuasiPeriodic kernel as alpha tends to infinity.
-        Parameters:
-            amplitude = amplitude of the kernel
-            ell_e and ell_p = aperiodic and periodic lenght scales
-            alpha = alpha of the rational quadratic kernel
-            P = periodic repetitions of the kernel
-            wn = white noise amplitude
-    """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(RQP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-        self.type = 'non-stationary and anisotropic'
-        self.derivatives = 6    #number of derivatives in this kernel
-        self.params_number = 6  #number of hyperparameters
-
-    def __call__(self, r):
-        try:
-            return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
-                                        / self.ell_p**2) \
-                        *(1+ r**2/ (2*self.alpha*self.ell_e**2))**(-self.alpha) \
-                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
-                                        / self.ell_p**2) \
-                        *(1+ r**2/ (2*self.alpha*self.ell_e**2))**(-self.alpha)
-
-class dRQP_damplitude(RQP):
-    """
-        Log-derivative in order to the amplitude
-    """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_damplitude, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-
-    def __call(self, r):
-        return 2 * self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
-                                    / self.ell_p**2) \
-                    /(1+ r**2/ (2*self.alpha*self.ell_e**2))**self.alpha
-
-class dRQP_dalpha(RQP):
-    """
-        Log-derivative in order to alpha
-    """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dalpha, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-
-    def __call__(self, r):
-        return self.alpha * ((r**2 / (2*self.alpha \
-                         *self.ell_e**2*(r**2/(2*self.alpha*self.ell_e**2)+1)) \
-            -np.log(r**2/(2*self.alpha*self.ell_e**2)+1)) \
-            *self.amplitude**2*exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2)) \
-            /(1+r**2/(2*self.alpha*self.ell_e**2))**self.alpha
-
-class dRQP_delle(RQP):
-    """
-        Log-derivative in order to ell_e
-    """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_delle, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-
-    def __call__(self, r):
-        return (r**2*(1+r**2/(2*self.alpha*self.ell_e**2))**(-1-self.alpha) \
-                *self.amplitude**2 \
-                *exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2))/self.ell_e**2
-
-class dRQP_dP(RQP):
-    """
-        Log-derivative in order to P
-    """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-
-    def __call__(self, r):
-        return (4*pi*r*self.amplitude**2*cosine(pi*np.abs(r)/self.P) \
-                *sine(pi*np.abs(r)/self.P) \
-                *exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2)) \
-                /(self.ell_p**2*(1+r**2/(2*self.alpha*self.ell_e**2))**self.alpha*self.P)
-
-class dRQP_dellp(RQP):
-    """
-        Log-derivative in order to ell_p
-    """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dellp, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-
-    def __call(self, r):
-        return (4*self.amplitude**2*sine(pi*np.abs(r)/self.P)**2 \
-                *exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2)) \
-                /(self.ell_p**2*(1+r**2/(2*self.alpha*self.ell_e**2))**self.alpha)
-
-class dRQP_dwn(RQP):
-    """
-        Log-derivative in order to the white noise amplitude
-    """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dwn, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-
-    def __call(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
-
-
 ##### Cosine kernel ############################################################
 class Cosine(kernel):
     """
@@ -956,6 +804,161 @@ class dMatern52_dwn(Matern52):
             return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
         except ValueError:
             return np.zeros_like(r)
+
+
+### Warning entering the realm of experimental kernels ###
+
+
+##### RQP kernel ###############################################################
+class RQP(kernel):
+    """
+        Definition of the product between the exponential sine squared kernel 
+    and the rational quadratic kernel that we called RQP kernel.
+        If I am thinking this correctly then this kernel should tend to the
+    QuasiPeriodic kernel as alpha increases, although I am not sure if we can
+    say that it tends to the QuasiPeriodic kernel as alpha tends to infinity.
+        Parameters:
+            amplitude = amplitude of the kernel
+            ell_e and ell_p = aperiodic and periodic lenght scales
+            alpha = alpha of the rational quadratic kernel
+            P = periodic repetitions of the kernel
+            wn = white noise amplitude
+    """
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(RQP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+        self.type = 'non-stationary and anisotropic'
+        self.derivatives = 6    #number of derivatives in this kernel
+        self.params_number = 6  #number of hyperparameters
+
+    def __call__(self, r):
+        try:
+            return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                        / self.ell_p**2) \
+                        *(1+ r**2/ (2*self.alpha*self.ell_e**2))**(-self.alpha) \
+                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                        / self.ell_p**2) \
+                        *(1+ r**2/ (2*self.alpha*self.ell_e**2))**(-self.alpha)
+
+class dRQP_damplitude(RQP):
+    """
+        Log-derivative in order to the amplitude
+    """
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(dRQP_damplitude, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+
+    def __call(self, r):
+        return 2 * self.amplitude**2 * exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                    / self.ell_p**2) \
+                    /(1+ r**2/ (2*self.alpha*self.ell_e**2))**self.alpha
+
+class dRQP_dalpha(RQP):
+    """
+        Log-derivative in order to alpha
+    """
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(dRQP_dalpha, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+
+    def __call__(self, r):
+        return self.alpha * ((r**2 / (2*self.alpha \
+                         *self.ell_e**2*(r**2/(2*self.alpha*self.ell_e**2)+1)) \
+            -np.log(r**2/(2*self.alpha*self.ell_e**2)+1)) \
+            *self.amplitude**2*exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2)) \
+            /(1+r**2/(2*self.alpha*self.ell_e**2))**self.alpha
+
+class dRQP_delle(RQP):
+    """
+        Log-derivative in order to ell_e
+    """
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(dRQP_delle, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+
+    def __call__(self, r):
+        return (r**2*(1+r**2/(2*self.alpha*self.ell_e**2))**(-1-self.alpha) \
+                *self.amplitude**2 \
+                *exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2))/self.ell_e**2
+
+class dRQP_dP(RQP):
+    """
+        Log-derivative in order to P
+    """
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(dRQP_dP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+
+    def __call__(self, r):
+        return (4*pi*r*self.amplitude**2*cosine(pi*np.abs(r)/self.P) \
+                *sine(pi*np.abs(r)/self.P) \
+                *exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2)) \
+                /(self.ell_p**2*(1+r**2/(2*self.alpha*self.ell_e**2))**self.alpha*self.P)
+
+class dRQP_dellp(RQP):
+    """
+        Log-derivative in order to ell_p
+    """
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(dRQP_dellp, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+
+    def __call(self, r):
+        return (4*self.amplitude**2*sine(pi*np.abs(r)/self.P)**2 \
+                *exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell_p**2)) \
+                /(self.ell_p**2*(1+r**2/(2*self.alpha*self.ell_e**2))**self.alpha)
+
+class dRQP_dwn(RQP):
+    """
+        Log-derivative in order to the white noise amplitude
+    """
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(dRQP_dwn, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+
+    def __call(self, r):
+        try:
+            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return np.zeros_like(r)
+
 
 #### Wave kernel #########################################################
 class Wave(kernel):

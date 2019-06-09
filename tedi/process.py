@@ -34,17 +34,12 @@ class GP(object):
         """
         return kernel.pars
 
-    def _kernel_matrix(self, kernel, time = None):
+    def _kernel_matrix(self, kernel, time):
         """
             Returns the covariance matrix created by evaluating a given kernel 
         at inputs time.
         """
-        #if time is None we use the time of our GP class
-        if time is None:
-            r = self.time[:, None] - self.time[None, :]
-        #if we define a new time we will use it
-        else:
-            r = time[:, None] - time[None, :]
+        r = time[:, None] - time[None, :]
         K = kernel(r)
         return K
 
@@ -197,7 +192,7 @@ class GP(object):
                 Sample of K 
         """
         mean = np.zeros_like(time)
-        cov = self.compute_matrix(kernel, time)
+        cov = self._kernel_matrix(kernel, time)
         norm = multivariate_normal(mean, cov, allow_singular=True)
         return norm.rvs()
 
