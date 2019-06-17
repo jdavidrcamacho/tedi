@@ -381,7 +381,7 @@ class dQuasiPeriodic_dP(QuasiPeriodic):
         self.wn = wn
 
     def __call(self, r):
-        return 4 * pi * r * self.w**2 \
+        return 4 * pi * r * self.wn**2 \
                 * cosine(pi*np.abs(r)/self.P) * sine(pi*np.abs(r)/self.P) \
                 * exp(-2 * sine(pi * np.abs(r)/self.P)**2 \
                       /self.ell_p**2 - r**2/(2*self.ell_e**2)) \
@@ -400,7 +400,7 @@ class dQuasiPeriodic_dellp(QuasiPeriodic):
         self.wn =wn
 
     def __call(self, r):
-        return  4 * self.w**2 * sine(pi*r/self.P)**2 \
+        return  4 * self.wn**2 * sine(pi*r/self.P)**2 \
                 * exp(-2 * sine(pi*np.abs(r)/self.P)**2 \
                       /self.ell_p**2 - r**2/(2*self.ell_e**2)) / self.ell_p**2
 
@@ -494,7 +494,7 @@ class dRationalQuadratic_dell(RationalQuadratic):
 
     def __call(self, r):
         return r**2 * (1+r**2/(2*self.alpha*self.ell**2))**(-1-self.alpha) \
-                * self.w**2 / self.ell**2
+                * self.wn**2 / self.ell**2
 
 class dRationalQuadratic_dwn(RationalQuadratic):
     """

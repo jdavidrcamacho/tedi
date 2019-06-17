@@ -15,9 +15,9 @@ def semi_amplitude(period, Mplanet, Mstar, ecc):
         Returns:
             Semi-amplitude K
     """
-    per = np.power(1/period, 1/3)
+    per = np.float(np.power(1/period, 1/3))
     Pmass = Mplanet / 1
-    Smass = np.power(1/Mstar, 2/3)
+    Smass = np.float(np.power(1/Mstar, 2/3))
     Ecc = 1 / np.sqrt(1 - ecc**2)
 
     return 28.435 * per * Pmass* Smass * Ecc

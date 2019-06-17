@@ -96,10 +96,10 @@ class GP(object):
         #if we are working with the product of kernels
         elif isinstance(kernel, kernels.Multiplication):
             k1_params = []
-            for i, e in enumerate(kernel.k1.pars):
+            for i, _ in enumerate(kernel.k1.pars):
                 k1_params.append(new_pars[i])
             k2_params = []
-            for j, e in enumerate(kernel.k2.pars):
+            for j, _ in enumerate(kernel.k2.pars):
                 k2_params.append(new_pars[len(kernel.k1.pars)+j])
             new_k1 = type(kernel.k1)(*k1_params)
             new_k2 = type(kernel.k2)(*k2_params)
@@ -324,7 +324,7 @@ class GP(object):
         else:
             y_mean = np.dot(Kstar, sol) #mean
         kstarT_k_kstar = []
-        for i, e in enumerate(time):
+        for i, _ in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
         y_cov = Kstarstar - kstarT_k_kstar
         y_var = np.diag(y_cov) #variance
@@ -422,12 +422,12 @@ class TP(object):
             new_k2 = type(kernel.k2)(*k2_params)
             return new_k1+new_k2
         #if we are working with the product of kernels
-        elif isinstance(kernel, kernels.Product):
+        elif isinstance(kernel, kernels.Multiplication):
             k1_params = []
-            for i, e in enumerate(kernel.k1.pars):
+            for i, _ in enumerate(kernel.k1.pars):
                 k1_params.append(new_pars[i])
             k2_params = []
-            for j, e in enumerate(kernel.k2.pars):
+            for j, _ in enumerate(kernel.k2.pars):
                 k2_params.append(new_pars[len(kernel.k1.pars)+j])
             new_k1 = type(kernel.k1)(*k1_params)
             new_k2 = type(kernel.k2)(*k2_params)
@@ -688,7 +688,7 @@ class TP(object):
         else:
             y_mean = np.dot(Kstar, sol)
         kstarT_k_kstar = []
-        for i, e in enumerate(time):
+        for i, _ in enumerate(time):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
         y_cov = Kstarstar - kstarT_k_kstar
         var1 = degrees -2 + np.dot(r.T, sol)

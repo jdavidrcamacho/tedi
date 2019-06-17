@@ -47,7 +47,7 @@ class MeanModel(object):
     def __mul__(self, b):
         return Multiplication(self, b)
     def __rmul__(self, b):
-        return self.__mult__(b)
+        return self.__mul__(b)
 
 
 class Sum(MeanModel):
