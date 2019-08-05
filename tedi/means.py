@@ -161,19 +161,34 @@ class Cubic(MeanModel):
         return np.polyval(self.pars, t)
 
 
-##### Sinusoidal mean ##########################################################
+##### Sinusoidal means #########################################################
 class Sine(MeanModel):
     """ 
         A sinusoidal mean function
-        m(t) = amplitude * sine(ang_freq * t + phase)
+        m(t) = amplitude**2 * sine( (2*pi*t/P) + phase) + displacement
     """
     _parsize = 3
-    def __init__(self, amp, w, phi):
-        super(Sine, self).__init__(amp, w, phi)
+    def __init__(self, amp, P, phi, D):
+        super(Sine, self).__init__(amp, P, phi, D)
 
     @array_input
     def __call__(self, t):
-        return self.pars[0] * np.sin(self.pars[1]*t + self.pars[2])
+        return self.pars[0] * np.sin((2*np.pi*t/self.pars[1]) + self.pars[2]) \
+                + self.pars[3]
+
+class Cosine(MeanModel):
+    """ 
+        Another sinusoidal mean function
+        m(t) = amplitude**2 * cosine( (2*pi*t/P) + phase) + displacement
+    """
+    _parsize = 3
+    def __init__(self, amp, P, phi, D):
+        super(Cosine, self).__init__(amp, P, phi, D)
+
+    @array_input
+    def __call__(self, t):
+        return self.pars[0]**2 * np.cos((2*np.pi*t/self.pars[1]) + self.pars[2]) \
+                + self.pars[3]
 
 
 ##### Keplerian mean ###########################################################
@@ -183,23 +198,23 @@ class oldKeplerian(MeanModel):
         tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
         E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
         M(t) = (2*pi*t/tau) + M0 = Mean anomaly
-        P  = period in days
+        p  = period in days
+        k = RV amplitude in m/s 
         e = eccentricity
-        K = RV amplitude in m/s 
         w = longitude of the periastron
         T0 = time of periastron passage
 
-        RV = K[cos(w+v) + e*cos(w)] + sis_vel
+        RV = K[cos(w+v) + e*cos(w)]
     """
     _parsize = 5
-    def __init__(self, P, K, e, w, T0):
-        super(oldKeplerian, self).__init__(P, K, e, w, T0)
+    def __init__(self, p, k, e, w, T0):
+        super(oldKeplerian, self).__init__(p, k, e, w, T0)
 
     @array_input
     def __call__(self, t):
-        P, K, e, w, T0 = self.pars
+        p, k, e, w, T0 = self.pars
         #mean anomaly
-        Mean_anom = 2*np.pi*(t-T0)/P
+        Mean_anom = 2*np.pi*(t-T0)/p
         #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
         E0 = Mean_anom + e*np.sin(Mean_anom) + 0.5*(e**2)*np.sin(2*Mean_anom)
         #mean anomaly -> M0=E0 - e*sin(E0)
@@ -213,7 +228,7 @@ class oldKeplerian(MeanModel):
             E0 = E1
             M0 = M1
         nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
-        RV = K*(e*np.cos(w)+np.cos(w+nu))
+        RV = k*(e*np.cos(w)+np.cos(w+nu))
         return RV
 
 
@@ -224,24 +239,24 @@ class Keplerian(MeanModel):
         tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
         E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
         M(t) = (2*pi*t/tau) + M0 = Mean anomaly
-        P  = period in days
+        p  = period in days
+        k = RV amplitude in m/s 
         e = eccentricity
-        K = RV amplitude in m/s 
         w = longitude of the periastron
         phi = orbital phase
 
         RV = K[cos(w+v) + e*cos(w)]
     """
     _parsize = 5
-    def __init__(self, P, K, e, w, phi):
-        super(Keplerian, self).__init__(P, K, e, w, phi)
+    def __init__(self, p, k, e, w, phi):
+        super(Keplerian, self).__init__(p, k, e, w, phi)
 
     @array_input
     def __call__(self, t):
-        P, K, e, w, phi = self.pars
+        p, k, e, w, phi = self.pars
         #mean anomaly
-        T0 = t[0] - (P*phi)/(2.*np.pi)
-        Mean_anom = 2*np.pi*(t-T0)/P
+        T0 = t[0] - (p*phi)/(2.*np.pi)
+        Mean_anom = 2*np.pi*(t-T0)/p
         #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
         E0 = Mean_anom + e*np.sin(Mean_anom) + 0.5*(e**2)*np.sin(2*Mean_anom)
         #mean anomaly -> M0=E0 - e*sin(E0)
@@ -255,7 +270,7 @@ class Keplerian(MeanModel):
             E0 = E1
             M0 = M1
         nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
-        RV = K*(e*np.cos(w)+np.cos(w+nu))
+        RV = k*(e*np.cos(w)+np.cos(w+nu))
         return RV
 
 
