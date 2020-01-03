@@ -13,6 +13,7 @@
 \
 Remember [gedi](https://github.com/jdavidrcamacho/Gedi)? This is its newest brother.
 
+Tedi is a Python package to examine radial velocity measurements and search for extra-solar planets.
 Check our [wiki page](https://github.com/jdavidrcamacho/tedi/wiki) to learn a bit more about it!
 
 -------------------------
