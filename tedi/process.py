@@ -10,13 +10,20 @@ from scipy.stats import multivariate_normal
 ##### Gaussian processes #######################################################
 class GP(object):
     """ 
-        Class to create our Gaussian process.
-        Parameters:
-            kernel = covariance funtion
-            means = mean function 
-            time = time array
-            y = measurements array
-            yerr = measurements errors array
+    Class to create our Gaussian process.
+    
+    Parameters
+    ----------
+    kernel: func
+        Covariance funtion
+    means: func
+        Mean function 
+    time: array
+        Time array
+    y: array
+        Measurements array
+    yerr: array
+        Measurements errors array
     """
     def __init__(self, kernel, mean, time, y, yerr = None):
         self.kernel = kernel        #covariance function
@@ -29,24 +36,17 @@ class GP(object):
             self.yerr = yerr        #measurements errors
 
     def _kernel_pars(self, kernel):
-        """
-            Returns a kernel parameters
-        """
+        """ Returns a kernel parameters """
         return kernel.pars
 
     def _kernel_matrix(self, kernel, time):
-        """
-            Returns the covariance matrix created by evaluating a given kernel 
-        at inputs time.
-        """
+        """ Returns a cov matrix when evaluating a given kernel at inputs time """
         r = time[:, None] - time[None, :]
         K = kernel(r)
         return K
 
     def _predict_kernel_matrix(self, kernel, time):
-        """
-            To be used in prediction()
-        """
+        """ To be used in prediction() """
 #        if isinstance(kernel.k2, kernels.WhiteNoise):
 #            kernel = kernel.k1
         r = time[:, None] - self.time[None, :]
@@ -54,9 +54,7 @@ class GP(object):
         return K
 
     def _mean_function(self, mean, time = None):
-        """
-            Returns the value of the mean function
-        """
+        """ Returns the value of the mean function """
         if time is None:
             #if we have a zero mean GP
             if mean is None:
@@ -75,12 +73,19 @@ class GP(object):
 
     def new_kernel(self, kernel, new_pars):
         """
-            Updates the parameters of a kernel.
-            Parameters:
-                kernel = original kernel
-                new_pars = new hyperparameters
-            Returns:
-                updated kernel
+        Updates the parameters of a kernel
+        
+        Parameters
+        ----------
+        kernel: func
+            Original kernel
+        new_pars: list
+            New hyperparameters
+        
+        Returns
+        -------
+        new_k: func
+            Updated kernel
         """
         #if we are working with the sum of kernels
         if isinstance(kernel, kernels.Sum):
@@ -101,43 +106,49 @@ class GP(object):
             k2_params = []
             for j, _ in enumerate(kernel.k2.pars):
                 k2_params.append(new_pars[len(kernel.k1.pars)+j])
-            new_k1 = type(kernel.k1)(*k1_params)
-            new_k2 = type(kernel.k2)(*k2_params)
-            return new_k1*new_k2
+            new_k = type(kernel.k1)(*k1_params) * type(kernel.k1)(*k2_params)
+            return new_k
         #if we are working with a "single" kernel
         else:
-            return type(kernel)(*new_pars)
+            new_k = type(kernel)(*new_pars)
+            return new_k
 
 
 ##### marginal likelihood functions
     def compute_matrix(self, kernel, time, nugget = False, shift = False):
         """
-            Creates the big covariance matrix K that will be used in the 
-        log marginal likelihood calculation
-            Parameters:
-                kernel = covariance kernel
-                time = time  
-                nugget = True if K is not positive definite, False otherwise
-                shift = True if K is not positive definite, False otherwise
-            Returns:
-                K = final covariance matrix 
-                
-            Note:
-                To understand the nugget and shift parameters see 
-            http://mathworld.wolfram.com/Ill-ConditionedMatrix.html for more 
-            information about ill-conditioned matrices and 
-            http://mathworld.wolfram.com/PositiveDefiniteMatrix.html for more
-            information about positive defined matrices.
+        Creates the big covariance matrix K that will be used in the log 
+        marginal likelihood calculation
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance kernel
+        time: array
+            Time array
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        shift: bool
+            True if K is not positive definite, False otherwise
+        
+        To understand the nugget and shift parameters see 
+        http://mathworld.wolfram.com/Ill-ConditionedMatrix.html
+        for more information about ill-conditioned matrices and 
+        http://mathworld.wolfram.com/PositiveDefiniteMatrix.html
+        for more information about positive defined matrices.
+        
+        Returns
+        -------
+        K: array
+            Final covariance matrix 
         """
         #Our K starts empty
         K = np.zeros((time.size, time.size))
         #Then we calculate the covariance matrix
         k = self._kernel_matrix(kernel, self.time)
-        
         #addition of the measurement errors
         diag = self.yerr**2 * np.identity(self.time.size)
         K = k + diag
-
         #more "weight" to the diagonal to avoid a ill-conditioned matrix
         if nugget:
             nugget_value = 0.01 #might be too big
@@ -146,20 +157,28 @@ class GP(object):
         if shift:
             shift = 0.01 #might be too big
             K = K + shift * np.identity(self.time.size)
-            
         return K
 
     def log_likelihood(self, kernel, mean = False, nugget = False, shift = False):
         """ 
-            Calculates the marginal log likelihood.
-        See Rasmussen & Williams (2006), page 113.
-            Parameters:
-                kernel = covariance funtion
-                mean = mean function 
-                nugget = True if K is not positive definite, False otherwise
-                shift = True if K is not positive definite, False otherwise
-            Returns:
-                log_like  = marginal log likelihood
+        Calculates the marginal log likelihood. See Rasmussen & Williams (2006),
+        page 113.
+        
+        Parameters
+        ----------
+        kernel:func
+            Covariance funtion
+        Mean: func
+            Mean function 
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        shift: bool
+            True if K is not positive definite, False otherwis
+        
+        Returns
+        -------
+        log_like: float
+            Marginal log likelihood
         """
         #covariance matrix calculation
         K = self.compute_matrix(kernel, self.time, 
@@ -169,7 +188,6 @@ class GP(object):
             y = self.y - mean(self.time)
         else:
             y = self.y
-
         #log marginal likelihood calculation
         try:
             L1 = cho_factor(K, overwrite_a=True, lower=False)
@@ -183,40 +201,51 @@ class GP(object):
 
 ##### GP sample funtion
     def sample(self, kernel, time):
-        """ 
-            Returns samples from the kernel
-            Parameters:
-                kernel = covariance function
-                time = time array
-            Returns:
-                Sample of K 
+        """
+        Returns samples from the kernel
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance function
+        time: array
+            Time array
+        
+        Returns
+        -------
+        norm: array
+            Sample of K 
         """
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)
-        norm = multivariate_normal(mean, cov, allow_singular=True)
-        return norm.rvs()
+        norm = multivariate_normal(mean, cov, allow_singular=True).rvs()
+        return norm
 
 
 ##### marginal likelihood gradient functions
     def _compute_matrix_derivative(self, kernel_derivative, nugget = False):
         """ 
-            Creates the covariance matrices of dK/dOmega, the derivatives of the
-        kernels.
-            Parameters:
-                kernel_derivative = derivatives we want to use this round
-                nugget = True if K is not positive definite, False otherwise
-            Returns:
-                k = final covariance matrix of dK/dOmega
+        Creates the covariance matrices of dK/dOmega, the derivatives of the
+        kernels
+        
+        Parameters
+        ----------
+        kernel_derivative: func
+            Derivatives we want to use this round
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        
+        Returns
+        -------
+        k: array
+            Final covariance matrix of dK/dOmega
         """
         #our matrix starts empty
         A = np.zeros((self.time.size, self.time.size))
-
         #measurement errors, should I add the errors in the derivatives???
         diag = self.yerr * np.identity(self.time.size)
-
         #derivative
         k = self._kernel_matrix(kernel_derivative, self.time)
-
         #final matrix
         A = A + k + diag
         #to avoid a ill-conditioned matrix
@@ -228,47 +257,59 @@ class GP(object):
     def _log_like_grad(self, kernel_derivative, kernel, mean = False,
                        nugget = False):
         """ 
-            Calculates the gradient of the marginal log likelihood for a given
-        kernel derivative. 
-        See Rasmussen & Williams (2006), page 114.
-            Parameters:
-                kernel_derivative = derivative we want to use this round
-                kernel = covariance function
-                nugget = True if K is not positive definite, False otherwise
-            Returns:
-                log_like  = Marginal log likelihood
+        Calculates the gradient of the marginal log likelihood for a given
+        kernel derivative. See Rasmussen & Williams (2006), page 114.
+        
+        Parameters
+        ----------
+        kernel_derivative: func
+            Derivative we want to use this round
+        kernel: func
+            Covariance function
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        
+        Returns
+        -------
+        log_like_grad: float
+            Marginal log likelihood
         """
         #calculates the  covariance matrix of K and its inverse Kinv
         K = self.compute_matrix(kernel, self.time)
         Kinv = np.linalg.inv(K)
         #calculates the  covariance matrix of dK/dOmega
         dK = self._compute_matrix_derivative(kernel_derivative, nugget)
-
         #mean funtion
         if mean:
             y = self.y - mean(self.time)
         else:
             y = self.y
-
         #d(log marginal likelihood)/dOmega calculation
         try:
             alpha = np.dot(Kinv, y) #gives an array
             A = np.einsum('i,j',alpha, alpha) - Kinv #= alpha @ alpha.T - Kinv
             log_like_grad = 0.5 * np.einsum('ij,ij', A, dK) #= trace(a @ dK)
-
         except LinAlgError:
             return -np.inf
         return log_like_grad
 
     def log_likelihood_gradient(self, kernel, mean = False, nugget = False):
         """ 
-            Returns the marginal log likelihood gradients of a kernel
-            Parameters:
-                kernel = covariance funtion
-                mean = mean function
-                nugget = True if K is not positive definite, False otherwise
-            Returns:
-                grads  = array of gradients
+        Returns the marginal log likelihood gradients of a kernel
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance funtion
+        mean: func
+            Mean function
+        nugget: bool
+            True if K is not positive definite, False otherwise
+
+        Returns
+        -------
+        grads: array
+            Array of gradients
         """
         #First we derive the kernels
         parameters = kernel.pars #kernel parameters to use
@@ -278,7 +319,6 @@ class GP(object):
             derivative = j(*parameters)
             loglike = self._log_like_grad(derivative, kernel, nugget)
             derivatives_array.append(loglike)
-
         #To finalize we merge it into an array
         grads = np.array(derivatives_array)
         return grads
@@ -287,13 +327,25 @@ class GP(object):
 ##### GP prediction funtion
     def prediction(self, kernel = False, mean = False, time = False):
         """ 
-            Conditional predictive distribution of the Gaussian process
-            Parameters:
-                kernel = covariance function
-                mean = mean function being used
-                time = time  
-            Returns:
-                mean vector, covariance matrix, standard deviation vector
+        Conditional predictive distribution of the Gaussian process
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance function
+        mean: func
+            Mean function being used
+        time: array
+            Time array
+        
+        Returns
+        -------
+        y_mean: array
+            Mean vector
+        y_std: array
+            Standard deviation vector
+        y_cov: array
+            Covariance matrix
         """
         if kernel:
             #To use a new kernel
@@ -301,24 +353,18 @@ class GP(object):
         else:
             #To use the one we defined earlier 
             kernel = self.kernel
-
         #calculate mean and residuals
         if mean:
             r = self.y - mean(self.time)
         else:
             r = self.y
-
-        #K
-        cov = self._kernel_matrix(kernel, self.time)
+        cov = self._kernel_matrix(kernel, self.time) #K
         L1 = cho_factor(cov)
-        
         sol = cho_solve(L1, r)
-
         #Kstar
         Kstar = self._predict_kernel_matrix(kernel, time)
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
-
         if mean:
             y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
         else:
@@ -335,14 +381,22 @@ class GP(object):
 ##### Student-t processes ######################################################
 class TP(object):
     """ 
-        Class to create our student-t process.
-        Parameters:
-            kernel = covariance funtion
-            degrees = degrees of freedom
-            means = mean function 
-            time = time array
-            y = measurements array
-            yerr = measurements errors array
+    Class to create our Student-t process
+    
+        Parameters
+    ----------
+    kernel: func
+        Covariance funtion
+    degrees: int
+        Degrees of freedom
+    means: func
+        Mean function 
+    time: array
+        Time array
+    y: array
+        Measurements array
+    yerr: array
+        Measurements errors array
     """
     def __init__(self, kernel, degrees, mean, time, y, yerr = None):
         self.kernel = kernel        #covariance function
@@ -356,16 +410,11 @@ class TP(object):
             self.yerr = yerr        #measurements errors
 
     def _kernel_pars(self, kernel):
-        """
-            Returns a kernel parameters
-        """
+        """ Returns a kernel parameters """
         return kernel.pars
 
     def _kernel_matrix(self, kernel, time = None):
-        """
-            Returns the covariance matrix created by evaluating a given kernel 
-        at inputs time.
-        """
+        """ Returns a cov matrix evaluating a given kernel at inputs time """
         #if time is None we use the time of our TP class
         if time is None:
             r = self.time[:, None] - self.time[None, :]
@@ -376,17 +425,13 @@ class TP(object):
         return K
 
     def _predict_kernel_matrix(self, kernel, time):
-        """
-            To be used in prediction()
-        """
+        """ To be used in prediction() """
         r = time[:, None] - self.time[None, :]
         K = kernel(r)
         return K
 
     def _mean_function(self, mean, time = None):
-        """
-            Returns the value of the mean function
-        """
+        """ Returns the value of the mean function """
         if time is None:
             #if we have a zero mean GP
             if mean is None:
@@ -405,10 +450,19 @@ class TP(object):
 
     def new_kernel(self, kernel, new_pars):
         """
-            Updates the parameters of a kernel.
-            Parameters:
-                kernel = original kernel
-                new_pars = new hyperparameters 
+        Updates the parameters of a kernel
+        
+        Parameters
+        ----------
+        kernel: func
+            Original kernel
+        new_pars: list
+            New hyperparameters
+        
+        Returns
+        -------
+        new_k: func
+            Updated kernel
         """
         #if we are working with a sum of kernels
         if isinstance(kernel, kernels.Sum):
@@ -429,43 +483,49 @@ class TP(object):
             k2_params = []
             for j, _ in enumerate(kernel.k2.pars):
                 k2_params.append(new_pars[len(kernel.k1.pars)+j])
-            new_k1 = type(kernel.k1)(*k1_params)
-            new_k2 = type(kernel.k2)(*k2_params)
-            return new_k1*new_k2
+            new_k = type(kernel.k1)(*k1_params) * type(kernel.k2)(*k2_params)
+            return new_k
         #if we are working with a "single" kernel
         else:
-            return type(kernel)(*new_pars)
+            new_k = type(kernel)(*new_pars)
+            return new_k
 
 
 ##### marginal likelihood functions
     def compute_matrix(self, kernel, time, nugget = False, shift = False):
         """
-            Creates the big covariance matrix K that will be used in the 
-        log marginal likelihood calculation
-            Parameters:
-                kernel = covariance kernel
-                time = time  
-                nugget = True if K is not positive definite, False otherwise
-                shift = True if K is not positive definite, False otherwise
-            Returns:
-                K = final covariance matrix 
-                
-            Note:
-                To understand the nugget and shift parameters see 
-            http://mathworld.wolfram.com/Ill-ConditionedMatrix.html for more 
-            information about ill-conditioned matrices, and 
-            http://mathworld.wolfram.com/PositiveDefiniteMatrix.html for more
-            information about positive defined matrices.
+        Creates the big covariance matrix K that will be used in the log 
+        marginal likelihood calculation
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance kernel
+        time: array
+            Time array
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        shift: bool
+            True if K is not positive definite, False otherwise
+        
+        To understand the nugget and shift parameters see 
+        http://mathworld.wolfram.com/Ill-ConditionedMatrix.html
+        for more information about ill-conditioned matrices and 
+        http://mathworld.wolfram.com/PositiveDefiniteMatrix.html
+        for more information about positive defined matrices.
+        
+        Returns
+        -------
+        K: array
+            Final covariance matrix 
         """
         #Our K starts empty
         K = np.zeros((time.size, time.size))
         #Then we calculate the covariance matrix
         k = self._kernel_matrix(kernel, self.time)
-        
         #addition of the measurement errors
         diag = self.yerr * np.identity(self.time.size)
         K = k + diag
-
         #more "weight" to the diagonal to avoid a ill-conditioned matrix
         if nugget:
             nugget_value = 0.01 #might be too big
@@ -476,30 +536,36 @@ class TP(object):
             K = K + shift * np.identity(self.time.size)
         return K
 
-    def log_likelihood(self, kernel, degrees, mean = False, 
-                       nugget = False, shift = False):
+    def log_likelihood(self, kernel, degrees, mean = False, nugget = False, 
+                       shift = False):
         """ 
-            Calculates the marginal log likelihood.
-        See Solin and Särkkä (2015).
-            Parameters:
-                kernel = covariance funtion
-                degrees = degrees of freedom
-                mean = mean function 
-                nugget = True if K is not positive definite, False otherwise
-                shift = True if K is not positive definite, False otherwise
-            Returns:
-                log_like  = marginal log likelihood
+        Calculates the marginal log likelihood. See Solin and Särkkä (2015).
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance funtion
+        degrees: int
+            Degrees of freedom
+        mean: func
+            Mean function 
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        shift: bool
+            True if K is not positive definite, False otherwise
+        
+        Returns
+        -------
+        log_like: int
+            Marginal log likelihood
         """
         #covariance matrix calculation
-        K = self.compute_matrix(kernel, self.time, 
-                                nugget = False, shift = False)
-
+        K = self.compute_matrix(kernel, self.time, nugget = False, shift = False)
         #calculation of y having into account the mean funtion
         if mean:
             y = self.y - mean(self.time)
         else:
             y = self.y
-
         #log marginal likelihood calculation
         try:
             L1 = cho_factor(K, overwrite_a=True, lower=False)
@@ -517,16 +583,22 @@ class TP(object):
 ##### TP sample funtion
     def sample(self, kernel, degrees, time):
         """ 
-            Sample from the kernel
-            Parameters:
-                kernel = covariance funtion
-                degrees_freedom = degrees of freedom
-                time = time array
-            Returns:
-                Sample of K 
-                
-            Note:
-                Adapted from https://github.com/statsmodels/statsmodels
+        Sample from the kernel
+        Note: adapted from https://github.com/statsmodels/statsmodels
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance funtion
+        degrees_freedom: int
+            Degrees of freedom
+        time: array
+            Time array
+        
+        Returns
+        -------
+        sample: array
+            Sample of K 
         """
         mean = np.zeros_like(self.time)
         if degrees == np.inf:
@@ -543,23 +615,27 @@ class TP(object):
 ##### marginal likelihood gradient functions
     def _compute_matrix_derivative(self, kernel_derivative, nugget = False):
         """ 
-            Creates the covariance matrices of dK/dOmega, the derivatives of the
+        Creates the covariance matrices of dK/dOmega, the derivatives of the
         kernels.
-            Parameters:
-                kernel_derivative = derivatives we want to use this round
-                nugget = True if K is not positive definite, False otherwise
-            Returns:
-                k = final covariance matrix of dK/dOmega
+        
+        Parameters
+        ----------
+        kernel_derivative: func
+            Derivatives we want to use this round
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        
+        Returns
+        -------
+        A: array
+            Final covariance matrix of dK/dOmega
         """
         #our matrix starts empty
         A = np.zeros((self.time.size, self.time.size))
-
         #measurement errors, should I add the errors in the derivatives???
         diag = self.yerr * np.identity(self.time.size)
-
         #derivative
         k = self._kernel_matrix(kernel_derivative, self.time)
-
         #final matrix
         A = A + k + diag
         #to avoid a ill-conditioned matrix
@@ -571,29 +647,35 @@ class TP(object):
     def _log_like_grad(self, kernel_derivative, kernel, degrees, mean = False,
                        nugget = False):
         """ 
-            Calculates the gradient of the marginal log likelihood for a given
-        kernel derivative. 
-        See Solin and Särkkä (2015) supplementary material.
-            Parameters:
-                kernel_derivative = derivative we want to use this round
-                kernel = covariance function
-                degrees = degrees of freedom
-                nugget = True if K is not positive definite, False otherwise
-            Returns:
-                log_like  = Marginal log likelihood
+        Calculates the gradient of the marginal log likelihood for a given
+        kernel derivative. See Solin and Särkkä (2015) supplementary material.
+        
+        Parameters
+        ----------
+        kernel_derivative: func
+            Derivative we want to use this round
+        kernel: func 
+            Covariance function
+        degrees: int
+            Degrees of freedom
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        
+        Returns
+        -------
+        log_like_grad: float
+            Marginal log likelihood
         """
         #calculates the  covariance matrix of K and its inverse Kinv
         K = self.compute_matrix(kernel, self.time)
         Kinv = np.linalg.inv(K)
         #calculates the  covariance matrix of dK/dOmega
         dK = self._compute_matrix_derivative(kernel_derivative, nugget)
-
         #mean funtion
         if mean:
             y = self.y - mean(self.time)
         else:
             y = self.y
-
         #d(log marginal likelihood)/dOmega calculation
         try:
             L1 = cho_factor(K, overwrite_a=True, lower=False)
@@ -607,16 +689,26 @@ class TP(object):
             return -np.inf
         return log_like_grad
 
+
     def log_likelihood_gradient(self, kernel, degrees, mean = False, nugget = False):
         """ 
-            Returns the marginal log likelihood gradients of a kernel.
-            Parameters:
-                kernel = covariance funtion
-                degrees = degrees of freedom
-                mean = mean function
-                nugget = True if K is not positive definite, False otherwise
-            Returns:
-                grads  = array of gradients
+        Returns the marginal log likelihood gradients of a kernel.
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance funtion
+        degrees:int
+            Degrees of freedom
+        mean: func
+            Mean function
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        
+        Returns
+        -------
+        grads: array
+            Array of gradients
         """
         #First we derive the kernels
         parameters = kernel.pars #kernel parameters to use
@@ -626,7 +718,6 @@ class TP(object):
             derivative = j(*parameters)
             loglike = self._log_like_grad(derivative, kernel, degrees, nugget)
             derivatives_array.append(loglike)
-
         #Then the derivative of the degrees of freedom
         K = self.compute_matrix(kernel, self.time)
         L1 = cho_factor(K, overwrite_a=True, lower=False)
@@ -637,23 +728,35 @@ class TP(object):
                             + 0.5 * np.log(1 + beta/(degrees-2)) \
                             - 0.5 * ((degrees+self.y.size) + beta) \
                                         / ((degrees-2)*(degrees-2 + beta))]
-
         #To finalize we merge it into an array
         grads = np.array(derivatives_array + degree_derivative)
         return grads
-    
+
 
 ##### TP predition funtion
     def prediction(self, kernel = None, degrees = None, mean = None, time = None):
         """ 
-            Conditional predictive distribution of the Gaussian process
-            Parameters:
-                kernel = covariance function
-                degrees = degrees of freedom
-                mean = mean function being used
-                time = time  
-            Returns:
-                mean vector, covariance matrix, standard deviation vector
+        Conditional predictive distribution of our process
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance function
+        degrees: int
+            Degrees of freedom
+        mean: func
+            Mean function being used
+        time: array
+            Time array
+        
+        Returns
+        -------
+        y_mean: array
+            Mean vector
+        y_std: array
+            Standard deviation vector
+        y_cov: array
+            Covariance matrix
         """
         if kernel:
             #To use a new kernel
@@ -672,17 +775,13 @@ class TP(object):
             r = self.y - mean(time)
         else:
             r = self.y
-
-        #K
-        cov = self._kernel_matrix(kernel, self.time)
+        cov = self._kernel_matrix(kernel, self.time) #K
         L1 = cho_factor(cov)
         sol = cho_solve(L1, r)
-
         #Kstar calculation
         Kstar = self._predict_kernel_matrix(kernel, time)
         #Kstarstar
         Kstarstar =  self._kernel_matrix(kernel, time)
-
         if mean:
             y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time) #mean
         else:
@@ -696,6 +795,3 @@ class TP(object):
         y_var =  var1 * np.diag(y_cov) / var2 #variance
         y_std = np.sqrt(y_var) #standard deviation
         return y_mean, y_std, y_cov
-
-
-##### END

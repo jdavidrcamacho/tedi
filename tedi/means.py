@@ -6,9 +6,7 @@ from functools import wraps
 __all__ = ['Constant', 'Linear', 'Parabola', 'Cubic', 'Keplerian', 'UdHO']
 
 def array_input(f):
-    """
-        decorator to provide the __call__ methods with an array
-    """
+    """ decorator to provide the __call__ methods with an array """
     @wraps(f)
     def wrapped(self, t):
         t = np.atleast_1d(t)
@@ -18,9 +16,7 @@ def array_input(f):
 
 
 class MeanModel(object):
-    """
-        Definition of the mean funtion that will be used.
-    """
+    """ Definition of the mean funtion that will be used """
     
     _parsize = 0
     def __init__(self, *pars):
@@ -34,9 +30,7 @@ class MeanModel(object):
 
     @classmethod
     def initialize(cls):
-        """ 
-            Initialize instance, setting all parameters to 0.
-        """
+        """ Initialize instance, setting all parameters to 0 """
         return cls( *([0.]*cls._parsize) )
 
     def __add__(self, b):
@@ -51,9 +45,7 @@ class MeanModel(object):
 
 
 class Sum(MeanModel):
-    """
-        Sum of two mean functions.
-    """
+    """ Sum of two mean functions """
     def __init__(self, m1, m2):
         self.m1, self.m2 = m1, m2
 
@@ -77,9 +69,7 @@ class Sum(MeanModel):
 
 
 class Multiplication(MeanModel):
-    """
-        Product of two mean functions. Not sure if we will need it...
-    """
+    """ Product of two mean functions. Not sure if we will need it... """
     def __init__(self, m1, m2):
         self.m1, self.m2 = m1, m2
 
@@ -104,9 +94,7 @@ class Multiplication(MeanModel):
 
 ##### Constant mean ############################################################
 class Constant(MeanModel):
-    """ 
-        A constant offset mean function
-    """
+    """ A constant offset mean function """
     _parsize = 1
     def __init__(self, c):
         super(Constant, self).__init__(c)
@@ -118,10 +106,7 @@ class Constant(MeanModel):
 
 ##### Linear mean ##############################################################
 class Linear(MeanModel):
-    """ 
-        A linear mean function
-        m(t) = slope * t + intercept 
-    """
+    """ Linear mean; m(t) = slope * t + intercept """
     _parsize = 2
     def __init__(self, slope, intercept):
         super(Linear, self).__init__(slope, intercept)
@@ -133,10 +118,7 @@ class Linear(MeanModel):
 
 ##### Parabolic mean ###########################################################
 class Parabola(MeanModel):
-    """ 
-        A 2nd degree polynomial mean function
-        m(t) = quad * t**2 + slope * t + intercept 
-    """
+    """ 2nd degree polynomial mean; m(t) = quad * t**2 + slope * t + intercept """
     _parsize = 3
     def __init__(self, quad, slope, intercept):
         super(Parabola, self).__init__(quad, slope, intercept)
@@ -148,10 +130,7 @@ class Parabola(MeanModel):
 
 ##### Cubic mean ###############################################################
 class Cubic(MeanModel):
-    """ 
-        A 3rd degree polynomial mean function
-        m(t) = cub * t**3 + quad * t**2 + slope * t + intercept 
-    """
+    """ 3rd degree polynomial mean; m(t) = cub*t**3 + quad*t**2 + slope*t + intercept """
     _parsize = 4
     def __init__(self, cub, quad, slope, intercept):
         super(Cubic, self).__init__(cub, quad, slope, intercept)
@@ -163,10 +142,7 @@ class Cubic(MeanModel):
 
 ##### Sinusoidal means #########################################################
 class Sine(MeanModel):
-    """ 
-        A sinusoidal mean function
-        m(t) = amplitude**2 * sine( (2*pi*t/P) + phase) + displacement
-    """
+    """ Sinusoidal mean; m(t) = amplitude**2*sine((2*pi*t/P)+phase) + displacement """
     _parsize = 3
     def __init__(self, amp, P, phi, D):
         super(Sine, self).__init__(amp, P, phi, D)
@@ -177,10 +153,7 @@ class Sine(MeanModel):
                 + self.pars[3]
 
 class Cosine(MeanModel):
-    """ 
-        Another sinusoidal mean function
-        m(t) = amplitude**2 * cosine( (2*pi*t/P) + phase) + displacement
-    """
+    """ Cosine mean; m(t) = amplitude**2*cosine((2*pi*t/P)+phase) + displacement """
     _parsize = 3
     def __init__(self, amp, P, phi, D):
         super(Cosine, self).__init__(amp, P, phi, D)
@@ -192,68 +165,26 @@ class Cosine(MeanModel):
 
 
 ##### Keplerian mean ###########################################################
-class oldKeplerian(MeanModel):
-    """
-        Keplerian function with T0
-        tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
-        E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
-        M(t) = (2*pi*t/tau) + M0 = Mean anomaly
-        p  = period in days
-        k = RV amplitude in m/s 
-        e = eccentricity
-        w = longitude of the periastron
-        T0 = time of periastron passage
-
-        RV = K[cos(w+v) + e*cos(w)]
-    """
-    _parsize = 5
-    def __init__(self, p, k, e, w, T0):
-        super(oldKeplerian, self).__init__(p, k, e, w, T0)
-
-    @array_input
-    def __call__(self, t):
-        p, k, e, w, T0 = self.pars
-        #mean anomaly
-        Mean_anom = 2*np.pi*(t-T0)/p
-        #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
-        E0 = Mean_anom + e*np.sin(Mean_anom) + 0.5*(e**2)*np.sin(2*Mean_anom)
-        #mean anomaly -> M0=E0 - e*sin(E0)
-        M0 = E0 - e*np.sin(E0)
-        niter=0
-        while niter < 500:
-            aux = Mean_anom - M0
-            E1 = E0 + aux/(1 - e*np.cos(E0))
-            M1 = E0 - e*np.sin(E0)
-            niter += 1
-            E0 = E1
-            M0 = M1
-        nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
-        RV = k*(e*np.cos(w)+np.cos(w+nu))
-        return RV
-
-
-##### Keplerian mean ###########################################################
 class Keplerian(MeanModel):
     """
-        Keplerian function with phi
-        tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
-        E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
-        M(t) = (2*pi*t/tau) + M0 = Mean anomaly
-        p  = period in days
-        k = RV amplitude in m/s 
-        e = eccentricity
-        w = longitude of the periastron
-        phi = orbital phase
-
-        RV = K[cos(w+v) + e*cos(w)]
+    Keplerian mean function
+    tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
+    E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
+    M(t) = (2*pi*t/tau) + M0 = Mean anomaly
+    p  = period in days
+    k = RV amplitude in m/s 
+    e = eccentricity
+    w = longitude of the periastron
+    phi = orbital phase
+    RV = K[cos(w+v) + e*cos(w)] + C
     """
     _parsize = 5
-    def __init__(self, p, k, e, w, phi):
-        super(Keplerian, self).__init__(p, k, e, w, phi)
+    def __init__(self, p, k, e, w, phi, offset):
+        super(Keplerian, self).__init__(p, k, e, w, phi, offset)
 
     @array_input
     def __call__(self, t):
-        p, k, e, w, phi = self.pars
+        p, k, e, w, phi, offset = self.pars
         #mean anomaly
         T0 = t[0] - (p*phi)/(2.*np.pi)
         Mean_anom = 2*np.pi*(t-T0)/p
@@ -270,20 +201,26 @@ class Keplerian(MeanModel):
             E0 = E1
             M0 = M1
         nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
-        RV = k*(e*np.cos(w)+np.cos(w+nu))
+        RV = k*(e*np.cos(w)+np.cos(w+nu)) + offset
         return RV
 
 
 ##### Underdamped harmonic oscillator mean #####################################
 class UdHO(MeanModel):
     """
-        Underdamped harmonic oscillator mean function
-        m(t) = A * exp(-b*t) * cos(w*t + phi)
-        A = kinda of an amplitude
-        b = damping coefficient
-        w = kinda of an angular frequency, w**2 = sqrt(w0**2 - b**2), where w0
-            is the angular frequency
-        phi = phase, determines the starting point of the "wave"
+    Underdamped harmonic oscillator mean; m(t) = A*exp(-b*t)*cos(w*t+phi)
+        
+    Parameters
+    ----------
+    A: float
+        Kinda of an amplitude
+    b: flaot
+        Damping coefficient
+    w: float
+        Kinda of an angular frequency, w**2 = sqrt(w0**2 - b**2), where w0 is 
+        the angular frequency
+    phi: float
+        Phase, determines the starting point of the "wave"
     """
     _parsize = 4
     def __init__(self, A, b, w, phi):
@@ -296,12 +233,12 @@ class UdHO(MeanModel):
 
 
 class TOI175keplerians(MeanModel):
-    """
-    Keplerian function for TOI-175
-    """
+    """ Keplerian function for TOI-175 """
     _parsize = 16
     def __init__(self, Pb,Kb,eb,wb,phib, Pc,Kc,ec,wc,phic, Pd,Kd,ed,wd,phid, C):
-        super(TOI175keplerians, self).__init__(Pb,Kb,eb,wb,phib, Pc,Kc,ec,wc,phic, Pd,Kd,ed,wd,phid, C)
+        super(TOI175keplerians, self).__init__(Pb,Kb,eb,wb,phib, 
+                                               Pc,Kc,ec,wc,phic, 
+                                               Pd,Kd,ed,wd,phid, C)
 
     @array_input
     def __call__(self, t):
@@ -363,5 +300,3 @@ class TOI175keplerians(MeanModel):
         finalRV = RVb + RVc + RVd + offset
         return finalRV
 
-
-##### END
