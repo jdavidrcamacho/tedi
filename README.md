@@ -2,8 +2,9 @@
 
 <img align="left" width="180" height="180" src="https://i.imgur.com/ne561vz.png">
 
-[![Build Status](https://travis-ci.org/jdavidrcamacho/tedi.svg?branch=master)](https://travis-ci.org/jdavidrcamacho/tedi) \
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jdavidrcamacho/tedi/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jdavidrcamacho/tedi/blob/master/LICENSE) \
+[![DOI](https://zenodo.org/badge/149329163.svg)](https://zenodo.org/badge/latestdoi/149329163) \
+[![Build Status](https://travis-ci.org/jdavidrcamacho/tedi.svg?branch=master)](https://travis-ci.org/jdavidrcamacho/tedi)
 
 
 \
