@@ -17,6 +17,6 @@ Tedi is a Python package to examine radial velocity measurements and search for 
 Check our [wiki page](https://github.com/jdavidrcamacho/tedi/wiki) to learn a bit more about it!
 
 -------------------------
-2018-2019 [João Camacho](https://github.com/jdavidrcamacho)
+2018-2020 [João Camacho](https://github.com/jdavidrcamacho)
 
 
