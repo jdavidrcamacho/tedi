@@ -3,7 +3,7 @@
 from setuptools import setup
 
 setup(name='tedi',
-      version='0.1',
+      version='1.0',
       description='Implementation of Gaussian and Student-t processes regression',
       author='João Camacho',
       author_email='joao.camacho@astro.up.pt',
@@ -12,6 +12,8 @@ setup(name='tedi',
       packages=['tedi'],
       install_requires=[
         'numpy',
-        'scipy'
+        'scipy',
+        'emcee',
+        'dynesty'
       ],
      )
