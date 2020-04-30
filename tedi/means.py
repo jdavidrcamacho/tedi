@@ -113,7 +113,8 @@ class Linear(MeanModel):
 
     @array_input
     def __call__(self, t):
-        return self.pars[0] * t + self.pars[1]
+        tmean = t.mean()
+        return self.pars[0] * (t-tmean) + self.pars[1]
 
 
 ##### Parabolic mean ###########################################################
