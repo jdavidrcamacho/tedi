@@ -47,8 +47,9 @@ class GP(object):
 
     def _predict_kernel_matrix(self, kernel, time):
         """ To be used in prediction() """
-#        if isinstance(kernel.k2, kernels.WhiteNoise):
-#            kernel = kernel.k1
+        if isinstance(kernel, kernels.Sum):
+            if isinstance(kernel.k2, kernels.WhiteNoise):
+                kernel = kernel.k1
         r = time[:, None] - self.time[None, :]
         K = kernel(r)
         return K
