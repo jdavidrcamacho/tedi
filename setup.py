@@ -14,5 +14,7 @@ setup(name='tedi',
       install_requires=[
         'numpy',
         'scipy',
+        'emcee',
+        'dynesty'
       ],
      )
