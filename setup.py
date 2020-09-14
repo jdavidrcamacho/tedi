@@ -1,9 +1,10 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+    Setup file for instalation
+"""
 from setuptools import setup
 
 setup(name='tedi',
-      version='1.3',
+      version='1.4',
       description='Implementation of Gaussian and Student-t processes regression',
       author='João Camacho',
       author_email='joao.camacho@astro.up.pt',
@@ -13,7 +14,5 @@ setup(name='tedi',
       install_requires=[
         'numpy',
         'scipy',
-        'emcee',
-        'dynesty'
       ],
      )

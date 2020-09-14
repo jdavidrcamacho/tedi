@@ -1,5 +1,6 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+Gaussian and Student-t processes functions
+"""
 import numpy as np
 from tedi import kernels
 from scipy.linalg import cho_factor, cho_solve, LinAlgError
@@ -25,7 +26,7 @@ class GP(object):
     yerr: array
         Measurements errors array
     """
-    def __init__(self, kernel, mean, time, y, yerr = None):
+    def __init__(self, kernel, mean, time, y, yerr=None):
         self.kernel = kernel        #covariance function
         self.mean = mean            #mean function
         self.time = time            #time
@@ -54,7 +55,7 @@ class GP(object):
         K = kernel(r)
         return K
 
-    def _mean_function(self, mean, time = None):
+    def _mean_function(self, mean, time=None):
         """ Returns the value of the mean function """
         if time is None:
             #if we have a zero mean GP
@@ -116,7 +117,7 @@ class GP(object):
 
 
 ##### marginal likelihood functions
-    def compute_matrix(self, kernel, time, nugget = False, shift = False):
+    def compute_matrix(self, kernel, time, nugget=False, shift=False):
         """
         Creates the big covariance matrix K that will be used in the log 
         marginal likelihood calculation
@@ -160,7 +161,7 @@ class GP(object):
             K = K + shift * np.identity(self.time.size)
         return K
 
-    def log_likelihood(self, kernel, mean = False, nugget = False, shift = False):
+    def log_likelihood(self, kernel=None, mean=None, nugget=False, shift=False):
         """ 
         Calculates the marginal log likelihood. See Rasmussen & Williams (2006),
         page 113.
@@ -181,6 +182,12 @@ class GP(object):
         log_like: float
             Marginal log likelihood
         """
+        if kernel:
+            #To use a new kernel
+            kernel = kernel
+        else:
+            #To use the one defined earlier 
+            kernel = self.kernel
         #covariance matrix calculation
         K = self.compute_matrix(kernel, self.time, 
                                 nugget = nugget, shift = shift)
@@ -224,7 +231,7 @@ class GP(object):
 
 
 ##### marginal likelihood gradient functions
-    def _compute_matrix_derivative(self, kernel_derivative, nugget = False):
+    def _compute_matrix_derivative(self, kernel_derivative, nugget=False):
         """ 
         Creates the covariance matrices of dK/dOmega, the derivatives of the
         kernels
@@ -255,8 +262,7 @@ class GP(object):
             A = (1 - nugget_value) * A + nugget_value * np.diag(np.diag(A))
         return A
 
-    def _log_like_grad(self, kernel_derivative, kernel, mean = False,
-                       nugget = False):
+    def _log_like_grad(self, kernel_derivative, kernel, mean=None, nugget=False):
         """ 
         Calculates the gradient of the marginal log likelihood for a given
         kernel derivative. See Rasmussen & Williams (2006), page 114.
@@ -294,7 +300,7 @@ class GP(object):
             return -np.inf
         return log_like_grad
 
-    def log_likelihood_gradient(self, kernel, mean = False, nugget = False):
+    def log_likelihood_gradient(self, kernel=None, mean=None, nugget=False):
         """ 
         Returns the marginal log likelihood gradients of a kernel
         
@@ -303,7 +309,7 @@ class GP(object):
         kernel: func
             Covariance funtion
         mean: func
-            Mean function
+            Mean function being used
         nugget: bool
             True if K is not positive definite, False otherwise
 
@@ -312,13 +318,18 @@ class GP(object):
         grads: array
             Array of gradients
         """
+        if not kernel:
+            #To use the one defined earlier 
+            kernel = self.kernel
+        if not mean:
+            mean = self.mean
         #First we derive the kernels
         parameters = kernel.pars #kernel parameters to use
         k = type(kernel).__subclasses__() #derivatives list
         derivatives_array = [] #its a list and not an array but thats ok
         for _, j in enumerate(k):
             derivative = j(*parameters)
-            loglike = self._log_like_grad(derivative, kernel, nugget)
+            loglike = self._log_like_grad(derivative, kernel, mean, nugget)
             derivatives_array.append(loglike)
         #To finalize we merge it into an array
         grads = np.array(derivatives_array)
@@ -326,7 +337,7 @@ class GP(object):
 
 
 ##### GP prediction funtion
-    def prediction(self, kernel = False, mean = False, time = False):
+    def prediction(self, kernel=None, mean=None, time=False):
         """ 
         Conditional predictive distribution of the Gaussian process
         
@@ -348,10 +359,7 @@ class GP(object):
         y_cov: array
             Covariance matrix
         """
-        if kernel:
-            #To use a new kernel
-            kernel = kernel
-        else:
+        if not kernel:
             #To use the one we defined earlier 
             kernel = self.kernel
         #calculate mean and residuals
@@ -395,7 +403,8 @@ class TP(object):
     time: array
         Time array
     y: array
-        Measurements array
+        Measurements array            r = self.y - mean(self.time)
+        else:
     yerr: array
         Measurements errors array
     """

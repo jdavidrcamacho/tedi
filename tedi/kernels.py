@@ -1,12 +1,13 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
+"""
+Covariance functions
+"""
 import numpy as np
 #because it makes my life easier down the line
 pi, exp, sine, cosine, sqrt = np.pi, np.exp, np.sin, np.cos, np.sqrt
 
 __all__ = ['Constant', 'WhiteNoise', 'SquaredExponential' , 'Periodic', 
             'QuasiPeriodic', 'RationalQuadratic', 'Cosine', 'Exponential',
-            'Matern32', 'Matern52']
+            'Matern32', 'Matern52', 'RQP']
 
 class kernel(object):
     """

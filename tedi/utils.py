@@ -1,3 +1,6 @@
+"""
+A collection of useful functions
+"""
 from scipy.stats import invgamma
 from scipy.optimize import minimize
 
