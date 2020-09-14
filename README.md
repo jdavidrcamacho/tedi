@@ -3,7 +3,7 @@
 <img align="left" width="180" height="180" src="https://i.imgur.com/ne561vz.png">
 
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jdavidrcamacho/tedi/blob/master/LICENSE) \
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.3597355.svg)](https://doi.org/10.5281/zenodo.3597355) \
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4029470.svg)](https://doi.org/10.5281/zenodo.4029470)
 [![Build Status](https://travis-ci.org/jdavidrcamacho/tedi.svg?branch=master)](https://travis-ci.org/jdavidrcamacho/tedi)
 
 \
