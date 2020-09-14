@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-
+from scipy.stats import invgamma
+from scipy.optimize import minimize
+
 import  numpy as np
 
 ##### Semi amplitude calculation ###############################################
