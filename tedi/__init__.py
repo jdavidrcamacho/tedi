@@ -1,7 +1,7 @@
 """
     __init file___
 """
-__version__ = '1.4'
+__version__ = '1.5'
 
 #covariance and mean functions
 from tedi import kernels, means
@@ -13,4 +13,4 @@ from tedi import process
 from tedi import utils
 
 #Evidence estimation
-from tedi import evidence
+from tedi import evidence, lib

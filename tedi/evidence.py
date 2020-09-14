@@ -6,7 +6,7 @@ from math import sqrt, log
 from time import time
 import numpy as np
 import scipy.stats
-from gprn import lib
+from tedi import lib
 
 ### Original functions taken from https://github.com/exord/bayev
 
