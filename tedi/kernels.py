@@ -865,6 +865,44 @@ class dRQP_dwn(RQP):
         raise NotImplementedError
 
 
+class Paciorek(kernel):
+    """
+    WARNING: EXPERIMENTAL KERNEL
+    Definition of the modified Paciorek's kernel
+    
+    Parameters
+    ----------
+    amplitude: float
+        Amplitude/amplitude of the kernel
+    ell_1: float
+        First lenght scale
+    ell_2: float
+        Second lenght scale
+    wn: float
+        White noise amplitude
+    """
+    def __init__(self, amplitude, ell_1, ell_2, wn):
+        super(Paciorek, self).__init__(amplitude, ell_1, ell_2, wn)
+        self.amplitude = amplitude
+        self.ell_1 = ell_1
+        self.ell_2 = ell_2
+        self.wn = wn
+        self.type = 'unknown'
+        self.derivatives = 0    #number of derivatives in this kernel
+        self.params_number = 5  #number of hyperparameters
+    def __call__(self, r):
+        try:
+            #because of numpy issues
+            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
+            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
+            c = self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+            return self.amplitude**2 * a * b + c
+        except ValueError:
+            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
+            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
+            return self.amplitude**2 * a *b
+
+
 #### Wave kernel #########################################################
 class Wave(kernel):
     """
@@ -968,7 +1006,7 @@ class varRQP(kernel):
         self.ell_p = ell_p
         self.wn = wn
         self.type = 'non-stationary and anisotropic'
-        self.derivatives = 6    #number of derivatives in this kernel
+        self.derivatives = 0    #number of derivatives in this kernel
         self.params_number = 6  #number of hyperparameters
         self.alpha = self.ell_e**(-4) / self.var
         
@@ -983,3 +1021,73 @@ class varRQP(kernel):
             a = exp(- 2*sine(pi*np.abs(r)/self.P)**2 / self.ell_p**2)
             b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
             return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha)
+            
+            
+class varRQP2(kernel):
+    """
+    WARNING: EXPERIMENTAL KERNEL
+    Definition of the product between the exponential sine squared kernel 
+    and the rational quadratic kernel that we called RQP kernel.
+    If I am thinking this correctly then this kernel should tend to the
+    QuasiPeriodic kernel as alpha increases, although I am not sure if we can
+    say that it tends to the QuasiPeriodic kernel as alpha tends to infinity.
+    
+    Parameters
+    ----------
+    amplitude: float
+        Amplitude of the kernel
+    ell_e and ell_p: float
+        Aperiodic and periodic lenght scales
+    var: float
+        var = shape * scale**2 = alpha * eta2**4 
+    alpha: NOT IMPLEMENTED 
+        alpha of the rational quadratic kernel
+    P: float
+        Periodic repetitions of the kernel
+    wn: float
+        White noise amplitude
+    """
+    def __init__(self, amplitude, var, ell_e, P, ell_p, wn):
+        super(varRQP2, self).__init__(amplitude, var, ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.var = var
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+        self.type = 'non-stationary and anisotropic'
+        self.derivatives = 0    #number of derivatives in this kernel
+        self.params_number = 6  #number of hyperparameters
+        self.alpha = self.var / self.ell_e**4
+        
+    def __call__(self, r):
+        try:
+            #because of numpy issues
+            a = exp(- 2*sine(pi*np.abs(r)/self.P)**2 / self.ell_p**2)
+            b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
+            c = self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+            return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha) + c
+        except ValueError:
+            a = exp(- 2*sine(pi*np.abs(r)/self.P)**2 / self.ell_p**2)
+            b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
+            return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha)
+
+
+###############################################################################
+class Piecewise(kernel):
+    """
+    WARNING: EXPERIMENTAL KERNEL
+    
+    Parameters
+    ----------
+    """
+    def __init__(self):
+        super(Piecewise, self).__init__()
+        self.type = 'unknown'
+        self.derivatives = 0    #number of derivatives in this kernel
+        self.params_number = 0    #number of hyperparameters
+    def __call__(self, r):
+        try:
+            return (3*r + 1) * (1 - r)**3
+        except ValueError:
+            return (3*r + 1) * (1 - r)**3
