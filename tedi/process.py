@@ -208,7 +208,7 @@ class GP(object):
 
 
 ##### GP sample funtion
-    def sample(self, kernel, time):
+    def sample(self, kernel, time, nugget=False):
         """
         Returns samples from the kernel
         
@@ -224,8 +224,12 @@ class GP(object):
         norm: array
             Sample of K 
         """
+        np.random.seed(23011990)
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)
+        if nugget:
+            nugget_value = 0.01 #might be too big
+            cov = (1 - nugget_value)*cov + nugget_value*np.diag(np.diag(cov))
         norm = multivariate_normal(mean, cov, allow_singular=True).rvs()
         return norm
 
