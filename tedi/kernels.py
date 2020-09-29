@@ -1088,6 +1088,6 @@ class Piecewise(kernel):
         self.params_number = 0    #number of hyperparameters
     def __call__(self, r):
         try:
-            return (3*r + 1) * (1 - r)**3
+            return (3*np.abs(r) + 1) * (1 - np.abs(r))**3
         except ValueError:
-            return (3*r + 1) * (1 - r)**3
+            return (3*np.abs(r) + 1) * (1 - np.abs(r))**3
