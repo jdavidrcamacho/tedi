@@ -1087,5 +1087,5 @@ class Piecewise(kernel):
         self.derivatives = 0    #number of derivatives in this kernel
         self.params_number = 0    #number of hyperparameters
     def __call__(self, r):
-        return (3*r + 1) * (1 - np.abs(r))**3
+        return (3*r + 1) * (1 - r)**3
 
