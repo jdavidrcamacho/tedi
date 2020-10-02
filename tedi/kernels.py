@@ -740,15 +740,54 @@ class dMatern52_dwn(Matern52):
             return np.zeros_like(r)
 
 
-##### RQP kernel ###############################################################
+##### Paciorek's kernel #######################################################
+class Paciorek(kernel):
+    """
+    Definition of the modified Paciorek's kernel (stationary version). 
+    
+    Parameters
+    ----------
+    amplitude: float
+        Amplitude/amplitude of the kernel
+    ell_1: float
+        First lenght scale
+    ell_2: float
+        Second lenght scale
+    wn: float
+        White noise amplitude
+    """
+    def __init__(self, amplitude, ell_1, ell_2, wn):
+        super(Paciorek, self).__init__(amplitude, ell_1, ell_2, wn)
+        self.amplitude = amplitude
+        self.ell_1 = ell_1
+        self.ell_2 = ell_2
+        self.wn = wn
+        self.type = 'unknown'
+        self.derivatives = 0    #number of derivatives in this kernel
+        self.params_number = 5  #number of hyperparameters
+    def __call__(self, r):
+        try:
+            #because of numpy issues
+            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
+            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
+            c = self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+            return self.amplitude**2 * a * b + c
+        except ValueError:
+            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
+            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
+            return self.amplitude**2 * a *b
+
+
+##### RQP kernel and derivatives of it ########################################
 class RQP(kernel):
     """
-    WARNING: EXPERIMENTAL KERNEL
-    Definition of the product between the exponential sine squared kernel 
-    and the rational quadratic kernel that we called RQP kernel.
-    If I am thinking this correctly then this kernel should tend to the
-    QuasiPeriodic kernel as alpha increases, although I am not sure if we can
-    say that it tends to the QuasiPeriodic kernel as alpha tends to infinity.
+    Definition of the product between the periodic kernel and the rational 
+    quadratic kernel that we called RQP kernel.
+    
+    Info: Test show that if alpha goes to infinity the RQP tends to the quasi
+    periodic kernel, if alpha goes to zero it tends to the periodic kernel.
+        There is a goldilocks region of alpha between 1e-3 and 0.1 where this 
+    kernel is much better than the quasi periodic kernel.
     
     Parameters
     ----------
@@ -865,114 +904,6 @@ class dRQP_dwn(RQP):
         raise NotImplementedError
 
 
-class Paciorek(kernel):
-    """
-    WARNING: EXPERIMENTAL KERNEL
-    Definition of the modified Paciorek's kernel
-    
-    Parameters
-    ----------
-    amplitude: float
-        Amplitude/amplitude of the kernel
-    ell_1: float
-        First lenght scale
-    ell_2: float
-        Second lenght scale
-    wn: float
-        White noise amplitude
-    """
-    def __init__(self, amplitude, ell_1, ell_2, wn):
-        super(Paciorek, self).__init__(amplitude, ell_1, ell_2, wn)
-        self.amplitude = amplitude
-        self.ell_1 = ell_1
-        self.ell_2 = ell_2
-        self.wn = wn
-        self.type = 'unknown'
-        self.derivatives = 0    #number of derivatives in this kernel
-        self.params_number = 5  #number of hyperparameters
-    def __call__(self, r):
-        try:
-            #because of numpy issues
-            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
-            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
-            c = self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-            return self.amplitude**2 * a * b + c
-        except ValueError:
-            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
-            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
-            return self.amplitude**2 * a *b
-
-
-#### Wave kernel #########################################################
-class Wave(kernel):
-    """
-    WARNING: EXPERIMENTAL KERNEL
-    Definition of the wave kernel. Still don't understand how this is a valid 
-    kernel since np.abs(r) needs to be different than 0
-    
-    Parameters
-    ----------
-    amplitude: float
-        Amplitude/amplitude of the kernel
-    theta: float
-        Parameter that still don't know what it does
-    wn: float
-        White noise amplitude
-    """
-    def __init__(self, amplitude, theta, wn):
-        super(Wave, self).__init__(amplitude, theta, wn)
-        self.amplitude = amplitude
-        self.theta = theta
-        self.wn = wn
-        self.type = 'unknown'
-        self.derivatives = 3    #number of derivatives in this kernel
-        self.params_number = 3    #number of hyperparameters
-    def __call__(self, r):
-        try:
-            if r == 0:
-                return 0
-            else:
-                return self.amplitude**2 * self.theta/np.abs(r) \
-                                * np.sin(-np.abs(r)/self.theta) \
-                                + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            if r == 0:
-                return 0
-            else:
-                return self.amplitude**2 * self.theta/np.abs(r) \
-                                * np.sin(-np.abs(r)/self.theta)
-
-class dWave_damplitude(Wave):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, theta, wn):
-        super(dWave_damplitude, self).__init__(amplitude, theta, wn)
-        self.amplitude = amplitude
-        self.theta = theta
-        self.wn = wn
-    def __call__(self, r):
-        raise NotImplementedError
-
-class dWave_dtheta(Wave):
-    """ Log-derivative in order to theta """
-    def __init__(self, amplitude, theta, wn):
-        super(dWave_dtheta, self).__init__(amplitude, theta, wn)
-        self.amplitude = amplitude
-        self.theta = theta
-        self.wn = wn
-    def __call__(self, r):
-        raise NotImplementedError
-
-class dWave_dwn(Wave):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, theta, wn):
-        super(dWave_dwn, self).__init__(amplitude, theta, wn)
-        self.amplitude = amplitude
-        self.theta = theta
-        self.wn = wn
-    def __call__(self, r):
-        raise NotImplementedError
-
-
 class varRQP(kernel):
     """
     WARNING: EXPERIMENTAL KERNEL
@@ -1074,18 +1005,59 @@ class varRQP2(kernel):
 
 
 ###############################################################################
-class Piecewise(kernel):
+class PiecewiseSE(kernel):
     """
     WARNING: EXPERIMENTAL KERNEL
     
     Parameters
     ----------
     """
-    def __init__(self):
-        super(Piecewise, self).__init__()
+    def __init__(self, eta1, eta2, eta3):
+        super(PiecewiseSE, self).__init__(eta1, eta2, eta3)
+        self.eta1 = eta1
+        self.eta2 = eta2
+        self.eta3 = eta3
         self.type = 'unknown'
         self.derivatives = 0    #number of derivatives in this kernel
         self.params_number = 0    #number of hyperparameters
     def __call__(self, r):
-        return (3*r + 1) * (1 - r)**3
+        evaluate = np.abs(r / self.eta3/2)
+        SE_term = self.eta1**2 + exp(-0.5 * r**2 / self.eta2**2)
+        piecewise = (3*r + 1) * (1 - r)**3
+        kern = SE_term*piecewise
+        kern = np.where(evaluate>1, 0, kern)
+        return kern
 
+
+##### supa kernel #############################################################
+class supa(kernel):
+    """
+    WARNING: EXPERIMENTAL KERNEL
+    
+    Is it a bird? Is it a plane? NO... It's the supa kernel
+    """
+    def __init__(self, QP1, QP2, QP3, QP4, SE1, SE2, wn):
+        super(supa, self).__init__(QP1, QP2, QP3, QP4, SE1, SE2, wn)
+        self.QP1 = QP1
+        self.QP2 = QP1
+        self.QP3 = QP3
+        self.QP4 = QP4
+        self.SE1 = SE1
+        self.SE2 = SE2
+        self.wn = wn
+        self.type = 'unknown'
+        self.derivatives = 'not implemented'
+        self.params_number = 7 #number of hyperparameters
+        self.halfEta3 = self.QP3/2
+        
+    def __call__(self, r):
+        try:
+            evaluate = np.abs(r / self.halfEta3)
+            rr = np.where(evaluate>1, 0, evaluate)
+            QP_term = self.QP1**2 * exp(- 2*sine(pi*np.abs(r)/self.QP3)**2 /self.QP4**2 - r**2/(2*self.QP2**2))
+            SE_term = self.SE1**2 + exp(-0.5 * r**2 / self.SE2**2)
+            Piecewise_term = (3*rr + 1) * (1 - rr)**3
+            WN_term = self.wn**2*np.diag(np.diag(np.ones_like(r)))
+            return QP_term + SE_term*Piecewise_term + WN_term
+        except ValueError:
+            return QP_term + SE_term*Piecewise_term 
