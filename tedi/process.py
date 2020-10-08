@@ -154,7 +154,8 @@ class GP(object):
         #more "weight" to the diagonal to avoid a ill-conditioned matrix
         if nugget:
             nugget_value = 0.01 #might be too big
-            K = (1 - nugget_value)*K + nugget_value*np.diag(np.diag(K))
+            K = nugget_value*np.identity(self.time.size) + K
+            #K = (1 - nugget_value)*K + nugget_value*np.diag(np.diag(K))
         #shifting all the eigenvalues up by the positive scalar to avoid a ill-conditioned matrix
         if shift:
             shift = 0.01 #might be too big

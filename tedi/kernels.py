@@ -903,7 +903,7 @@ class dRQP_dwn(RQP):
     def __call(self, r):
         raise NotImplementedError
 
-
+import matplotlib.pyplot as plt
 ###############################################################################
 class PiecewiseSE(kernel):
     """
@@ -922,14 +922,62 @@ class PiecewiseSE(kernel):
         self.params_number = 0    #number of hyperparameters
     def __call__(self, r):
         SE_term = self.eta1**2 + exp(-0.5 * r**2 / self.eta2**2)
-        #print('SE:\n',SE_term, '\n')
-        piecewise = (3*r + 1) * (1 - r)**3
-        #print('piecewise:\n', piecewise, '\n')
-        #print('r:\n', np.abs(r)/(0.5*self.eta3), '\n')
+        piecewise = (3*r +1) * (1 - r)**3 /12
+        #piecewise = (1 - r)
+        #piecewise = (1 - r)**2
+        #piecewise = (1 - r)**5
+        piecewise = np.where(np.abs(piecewise)>0.5*self.eta3, 0, piecewise)
         k = SE_term*piecewise
-        k = np.where(np.abs(r)>0.5*self.eta3, 0, k)
-        #print('piecewise:\n', piecewise, '\n')
-        #k = SE_term*piecewise
-        #print('final:\n', k, '\n')
         return k
 
+
+
+
+
+
+class PiecewiseSE2(kernel):
+    """
+    WARNING: EXPERIMENTAL KERNEL
+    
+    Parameters
+    ----------
+    """
+    def __init__(self, eta1, eta2, eta3):
+        super(PiecewiseSE2, self).__init__(eta1, eta2, eta3)
+        self.eta1 = eta1
+        self.eta2 = eta2
+        self.eta3 = eta3
+        self.type = 'unknown'
+        self.derivatives = 0    #number of derivatives in this kernel
+        self.params_number = 0    #number of hyperparameters
+    def __call__(self, r):
+        SE_term = self.eta1**2 + exp(-0.5 * r**2 / self.eta2**2)
+        piecewise = (8*r*r + 5*r + 1) * (1 - r)**5
+        k = SE_term*piecewise
+        k = np.where(2*np.abs(r)/self.eta3>1, 0, k)
+        return k
+
+
+class PiecewiseQP(kernel):
+    """
+    WARNING: EXPERIMENTAL KERNEL
+    
+    Parameters
+    ----------
+    """
+    def __init__(self, eta1, eta2, eta3, eta4):
+        super(PiecewiseQP, self).__init__(eta1, eta2, eta3, eta4)
+        self.eta1 = eta1
+        self.eta2 = eta2
+        self.eta3 = eta3
+        self.eta4 = eta4
+        self.type = 'unknown'
+        self.derivatives = 0    #number of derivatives in this kernel
+        self.params_number = 0    #number of hyperparameters
+    def __call__(self, r):
+        QP_term = self.eta1**2 *exp(- 2*sine(pi*np.abs(r)/self.eta3)**2
+                                         /self.eta4**2 - r**2/(2*self.eta2**2))
+        piecewise = (3*r + 1) * (1 - r)**3
+        k = QP_term*piecewise
+        k = np.where(np.abs(r)>0.5*self.eta3, 0, k)
+        return k
