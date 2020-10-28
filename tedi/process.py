@@ -225,7 +225,7 @@ class GP(object):
         norm: array
             Sample of K 
         """
-        np.random.seed(23011990)
+        #np.random.seed(23011990)
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)
         if nugget:

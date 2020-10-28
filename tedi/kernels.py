@@ -861,19 +861,21 @@ class NewPeriodic(kernel):
     ----------
     amplitude: float
         Amplitude of the kernel
-    alpha: float
-        Alpha parameters fo the rational quadratic kernel
-    ell_e and ell_p: float
-        Aperiodic and periodic lenght scales
+    alpha2: float
+        Alpha parameter of the rational quadratic mapping
+    ell_e: float
+        Aperiodic lenght scale
     P: float
         Period
+    ell_p: float
+        Periodic lenght scale
     wn: float
         White noise amplitude
     """
-    def __init__(self, amplitude, alpha, P, l, wn):
-        super(NewPeriodic, self).__init__(amplitude, alpha, P, l, wn)
+    def __init__(self, amplitude, alpha2, P, l, wn):
+        super(NewPeriodic, self).__init__(amplitude, alpha2, P, l, wn)
         self.amplitude = amplitude
-        self.alpha = alpha
+        self.alpha2 = alpha2
         self.P = P
         self.l = l
         self.wn = wn
@@ -882,9 +884,10 @@ class NewPeriodic(kernel):
         self.params_number = 5  #number of hyperparameters
     def __call__(self, r):
         try:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha*self.l**2))**(-self.alpha)
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.l**2))**(-self.alpha2)
             return self.amplitude**2 * a + self.wn**2*np.diag(np.diag(np.ones_like(r)))
         except ValueError:
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.l**2))**(-self.alpha2)
             return self.amplitude**2 * a
 
 
@@ -899,20 +902,22 @@ class NewQuasiPeriodic(kernel):
     ----------
     amplitude: float
         Amplitude of the kernel
-    alpha: float
-        Alpha parameters fo the rational quadratic kernel
+    alpha2: float
+        Alpha parameter of the rational quadratic mapping
+    ell_e: float
+        Aperiodic lenght scale
     P: float
         Period
-    e4: float
-        Lenght scale
+    ell_p: float
+        Periodic lenght scale
     wn: float
         White noise amplitude
     """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(NewQuasiPeriodic, self).__init__(amplitude, alpha, ell_e, P, 
+    def __init__(self, amplitude, alpha2, ell_e, P, ell_p, wn):
+        super(NewQuasiPeriodic, self).__init__(amplitude, alpha2, ell_e, P, 
                                                  ell_p, wn)
         self.amplitude = amplitude
-        self.alpha = alpha
+        self.alpha2 = alpha2
         self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
@@ -922,11 +927,59 @@ class NewQuasiPeriodic(kernel):
         self.params_number = 5  #number of hyperparameters
     def __call__(self, r):
         try:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha*self.ell_p**2))**(-self.alpha)
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
             b =  exp(-0.5 * r**2 / self.ell_e**2)
             return self.amplitude**2 * a * b \
                         + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
         except ValueError:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha*self.ell_p**2))**(-self.alpha)
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
             b =  exp(-0.5 * r**2 / self.ell_e**2)
+            return self.amplitude**2 * a * b
+
+
+class NewRQP(kernel):
+    """
+    Definition of a new quasi-periodic kernel. Derived from mapping the rational
+    quadratic kernel to the 2D space u(x) = (cos x, sin x) and multiplying it by
+    a rational quadratic kernel
+    
+    Parameters
+    ----------
+    amplitude: float
+        Amplitude of the kernel
+    alpha1: float
+        Alpha parameter of the rational quadratic kernel
+    ell_e: float
+        Aperiodic lenght scale
+    P: float
+        Period
+    ell_p: float
+        Periodic lenght scale
+    alpha2: float
+        Another alpha parameter from the mapping 
+    wn: float
+        White noise amplitude
+    """
+    def __init__(self, amplitude, alpha1, alpha2, ell_e, P, ell_p, wn):
+        super(NewRQP, self).__init__(amplitude, alpha1, alpha2,
+                                     ell_e, P, ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha1 = alpha1
+        self.alpha2 = alpha2
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
+        self.type = 'unknown'
+        self.derivatives = 0    #number of derivatives in this kernel
+        self.params_number = 5  #number of hyperparameters
+    def __call__(self, r):
+        try:
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
+            b = (1+ 0.5*r**2/ (self.alpha1*self.ell_e**2))**(-self.alpha1)
+            return self.amplitude**2 * a * b \
+                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
+            b = (1+ 0.5*r**2/ (self.alpha1*self.ell_e**2))**(-self.alpha1)
             return self.amplitude**2 * a * b
