@@ -199,8 +199,8 @@ class Periodic(kernel):
     wn: float
         White noise amplitude
     """
-    def __init__(self, amplitude, ell, P, wn):
-        super(Periodic, self).__init__(amplitude, ell, P, wn)
+    def __init__(self, amplitude, P, ell, wn):
+        super(Periodic, self).__init__(amplitude, P, ell, wn)
         self.amplitude = amplitude
         self.ell = ell
         self.P = P
@@ -825,85 +825,7 @@ class RQP(kernel):
             b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
             return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha)
 
-class dRQP_damplitude(RQP):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_damplitude, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call(self, r):
-        raise NotImplementedError
 
-class dRQP_dalpha(RQP):
-    """ Log-derivative in order to alpha """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dalpha, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call__(self, r):
-        raise NotImplementedError
-
-class dRQP_delle(RQP):
-    """ Log-derivative in order to ell_e """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_delle, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call__(self, r):
-        raise NotImplementedError
-
-class dRQP_dP(RQP):
-    """ Log-derivative in order to P """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call__(self, r):
-        raise NotImplementedError
-
-class dRQP_dellp(RQP):
-    """ Log-derivative in order to ell_p """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dellp, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call(self, r):
-        raise NotImplementedError
-
-class dRQP_dwn(RQP):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(dRQP_dwn, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call(self, r):
-        raise NotImplementedError
-
-import matplotlib.pyplot as plt
 ###############################################################################
 class PiecewiseSE(kernel):
     """
@@ -922,62 +844,89 @@ class PiecewiseSE(kernel):
         self.params_number = 0    #number of hyperparameters
     def __call__(self, r):
         SE_term = self.eta1**2 + exp(-0.5 * r**2 / self.eta2**2)
-        piecewise = (3*r +1) * (1 - r)**3 /12
-        #piecewise = (1 - r)
-        #piecewise = (1 - r)**2
-        #piecewise = (1 - r)**5
-        piecewise = np.where(np.abs(piecewise)>0.5*self.eta3, 0, piecewise)
+        r = r/(0.5*self.eta3)
+        piecewise = (3*np.abs(r) +1) * (1 - np.abs(r))**3
+        piecewise = np.where(np.abs(r)>1, 0, piecewise)
         k = SE_term*piecewise
         return k
 
 
-
-
-
-
-class PiecewiseSE2(kernel):
+##### New periodic kernel ######################################################
+class NewPeriodic(kernel):
     """
-    WARNING: EXPERIMENTAL KERNEL
+    Definition of a new periodic kernel. Derived from mapping the rational
+    quadratic kernel to the 2D space u(x) = (cos x, sin x)
     
     Parameters
     ----------
+    amplitude: float
+        Amplitude of the kernel
+    alpha: float
+        Alpha parameters fo the rational quadratic kernel
+    ell_e and ell_p: float
+        Aperiodic and periodic lenght scales
+    P: float
+        Period
+    wn: float
+        White noise amplitude
     """
-    def __init__(self, eta1, eta2, eta3):
-        super(PiecewiseSE2, self).__init__(eta1, eta2, eta3)
-        self.eta1 = eta1
-        self.eta2 = eta2
-        self.eta3 = eta3
+    def __init__(self, amplitude, alpha, P, l, wn):
+        super(NewPeriodic, self).__init__(amplitude, alpha, P, l, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.P = P
+        self.l = l
+        self.wn = wn
         self.type = 'unknown'
         self.derivatives = 0    #number of derivatives in this kernel
-        self.params_number = 0    #number of hyperparameters
+        self.params_number = 5  #number of hyperparameters
     def __call__(self, r):
-        SE_term = self.eta1**2 + exp(-0.5 * r**2 / self.eta2**2)
-        piecewise = (8*r*r + 5*r + 1) * (1 - r)**5
-        k = SE_term*piecewise
-        k = np.where(2*np.abs(r)/self.eta3>1, 0, k)
-        return k
+        try:
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha*self.l**2))**(-self.alpha)
+            return self.amplitude**2 * a + self.wn**2*np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            return self.amplitude**2 * a
 
 
-class PiecewiseQP(kernel):
+##### New periodic kernel ######################################################
+class NewQuasiPeriodic(kernel):
     """
-    WARNING: EXPERIMENTAL KERNEL
+    Definition of a new quasi-periodic kernel. Derived from mapping the rational
+    quadratic kernel to the 2D space u(x) = (cos x, sin x) and multiplying it by
+    a squared exponential kernel
     
     Parameters
     ----------
+    amplitude: float
+        Amplitude of the kernel
+    alpha: float
+        Alpha parameters fo the rational quadratic kernel
+    P: float
+        Period
+    e4: float
+        Lenght scale
+    wn: float
+        White noise amplitude
     """
-    def __init__(self, eta1, eta2, eta3, eta4):
-        super(PiecewiseQP, self).__init__(eta1, eta2, eta3, eta4)
-        self.eta1 = eta1
-        self.eta2 = eta2
-        self.eta3 = eta3
-        self.eta4 = eta4
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
+        super(NewQuasiPeriodic, self).__init__(amplitude, alpha, ell_e, P, 
+                                                 ell_p, wn)
+        self.amplitude = amplitude
+        self.alpha = alpha
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.wn = wn
         self.type = 'unknown'
         self.derivatives = 0    #number of derivatives in this kernel
-        self.params_number = 0    #number of hyperparameters
+        self.params_number = 5  #number of hyperparameters
     def __call__(self, r):
-        QP_term = self.eta1**2 *exp(- 2*sine(pi*np.abs(r)/self.eta3)**2
-                                         /self.eta4**2 - r**2/(2*self.eta2**2))
-        piecewise = (3*r + 1) * (1 - r)**3
-        k = QP_term*piecewise
-        k = np.where(np.abs(r)>0.5*self.eta3, 0, k)
-        return k
+        try:
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha*self.ell_p**2))**(-self.alpha)
+            b =  exp(-0.5 * r**2 / self.ell_e**2)
+            return self.amplitude**2 * a * b \
+                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
+        except ValueError:
+            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha*self.ell_p**2))**(-self.alpha)
+            b =  exp(-0.5 * r**2 / self.ell_e**2)
+            return self.amplitude**2 * a * b

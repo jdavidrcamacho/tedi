@@ -71,7 +71,7 @@ def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
     end = time()
     print('Estimated evidence: {0}; it took {1}s'.format(perr, end-start))
     #error estimation
-    K = 50
+    K = 100
     if errorestimation:
         batchSize = initial_sample.shape[0]//K
         meanErr = [_perrakis_error(initial_sample[0:batchSize, :],

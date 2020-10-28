@@ -199,7 +199,7 @@ class GP(object):
             y = self.y
         #log marginal likelihood calculation
         try:
-            L1 = cho_factor(K, overwrite_a=True, lower=False)
+            L1 = cho_factor(K, overwrite_a=True, lower=False, check_finite=False)
             log_like = - 0.5*np.dot(y.T, cho_solve(L1, y)) \
                        - np.sum(np.log(np.diag(L1[0]))) \
                        - 0.5*y.size*np.log(2*np.pi)
@@ -342,7 +342,7 @@ class GP(object):
 
 
 ##### GP prediction funtion
-    def prediction(self, kernel=None, mean=None, time=False):
+    def prediction(self, kernel=None, mean=None, time=False, std=True):
         """ 
         Conditional predictive distribution of the Gaussian process
         
@@ -354,7 +354,9 @@ class GP(object):
             Mean function being used
         time: array
             Time array
-        
+        std: bool
+            True to calculate standard deviation, False otherwise
+            
         Returns
         -------
         y_mean: array
@@ -388,8 +390,10 @@ class GP(object):
             kstarT_k_kstar.append(np.dot(Kstar, cho_solve(L1, Kstar[i,:])))
         y_cov = Kstarstar - kstarT_k_kstar
         y_var = np.diag(y_cov) #variance
-        y_std = np.sqrt(y_var) #standard deviation
-        return y_mean, y_std, y_cov
+        if std:
+            y_std = np.sqrt(y_var) #standard deviation
+            return y_mean, y_std, y_cov
+        return y_mean, np.zeros_like(y_mean), y_cov
 
 
 ##### Student-t processes ######################################################
