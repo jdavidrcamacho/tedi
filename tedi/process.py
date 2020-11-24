@@ -189,6 +189,7 @@ class GP(object):
         else:
             #To use the one defined earlier 
             kernel = self.kernel
+            print(kernel)
         #covariance matrix calculation
         K = self.compute_matrix(kernel, self.time, 
                                 nugget = nugget, shift = shift)
@@ -196,7 +197,7 @@ class GP(object):
         if mean:
             y = self.y - mean(self.time)
         else:
-            y = self.y
+            y = self.y - self.mean(self.time)
         #log marginal likelihood calculation
         try:
             L1 = cho_factor(K, overwrite_a=True, lower=False, check_finite=False)
@@ -209,7 +210,8 @@ class GP(object):
 
 
 ##### GP sample funtion
-    def sample(self, kernel, time, nugget=False):
+    def sample(self, kernel, time, nugget=False, 
+               seed=False, seedValue=23011990):
         """
         Returns samples from the kernel
         
@@ -219,13 +221,23 @@ class GP(object):
             Covariance function
         time: array
             Time array
-        
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        seed: bool
+            True to include a seed
+        seedValue: int
+            Integer of the seed
         Returns
         -------
         norm: array
             Sample of K 
         """
-        #np.random.seed(23011990)
+        if seed:
+            seeds = int(seedValue)
+        else:
+            seeds = int(np.random.uniform(0,10000))
+        print('Seed used:', seeds)
+        np.random.seed(seeds)
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)
         if nugget:
