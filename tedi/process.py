@@ -189,7 +189,6 @@ class GP(object):
         else:
             #To use the one defined earlier 
             kernel = self.kernel
-            print(kernel)
         #covariance matrix calculation
         K = self.compute_matrix(kernel, self.time, 
                                 nugget = nugget, shift = shift)
