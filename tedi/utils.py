@@ -3,10 +3,10 @@ A collection of useful functions
 """
 from scipy.stats import invgamma
 from scipy.optimize import minimize
-
 import  numpy as np
 
-##### Semi amplitude calculation ###############################################
+
+##### Semi amplitude calculation ##############################################
 def semi_amplitude(period, Mplanet, Mstar, ecc):
     """
     Calculates the semi-amplitude (K) caused by a planet with a given period 
@@ -35,7 +35,7 @@ def semi_amplitude(period, Mplanet, Mstar, ecc):
     return 28.435 * per * Pmass* Smass * Ecc
 
 
-##### Keplerian function #######################################################
+##### Keplerian function ######################################################
 def keplerian(P=365, K=.1, e=0,  w=np.pi, T=0, phi=None, gamma=0, t=None):
     """
     keplerian() simulates the radial velocity signal of a planet in a 
@@ -95,7 +95,7 @@ def keplerian(P=365, K=.1, e=0,  w=np.pi, T=0, phi=None, gamma=0, t=None):
     return t, RV
 
 
-##### Phase-folding function ###################################################
+##### Phase-folding function ##################################################
 def phase_folding(t, y, yerr, period):
     """
     phase_folding() allows the phase folding (duh...) of a given data
@@ -132,59 +132,7 @@ def phase_folding(t, y, yerr, period):
     return phase, folded_y, folded_yerr
 
 
-##### MCMC with dynesty or emcee ###############################################
-import dynesty, emcee
-from multiprocessing import Pool
-
-def run_mcmc(prior_func, loglike_func, iterations = 1000, sampler = 'emcee'):
-    """
-    run_mcmc() allow the user to run emcee or dynesty automatically
-    
-    Parameters
-    ----------
-    prior_func: func
-        Function that return an array with the priors
-    loglike_func: func
-        Function that calculates the log-likelihood 
-    iterations: int
-        Number of iterations; in emcee half of it will be used as burn-in
-    sampler: string
-        'emcee' or 'dynesty'
-        
-    Returns
-    -------
-    result: ?
-        Sampler's results accordingly to the sampler
-    """
-    if sampler == 'emcee':
-        ndim = prior_func().size
-        burns, runs = int(iterations/2), int(iterations/2)
-        #defining emcee properties
-        nwalkers = 2*ndim
-        sampler = emcee.EnsembleSampler(nwalkers, ndim, 
-                                        loglike_func, threads= 4)
-        #Initialize the walkers
-        p0=[prior_func() for i in range(nwalkers)]
-        #running burns and runs
-        print("Running burn-in")
-        p0, _, _ = sampler.run_mcmc(p0, burns)
-        print("Running production chain")
-        sampler.run_mcmc(p0, runs)
-        #preparing samples to return
-        samples = sampler.chain[:, burns:, :].reshape((-1, ndim))
-        lnprob = sampler.lnprobability[:, burns:].reshape(nwalkers*burns, 1)
-        results = np.vstack([samples.T,np.array(lnprob).T]).T
-    if sampler == 'dynesty':
-        ndim = prior_func(0).size
-        dsampler = dynesty.DynamicNestedSampler(loglike_func, prior_func, 
-                                        ndim=ndim, nlive = 1000, sample='rwalk',
-                                        queue_size=4, pool=Pool(4))
-        dsampler.run_nested(nlive_init = 1000, maxiter = iterations)
-        results = dsampler.results
-    return results
-
-
-##### inverse gamma distribution ###############################################
+##### inverse gamma distribution ##############################################
 f = lambda x, lims: \
     (np.array([invgamma(a=x[0], scale=x[1]).cdf(lims[0]) - 0.01,
                invgamma(a=x[0], scale=x[1]).sf(lims[1]) - 0.01])**2).sum()
@@ -213,5 +161,6 @@ def invGamma(lower, upper, x0=[1, 5], showit=False):
         ax.vlines(limits, 0, d.pdf(x).max())
         plt.show()
     return invgamma(a=a, scale=b)
+
 
 ### END

@@ -4,8 +4,8 @@
 from setuptools import setup
 
 setup(name='tedi',
-      version='1.4',
-      description='Implementation of Gaussian and Student-t processes regression',
+      version='2.0',
+      description='Python implementation of Gaussian and Student-t processes regression',
       author='João Camacho',
       author_email='joao.camacho@astro.up.pt',
       license='MIT',
@@ -14,7 +14,6 @@ setup(name='tedi',
       install_requires=[
         'numpy',
         'scipy',
-        'emcee',
-        'dynesty'
+        'emcee'
       ],
      )

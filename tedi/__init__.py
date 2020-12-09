@@ -1,7 +1,7 @@
 """
     __init file___
 """
-__version__ = '1.5'
+__version__ = '2.0'
 
 #covariance and mean functions
 from tedi import kernels, means

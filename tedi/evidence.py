@@ -3,13 +3,12 @@ Computation of the evidence using the method developed by Perrakis et al. (2014)
 """
 import random
 from math import sqrt, log
-from time import time
 import numpy as np
 import scipy.stats
 from tedi import lib
 
-### Original functions taken from https://github.com/exord/bayev
 
+# Original functions taken from https://github.com/exord/bayev
 def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
                               nsamples=1000, lnlikeargs=(), lnpriorargs=(),
                               densityestimation='kde', errorestimation=False,
@@ -43,7 +42,6 @@ def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
     ----------
     Perrakis et al. (2014; arXiv:1311.0674)
     """
-    start = time()
     if errorestimation:
         initial_sample = marginal_sample
     marginal_sample = make_marginal_samples(marginal_sample, nsamples)
@@ -68,11 +66,10 @@ def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
     log_summands = (log_likelihood[cond] + log_prior[cond] -
                     np.log(prod_marginal_densities[cond]))
     perr = log_sum(log_summands) - log(len(log_summands))
-    end = time()
-    print('Estimated evidence: {0}; it took {1}s'.format(perr, end-start))
     #error estimation
     K = 100
     if errorestimation:
+        print('Estimating error...')
         batchSize = initial_sample.shape[0]//K
         meanErr = [_perrakis_error(initial_sample[0:batchSize, :],
                                    lnlikefunc, lnpriorfunc, nsamples=nsamples,
@@ -95,33 +92,6 @@ def _perrakis_error(marginal_samples, lnlikefunc, lnpriorfunc, nsamples=1000,
                                      nsamples=nsamples,
                                      densityestimation=densityestimation,
                                      errorestimation=errorestimation)
-
-
-def _errorCalc(marginal_sample, lnlikefunc, lnpriorfunc, nsamples=300,
-               densityestimation='histogram', **kwargs):
-    marginal_sample = make_marginal_samples(marginal_sample, nsamples)
-    if not isinstance(marginal_sample, np.ndarray):
-        marginal_sample = np.array(marginal_sample)
-    number_parameters = marginal_sample.shape[1]
-    #Estimate marginal posterior density for each parameter.
-    marginal_posterior_density = np.zeros(marginal_sample.shape)
-    for parameter_index in range(number_parameters):
-        #Extract samples for this parameter._perrakis_error(
-        x = marginal_sample[:, parameter_index]
-        #Estimate density with method "densityestimation".
-        marginal_posterior_density[:, parameter_index] = \
-            estimate_density(x, method=densityestimation, **kwargs)
-    #Compute produt of marginal posterior densities for all parameters
-    prod_marginal_densities = marginal_posterior_density.prod(axis=1)
-    #Compute lnprior and likelihood in marginal sample.
-    log_prior = lnpriorfunc(marginal_sample)
-    log_likelihood = lnlikefunc(marginal_sample)
-    #Mask values with zero likelihood (a problem in lnlike)
-    cond = log_likelihood != 0
-    log_summands = (log_likelihood[cond] + log_prior[cond] -
-                    np.log(prod_marginal_densities[cond]))
-    perr = log_sum(log_summands) - log(len(log_summands))
-    return perr
 
 
 def estimate_density(x, method='histogram', **kwargs):

@@ -81,3 +81,6 @@ class MultivariateGaussian(scipy.stats.rv_continuous):
 
     def rvs(self, nsamples):
         return np.random.multivariate_normal(self.mu, self.covariance, nsamples)
+
+
+### END

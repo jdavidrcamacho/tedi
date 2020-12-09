@@ -2,12 +2,12 @@
 Covariance functions
 """
 import numpy as np
-#because it makes my life easier down the line
+#because it makes life easier down the line
 pi, exp, sine, cosine, sqrt = np.pi, np.exp, np.sin, np.cos, np.sqrt
-
 __all__ = ['Constant', 'WhiteNoise', 'SquaredExponential' , 'Periodic', 
             'QuasiPeriodic', 'RationalQuadratic', 'Cosine', 'Exponential',
             'Matern32', 'Matern52', 'RQP']
+
 
 class kernel(object):
     """
@@ -62,7 +62,7 @@ class Multiplication(_operator):
         return self.k1(r) * self.k2(r)
 
 
-##### Constant kernel ##########################################################
+##### Constant kernel #########################################################
 class Constant(kernel):
     """
     This kernel returns its constant argument c 
@@ -75,22 +75,12 @@ class Constant(kernel):
     def __init__(self, c):
         super(Constant, self).__init__(c)
         self.c = c
-        self.type = 'non-stationary and anisotropic'
-        self.derivatives = 1    #number of derivatives in this kernel
         self.params_number = 1  #number of hyperparameters
     def __call__(self, r):
         return self.c * np.ones_like(r)
 
-class dConstant_dc(Constant):
-    """ Log-derivative in order to c """
-    def __init__(self, c):
-        super(dConstant_dc, self).__init__(c)
-        self.c = c
-    def __call__(self, r):
-        return self.c * np.ones_like(r)
 
-
-##### White noise kernel #######################################################
+##### White noise kernel ######################################################
 class WhiteNoise(kernel):
     """
     Definition of the white noise kernel.
@@ -109,16 +99,8 @@ class WhiteNoise(kernel):
     def __call__(self, r):
         return self.wn**2 * np.diag(np.diag(np.ones_like(r)))
 
-class dWhiteNoise_dwn(WhiteNoise):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, wn):
-        super(dWhiteNoise_dwn, self).__init__(wn)
-        self.wn = wn
-    def __call__(self, r):
-        return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
 
-
-##### Squared exponential kernel ###############################################
+##### Squared exponential kernel ##############################################
 class SquaredExponential(kernel):
     """
     Squared Exponential kernel, also known as radial basis function or RBF 
@@ -130,60 +112,17 @@ class SquaredExponential(kernel):
         Amplitude of the kernel
     ell: float
         Length-scale
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, ell, wn):
-        super(SquaredExponential, self).__init__(amplitude, ell, wn)
+    def __init__(self, amplitude, ell):
+        super(SquaredExponential, self).__init__(amplitude, ell)
         self.amplitude = amplitude
         self.ell = ell
-        self.wn = wn
-        self.type = 'stationary and anisotropic'
-        self.derivatives = 3    #number of derivatives in this kernel
-        self.params_number = 3  #number of hyperparameters
+        self.params_number = 2
     def __call__(self, r):
-        try:
-            return self.amplitude**2 * exp(-0.5 * r**2 / self.ell**2) \
-                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 * exp(-0.5 * r**2 / self.ell**2)
-
-class dSquaredExponential_damplitude(SquaredExponential):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dSquaredExponential_damplitude, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return 2 * self.amplitude**2 * exp(-0.5 * r**2 / self.ell**2)
-
-class dSquaredExponential_dell(SquaredExponential):
-    """ Log-derivative in order to the ell """
-    def __init__(self, amplitude, ell, wn):
-        super(dSquaredExponential_dell, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return (r**2 * self.amplitude**2 / self.ell**2) \
-                * exp(-0.5 * r**2 / self.ell**2)
-
-class dSquaredExponential_dwn(SquaredExponential):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dSquaredExponential_dwn, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
+        return self.amplitude**2 * exp(-0.5 * r**2 / self.ell**2)
 
 
-##### Periodic kernel ##########################################################
+##### Periodic kernel #########################################################
 class Periodic(kernel):
     """
     Definition of the periodic kernel.
@@ -196,82 +135,18 @@ class Periodic(kernel):
         Lenght scale
     P: float
         Period
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, P, ell, wn):
-        super(Periodic, self).__init__(amplitude, P, ell, wn)
+    def __init__(self, amplitude, P, ell):
+        super(Periodic, self).__init__(amplitude, P, ell)
         self.amplitude = amplitude
         self.ell = ell
         self.P = P
-        self.wn = wn
-        self.type = 'non-stationary and isotropic'
-        self.derivatives = 4    #number of derivatives in this kernel
-        self.params_number = 4  #number of hyperparameters
+        self.params_number = 3  #number of hyperparameters
     def __call__(self, r):
-        try:
-            return self.amplitude**2 * \
-                    exp( -2 * sine(pi*np.abs(r)/self.P)**2 /self.ell**2) \
-                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 * \
-                    exp( -2 * sine(pi*np.abs(r)/self.P)**2 /self.ell**2) 
-
-class dPeriodic_damplitude(Periodic):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, ell, P, wn):
-        super(dPeriodic_damplitude, self).__init__(amplitude, ell, P, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        return 2 * self.amplitude**2 * exp(-2 * sine(pi * np.abs(r) / self.P)**2 \
-                                        / self.ell**2)
-
-class dPeriodic_dell(Periodic):
-    """ Log-derivative in order to ell """
-    def __init__(self, amplitude, ell, P, wn):
-        super(dPeriodic_dell, self).__init__(amplitude, ell, P, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        return (4* self.amplitude**2 * sine(pi * np.abs(r) / self.P)**2 \
-                *exp(-2 * sine(pi * np.abs(r) / self.P)**2 \
-                     / self.ell**2)) / self.ell**2
-
-class dPeriodic_dP(Periodic):
-    """ Log-derivative in order to P """
-    def __init__(self, amplitude, ell, P, wn):
-        super(dPeriodic_dP, self).__init__(amplitude, ell, P, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        return (4 * pi * r * self.amplitude**2 \
-                * cosine(pi*np.abs(r) / self.P) *sine(pi*np.abs(r) / self.P) \
-                * exp(-2 * sine(pi*np.abs(r) / self.P)**2 / self.ell**2)) \
-                / (self.ell**2 * self.P)
-
-class dPeriodic_dwn(Periodic):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, ell, P, wn):
-        super(dPeriodic_dwn, self).__init__(amplitude, ell, P, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
+        return self.amplitude**2*exp(-2*sine(pi*np.abs(r)/self.P)**2/self.ell**2)
 
 
-##### Quasi periodic kernel ####################################################
+##### Quasi periodic kernel ###################################################
 class QuasiPeriodic(kernel):
     """
     This kernel is the product between the exponential sine squared kernel 
@@ -288,102 +163,20 @@ class QuasiPeriodic(kernel):
         Length scale of the periodic component
     P: float
         Kernel periodicity
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, ell_e, P, ell_p, wn):
-        super(QuasiPeriodic, self).__init__(amplitude, ell_e, P, ell_p, wn)
+    def __init__(self, amplitude, ell_e, P, ell_p):
+        super(QuasiPeriodic, self).__init__(amplitude, ell_e, P, ell_p)
         self.amplitude = amplitude
         self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
-        self.wn = wn
-        self.type = 'non-stationary and anisotropic'
-        self.derivatives = 5    #number of derivatives in this kernel
-        self.params_number = 5  #number of hyperparameters
+        self.params_number = 4
     def __call__(self, r):
-        try:
-            return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
-                                          /self.ell_p**2 - r**2/(2*self.ell_e**2)) \
-                                          + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
-                                          /self.ell_p**2 - r**2/(2*self.ell_e**2))
-
-class dQuasiPeriodic_damplitude(Periodic):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, ell_e, P, ell_p, wn):
-        super(dQuasiPeriodic_damplitude, self).__init__(amplitude, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call(self, r):
-        return 2 * self.amplitude**2 *exp(-2 * sine(pi*np.abs(r)/self.P)**2 \
-                                   /self.ell_p**2 - r**2/(2*self.ell_e**2))
-
-class dQuasiPeriodic_delle(QuasiPeriodic):
-    """ Log-derivative in order to ell_e """
-    def __init__(self, amplitude, ell_e, P, ell_p, wn):
-        super(dQuasiPeriodic_delle, self).__init__(amplitude, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call(self, r):
-        return (r**2 * self.amplitude**2 / self.ell_e**2) \
-                *exp(-2 * sine(pi*np.abs(r)/self.P)**2 \
-                     /self.ell_p**2 - r**2/(2*self.ell_e**2))
-
-class dQuasiPeriodic_dP(QuasiPeriodic):
-    """ Log-derivative in order to P """
-    def __init__(self, amplitude, ell_e, P, ell_p, wn):
-        super(dQuasiPeriodic_dP, self).__init__(amplitude, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn = wn
-    def __call(self, r):
-        return 4 * pi * r * self.wn**2 \
-                * cosine(pi*np.abs(r)/self.P) * sine(pi*np.abs(r)/self.P) \
-                * exp(-2 * sine(pi * np.abs(r)/self.P)**2 \
-                      /self.ell_p**2 - r**2/(2*self.ell_e**2)) \
-                      / (self.ell_p**2 * self.P)
-
-class dQuasiPeriodic_dellp(QuasiPeriodic):
-    """ Log-derivative in order to ell_p """
-    def __init__(self, amplitude, ell_e, P, ell_p, wn):
-        super(dQuasiPeriodic_dellp, self).__init__(amplitude, ell_e, P, ell_p, wn)
-        self.amplitude = amplitude
-        self.ell_e = ell_e
-        self.P = P
-        self.ell_p = ell_p
-        self.wn =wn
-    def __call(self, r):
-        return  4 * self.wn**2 * sine(pi*r/self.P)**2 \
-                * exp(-2 * sine(pi*np.abs(r)/self.P)**2 \
-                      /self.ell_p**2 - r**2/(2*self.ell_e**2)) / self.ell_p**2
-
-class dQuasiPeriodic_dwn(QuasiPeriodic):
-    """ Log-derivative in order to the white noise amplitude
-    """
-    def __init__(self, amplitude, ell, P, wn):
-        super(dQuasiPeriodic_dwn, self).__init__(amplitude, ell, P, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
+        return self.amplitude**2 *exp(- 2*sine(pi*np.abs(r)/self.P)**2 \
+                                      /self.ell_p**2 - r**2/(2*self.ell_e**2))
 
 
-##### Rational quadratic kernel ################################################
+##### Rational quadratic kernel ###############################################
 class RationalQuadratic(kernel):
     """
     Definition of the rational quadratic kernel.
@@ -396,79 +189,18 @@ class RationalQuadratic(kernel):
         Amplitude of large and small scale variations
     ell: float
         Characteristic lenght scale to define the kernel "smoothness"
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, alpha, ell, wn):
-        super(RationalQuadratic, self).__init__(amplitude, alpha, ell, wn)
+    def __init__(self, amplitude, alpha, ell):
+        super(RationalQuadratic, self).__init__(amplitude, alpha, ell)
         self.amplitude = amplitude
         self.alpha = alpha
         self.ell = ell
-        self.wn = wn
-        self.type = 'stationary and anisotropic'
-        self.derivatives = 4    #number of derivatives in this kernel
-        self.params_number = 4  #number of hyperparameters
+        self.params_number = 3
     def __call__(self, r):
-        try: 
-            return self.amplitude**2 * (1+ 0.5*r**2/ (self.alpha*self.ell**2))**(-self.alpha) \
-                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 * (1+ 0.5*r**2/ (self.alpha*self.ell**2))**(-self.alpha)
-
-class dRationalQuadratic_damplitude(RationalQuadratic):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, alpha, ell, wn):
-        super(dRationalQuadratic_damplitude, self).__init__(amplitude, alpha, ell, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return 2 * self.amplitude**2 \
-                / (1+ r**2/ (2*self.alpha*self.ell**2))**self.alpha
-
-class dRationalQuadratic_dalpha(RationalQuadratic):
-    """ Log-derivative in order to alpha """
-    def __init__(self, amplitude, alpha, ell, wn):
-        super(dRationalQuadratic_dalpha, self).__init__(amplitude, alpha, ell, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell = ell
-        self.wn = wn
-    def __call(self, r):
-        return ((r**2/(2*self.alpha*self.ell**2*(r**2/(2*self.alpha*self.ell**2)+1))\
-                 - np.log(r**2/(2*self.alpha*self.ell**2)+1)) \
-                    * self.amplitude**2 * self.alpha) \
-                    / (1+r**2/(2*self.alpha*self.ell**2))**self.alpha
-
-class dRationalQuadratic_dell(RationalQuadratic):
-    """ Log-derivative in order to ell """
-    def __init__(self, amplitude, alpha, ell, wn):
-        super(dRationalQuadratic_dell, self).__init__(amplitude, alpha, ell, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell = ell
-        self.wn = wn
-    def __call(self, r):
-        return r**2 * (1+r**2/(2*self.alpha*self.ell**2))**(-1-self.alpha) \
-                * self.wn**2 / self.ell**2
-
-class dRationalQuadratic_dwn(RationalQuadratic):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, alpha, ell, wn):
-        super(dRationalQuadratic_dwn, self).__init__(amplitude, alpha, ell, wn)
-        self.amplitude = amplitude
-        self.alpha = alpha
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
+        return self.amplitude**2*(1+0.5*r**2/(self.alpha*self.ell**2))**(-self.alpha)
 
 
-##### Cosine kernel ############################################################
+##### Cosine kernel ###########################################################
 class Cosine(kernel):
     """
     Definition of the cosine kernel.
@@ -479,59 +211,17 @@ class Cosine(kernel):
         Amplitude of the kernel
     P: float
         Period
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, P, wn):
-        super(Cosine, self).__init__(amplitude, P, wn)
+    def __init__(self, amplitude, P):
+        super(Cosine, self).__init__(amplitude, P)
         self.amplitude = amplitude
         self.P = P
-        self.wn = wn
-        self.type = 'non-stationary and isotropic'
-        self.derivatives = 3    #number of derivatives in this kernel
-        self.params_number = 3  #number of hyperparameters
+        self.params_number = 2
     def __call__(self, r):
-        try:
-            return self.amplitude**2 * cosine(2*pi*np.abs(r) / self.P) \
-                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 * cosine(2*pi*np.abs(r) / self.P)
-
-class dCosine_damplitude(Cosine):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, P, wn):
-        super(dCosine_damplitude, self).__init__(amplitude, P, wn)
-        self.amplitude = amplitude
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        return 2*self.amplitude**2 * cosine(2*pi*np.abs(r) / self.P)
-
-class dCosine_dP(Cosine):
-    """ Log-derivative in order to P """
-    def __init__(self, amplitude, P, wn):
-        super(dCosine_dP, self).__init__(amplitude, P, wn)
-        self.amplitude = amplitude
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        return self.amplitude**2 * r*pi*sine(2*pi*np.abs(r) / self.P) / self.P
-
-class dCosine_dwn(Cosine):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, P, wn):
-        super(dCosine_dwn, self).__init__(amplitude, P, wn)
-        self.amplitude = amplitude
-        self.P = P
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
+        return self.amplitude**2 * cosine(2*pi*np.abs(r) / self.P)
 
 
-##### Exponential kernel #######################################################
+##### Exponential kernel ######################################################
 class Exponential(kernel):
     """
     Definition of the exponential kernel. This kernel arises when setting v=1/2
@@ -543,60 +233,17 @@ class Exponential(kernel):
         Amplitude of the kernel
     ell: float
         Characteristic lenght scale
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, ell, wn):
-        super(Exponential, self).__init__(amplitude, ell, wn)
+    def __init__(self, amplitude, ell):
+        super(Exponential, self).__init__(amplitude, ell)
         self.amplitude = amplitude
         self.ell = ell
-        self.wn = wn
-        self.type = 'stationary and isotropic'
-        self.derivatives = 3    #number of derivatives in this kernel
-        self.params_number = 3  #number of hyperparameters
+        self.params_number = 2
     def __call__(self, r):
-        try:
-            return self.amplitude**2 * exp(- np.abs(r)/self.ell) \
-                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 * exp(- np.abs(r)/self.ell)
+        return self.amplitude**2 * exp(- np.abs(r)/self.ell)
 
 
-class dExponential_damplitude(Exponential):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dExponential_damplitude, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return 2*self.amplitude**2 * exp(- np.abs(r)/self.ell)
-
-class dExpoential_dell(Exponential):
-    """ Log-derivative in order to ell """
-    def __init__(self, amplitude, ell, wn):
-        super(dExpoential_dell, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return -0.5*self.amplitude**2 * r *exp(- np.abs(r)/self.ell) /self.ell
-
-class dExpoential_dwm(Exponential):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dExpoential_dwm, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
-
-
-##### Matern 3/2 kernel ########################################################
+##### Matern 3/2 kernel #######################################################
 class Matern32(kernel):
     """
     Definition of the Matern 3/2 kernel. This kernel arise when setting v=3/2 
@@ -608,64 +255,18 @@ class Matern32(kernel):
         Amplitude of the kernel
     ell: float
         Characteristic lenght scale
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, ell, wn):
-        super(Matern32, self).__init__(amplitude, ell, wn)
+    def __init__(self, amplitude, ell):
+        super(Matern32, self).__init__(amplitude, ell)
         self.amplitude = amplitude
         self.ell = ell
-        self.wn = wn
-        self.type = 'stationary and isotropic'
-        self.derivatives = 3    #number of derivatives in this kernel
-        self.params_number = 3  #number of hyperparameters
+        self.params_number = 2
     def __call__(self, r):
-        try:
-            return self.amplitude**2 *(1 + np.sqrt(3)*np.abs(r)/self.ell) \
-                        * np.exp(-np.sqrt(3)*np.abs(r) / self.ell) \
-                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 *(1 + np.sqrt(3)*np.abs(r)/self.ell) \
-                        * np.exp(-np.sqrt(3)*np.abs(r) / self.ell)
-
-class dMatern32_damplitude(Matern32):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dMatern32_damplitude, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return 2*self.amplitude**2 *(1 + np.sqrt(3)*np.abs(r)/self.ell) \
-                    *np.exp(-np.sqrt(3)*np.abs(r) / self.ell)
-
-class dMatern32_dell(Matern32):
-    """ Log-derivative in order to ell """
-    def __init__(self, amplitude, ell, wn):
-        super(dMatern32_dell, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return (sqrt(3) * r * (1+ (sqrt(3) * r) / self.ell) \
-                *exp(-(sqrt(3)*r) / self.ell) * self.amplitude**2) / self.ell \
-                -(sqrt(3) * r * exp(-(sqrt(3)*r) / self.ell)*self.amplitude**2)/self.ell
-
-class dMatern32_dwn(Matern32):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dMatern32_dwn, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
+        return self.amplitude**2 *(1 + np.sqrt(3)*np.abs(r)/self.ell) \
+                        *np.exp(-np.sqrt(3)*np.abs(r) / self.ell)
 
 
-#### Matern 5/2 kernel #########################################################
+#### Matern 5/2 kernel ########################################################
 class Matern52(kernel):
     """
     Definition of the Matern 5/2 kernel. This kernel arise when setting v=5/2 
@@ -677,67 +278,16 @@ class Matern52(kernel):
         Amplitude of the kernel
     ell: float
         Characteristic lenght scale
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, ell, wn):
-        super(Matern52, self).__init__(amplitude, ell, wn)
+    def __init__(self, amplitude, ell):
+        super(Matern52, self).__init__(amplitude, ell)
         self.amplitude = amplitude
         self.ell = ell
-        self.wn = wn
-        self.type = 'stationary and isotropic'
-        self.derivatives = 3    #number of derivatives in this kernel
-        self.params_number = 3    #number of hyperparameters
+        self.params_number = 2
     def __call__(self, r):
-        try:
-            return self.amplitude**2 * (1 + (3*np.sqrt(5)*self.ell*np.abs(r) \
-                                               +5*np.abs(r)**2)/(3*self.ell**2) ) \
-                                              *exp(-np.sqrt(5.0)*np.abs(r)/self.ell) \
-                                    + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return self.amplitude**2 * (1 + (3*np.sqrt(5)*self.ell*np.abs(r) \
-                                               +5*np.abs(r)**2)/(3*self.ell**2) ) \
-                                              *exp(-np.sqrt(5.0)*np.abs(r)/self.ell) 
-
-class dMatern52_damplitude(Matern52):
-    """ Log-derivative in order to the amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dMatern52_damplitude, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return 2*self.amplitude**2 * (1 + ( 3*np.sqrt(5)*self.ell*np.abs(r) \
-                                           +5*np.abs(r)**2)/(3*self.ell**2) ) \
-                                          *exp(-np.sqrt(5.0)*np.abs(r)/self.ell)
-
-class dMatern52_dell(Matern52):
-    """ Log-derivative in order to ell """
-    def __init__(self, amplitude, ell, wn):
-        super(dMatern52_dell, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        return self.ell * ((sqrt(5)*r*(1+(sqrt(5)*r) \
-                                 /self.ell+(5*r**2)/(3*self.ell**2)) \
-                             *exp(-(sqrt(5)*r)/self.ell)*self.amplitude**2) \
-            /self.ell**2 +(-(sqrt(5)*r)/self.ell**2-(10*r**2) \
-                           /(3*self.ell**3)) \
-                           *exp(-(sqrt(5)*r)/self.ell)*self.amplitude**2)
-
-class dMatern52_dwn(Matern52):
-    """ Log-derivative in order to the white noise amplitude """
-    def __init__(self, amplitude, ell, wn):
-        super(dMatern52_dwn, self).__init__(amplitude, ell, wn)
-        self.amplitude = amplitude
-        self.ell = ell
-        self.wn = wn
-    def __call__(self, r):
-        try:
-            return 2 * self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            return np.zeros_like(r)
+        return self.amplitude**2 * (1 + (3*np.sqrt(5)*self.ell*np.abs(r) \
+                                         +5*np.abs(r)**2)/(3*self.ell**2) ) \
+                                         *exp(-np.sqrt(5.0)*np.abs(r)/self.ell)
 
 
 ##### Paciorek's kernel #######################################################
@@ -753,32 +303,20 @@ class Paciorek(kernel):
         First lenght scale
     ell_2: float
         Second lenght scale
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, ell_1, ell_2, wn):
-        super(Paciorek, self).__init__(amplitude, ell_1, ell_2, wn)
+    def __init__(self, amplitude, ell_1, ell_2):
+        super(Paciorek, self).__init__(amplitude, ell_1, ell_2)
         self.amplitude = amplitude
         self.ell_1 = ell_1
         self.ell_2 = ell_2
-        self.wn = wn
-        self.type = 'unknown'
-        self.derivatives = 0    #number of derivatives in this kernel
-        self.params_number = 5  #number of hyperparameters
+        self.params_number = 3
     def __call__(self, r):
-        try:
-            #because of numpy issues
-            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
-            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
-            c = self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-            return self.amplitude**2 * a * b + c
-        except ValueError:
-            a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
-            b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
-            return self.amplitude**2 * a *b
+        a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
+        b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
+        return self.amplitude**2 * a *b
 
 
-##### RQP kernel and derivatives of it ########################################
+##### RQP kernel ##############################################################
 class RQP(kernel):
     """
     Definition of the product between the periodic kernel and the rational 
@@ -786,8 +324,8 @@ class RQP(kernel):
     
     Info: Test show that if alpha goes to infinity the RQP tends to the quasi
     periodic kernel, if alpha goes to zero it tends to the periodic kernel.
-        There is a goldilocks region of alpha between 1e-3 and 0.1 where this 
-    kernel is much better than the quasi periodic kernel.
+        There is a goldilocks region of alpha where this kernel is much better 
+    than the quasi periodic kernel.
     
     Parameters
     ----------
@@ -799,49 +337,41 @@ class RQP(kernel):
         alpha of the rational quadratic kernel
     P: float
         Periodic repetitions of the kernel
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, alpha, ell_e, P, ell_p, wn):
-        super(RQP, self).__init__(amplitude, alpha, ell_e, P, ell_p, wn)
+    def __init__(self, amplitude, alpha, ell_e, P, ell_p):
+        super(RQP, self).__init__(amplitude, alpha, ell_e, P, ell_p)
         self.amplitude = amplitude
         self.alpha = alpha
         self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
-        self.wn = wn
-        self.type = 'non-stationary and anisotropic'
-        self.derivatives = 6    #number of derivatives in this kernel
-        self.params_number = 6  #number of hyperparameters
+        self.params_number = 5
     def __call__(self, r):
-        try:
-            #because of numpy issues
-            a = exp(- 2*sine(pi*np.abs(r)/self.P)**2 / self.ell_p**2)
-            b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
-            c = self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-            return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha) + c
-        except ValueError:
-            a = exp(- 2*sine(pi*np.abs(r)/self.P)**2 / self.ell_p**2)
-            b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
-            return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha)
+        a = exp(- 2*sine(pi*np.abs(r)/self.P)**2 / self.ell_p**2)
+        b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
+        return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha)
 
 
 ###############################################################################
 class PiecewiseSE(kernel):
     """
-    WARNING: EXPERIMENTAL KERNEL
+    Product of the Squared Exponential and Piecewice kernels
     
     Parameters
     ----------
+    eta1: float
+        Amplitude of the kernel
+    eta2: float
+        Aperiodic lenght scale
+    eta3: float
+        Periodic repetitions of the kernel
     """
     def __init__(self, eta1, eta2, eta3):
         super(PiecewiseSE, self).__init__(eta1, eta2, eta3)
         self.eta1 = eta1
         self.eta2 = eta2
         self.eta3 = eta3
-        self.type = 'unknown'
-        self.derivatives = 0    #number of derivatives in this kernel
-        self.params_number = 0    #number of hyperparameters
+        self.params_number = 3
     def __call__(self, r):
         SE_term = self.eta1**2 + exp(-0.5 * r**2 / self.eta2**2)
         r = r/(0.5*self.eta3)
@@ -854,7 +384,7 @@ class PiecewiseSE(kernel):
 ##### New periodic kernel ######################################################
 class NewPeriodic(kernel):
     """
-    Definition of a new periodic kernel. Derived from mapping the rational
+    Definition of a new periodic kernel derived from mapping the rational 
     quadratic kernel to the 2D space u(x) = (cos x, sin x)
     
     Parameters
@@ -863,32 +393,21 @@ class NewPeriodic(kernel):
         Amplitude of the kernel
     alpha2: float
         Alpha parameter of the rational quadratic mapping
-    ell_e: float
-        Aperiodic lenght scale
     P: float
         Period
-    ell_p: float
+    l: float
         Periodic lenght scale
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, alpha2, P, l, wn):
-        super(NewPeriodic, self).__init__(amplitude, alpha2, P, l, wn)
+    def __init__(self, amplitude, alpha2, P, l):
+        super(NewPeriodic, self).__init__(amplitude, alpha2, P, l)
         self.amplitude = amplitude
         self.alpha2 = alpha2
         self.P = P
         self.l = l
-        self.wn = wn
-        self.type = 'unknown'
-        self.derivatives = 0    #number of derivatives in this kernel
-        self.params_number = 5  #number of hyperparameters
+        self.params_number = 4
     def __call__(self, r):
-        try:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.l**2))**(-self.alpha2)
-            return self.amplitude**2 * a + self.wn**2*np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.l**2))**(-self.alpha2)
-            return self.amplitude**2 * a
+        a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.l**2))**(-self.alpha2)
+        return self.amplitude**2 * a
 
 
 ##### New periodic kernel ######################################################
@@ -910,31 +429,19 @@ class NewQuasiPeriodic(kernel):
         Period
     ell_p: float
         Periodic lenght scale
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, alpha2, ell_e, P, ell_p, wn):
-        super(NewQuasiPeriodic, self).__init__(amplitude, alpha2, ell_e, P, 
-                                                 ell_p, wn)
+    def __init__(self, amplitude, alpha2, ell_e, P, ell_p):
+        super(NewQuasiPeriodic, self).__init__(amplitude, alpha2, ell_e, P, ell_p)
         self.amplitude = amplitude
         self.alpha2 = alpha2
         self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
-        self.wn = wn
-        self.type = 'unknown'
-        self.derivatives = 0    #number of derivatives in this kernel
         self.params_number = 5  #number of hyperparameters
     def __call__(self, r):
-        try:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
-            b =  exp(-0.5 * r**2 / self.ell_e**2)
-            return self.amplitude**2 * a * b \
-                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
-            b =  exp(-0.5 * r**2 / self.ell_e**2)
-            return self.amplitude**2 * a * b
+        a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
+        b =  exp(-0.5 * r**2 / self.ell_e**2)
+        return self.amplitude**2 * a * b
 
 
 class NewRQP(kernel):
@@ -957,29 +464,21 @@ class NewRQP(kernel):
         Periodic lenght scale
     alpha2: float
         Another alpha parameter from the mapping 
-    wn: float
-        White noise amplitude
     """
-    def __init__(self, amplitude, alpha1, alpha2, ell_e, P, ell_p, wn):
+    def __init__(self, amplitude, alpha1, alpha2, ell_e, P, ell_p):
         super(NewRQP, self).__init__(amplitude, alpha1, alpha2,
-                                     ell_e, P, ell_p, wn)
+                                     ell_e, P, ell_p)
         self.amplitude = amplitude
         self.alpha1 = alpha1
         self.alpha2 = alpha2
         self.ell_e = ell_e
         self.P = P
         self.ell_p = ell_p
-        self.wn = wn
-        self.type = 'unknown'
-        self.derivatives = 0    #number of derivatives in this kernel
         self.params_number = 5  #number of hyperparameters
     def __call__(self, r):
-        try:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
-            b = (1+ 0.5*r**2/ (self.alpha1*self.ell_e**2))**(-self.alpha1)
-            return self.amplitude**2 * a * b \
-                        + self.wn**2 * np.diag(np.diag(np.ones_like(r)))
-        except ValueError:
-            a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
-            b = (1+ 0.5*r**2/ (self.alpha1*self.ell_e**2))**(-self.alpha1)
-            return self.amplitude**2 * a * b
+        a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
+        b = (1+ 0.5*r**2/ (self.alpha1*self.ell_e**2))**(-self.alpha1)
+        return self.amplitude**2 * a * b
+
+
+### END

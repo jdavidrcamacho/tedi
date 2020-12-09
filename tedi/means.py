@@ -3,8 +3,8 @@ Mean functions
 """
 import numpy as np
 from functools import wraps
-
 __all__ = ['Constant', 'Linear', 'Parabola', 'Cubic', 'Keplerian', 'UdHO']
+
 
 def array_input(f):
     """ Decorator to provide the __call__ methods with an array """
@@ -60,9 +60,9 @@ class Sum(MeanModel):
     @array_input
     def __call__(self, t):
         return self.m1(t) + self.m2(t)
-    
-    
-##### Constant mean ############################################################
+
+
+##### Constant mean ###########################################################
 class Constant(MeanModel):
     """ A constant offset mean function """
     _parsize = 1
@@ -74,7 +74,7 @@ class Constant(MeanModel):
         return np.full(t.shape, self.pars[0])
 
 
-##### Linear mean ##############################################################
+##### Linear mean #############################################################
 class Linear(MeanModel):
     """ Linear mean; m(t) = slope * t + intercept """
     _parsize = 2
@@ -87,7 +87,7 @@ class Linear(MeanModel):
         return self.pars[0] * (t-tmean) + np.full(t.shape, self.pars[1])
 
 
-##### Parabolic mean ###########################################################
+##### Parabolic mean ##########################################################
 class Parabola(MeanModel):
     """
     2nd degree polynomial mean
@@ -101,7 +101,7 @@ class Parabola(MeanModel):
         return np.polyval(self.pars, t)
 
 
-##### Cubic mean ###############################################################
+##### Cubic mean ##############################################################
 class Cubic(MeanModel):
     """
     3rd degree polynomial mean
@@ -115,7 +115,7 @@ class Cubic(MeanModel):
         return np.polyval(self.pars, t)
         
         
-##### Sinusoidal means #########################################################
+##### Sinusoidal means ########################################################
 class Sine(MeanModel):
     """ 
     Sinusoidal mean
@@ -197,7 +197,8 @@ class Keplerian(MeanModel):
         RV = k*(e*np.cos(w)+np.cos(w+nu)) + offset
         return RV
 
-class oldKeplerian(MeanModel):
+
+class otherKeplerian(MeanModel):
     """
     Keplerian function with T0
     tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
@@ -226,7 +227,7 @@ class oldKeplerian(MeanModel):
     """
     _parsize = 5
     def __init__(self, P, K, e, w, T0, offset):
-        super(oldKeplerian, self).__init__(P, K, e, w, T0, offset)
+        super(otherKeplerian, self).__init__(P, K, e, w, T0, offset)
 
     @array_input
     def __call__(self, t):
@@ -249,77 +250,8 @@ class oldKeplerian(MeanModel):
         RV = K*(e*np.cos(w)+np.cos(w+nu)) + offset
         return RV
 
-class TOI175keplerians(MeanModel):
-    """
-    Keplerian function for TOI-175
-    m(t) = 3 keplerians plus offset
-    """
-    _parsize = 16
-    def __init__(self, Pb,Kb,eb,wb,phib, Pc,Kc,ec,wc,phic, Pd,Kd,ed,wd,phid, C):
-        super(TOI175keplerians, self).__init__(Pb,Kb,eb,wb,phib, 
-                                               Pc,Kc,ec,wc,phic, 
-                                               Pd,Kd,ed,wd,phid, C)
 
-    @array_input
-    def __call__(self, t):
-        Pb,Kb,eb,wb,phib, Pc,Kc,ec,wc,phic, Pd,Kd,ed,wd,phid, C = self.pars
-        #mean anomaly
-        T0 = t[0] - (Pb*phib)/(2.*np.pi)
-        Mean_anom = 2*np.pi*(t-T0)/Pb
-        #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
-        E0 = Mean_anom + eb*np.sin(Mean_anom) + 0.5*(eb**2)*np.sin(2*Mean_anom)
-        #mean anomaly -> M0=E0 - e*sin(E0)
-        M0 = E0 - eb*np.sin(E0)
-        niter=0
-        while niter < 500:
-            aux = Mean_anom - M0
-            E1 = E0 + aux/(1 - eb*np.cos(E0))
-            M1 = E0 - eb*np.sin(E0)
-            niter += 1
-            E0 = E1
-            M0 = M1
-        nu = 2*np.arctan(np.sqrt((1+eb)/(1-eb))*np.tan(E0/2))
-        RVb = Kb*(eb*np.cos(wb)+np.cos(wb+nu))
-        #mean anomaly
-        T0c = t[0] - (Pc*phic)/(2.*np.pi)
-        Mean_anomc = 2*np.pi*(t-T0c)/Pc
-        #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
-        E0c = Mean_anomc + ec*np.sin(Mean_anomc) + 0.5*(ec**2)*np.sin(2*Mean_anomc)
-        #mean anomaly -> M0=E0 - e*sin(E0)
-        M0c = E0c - ec*np.sin(E0c)
-        niter=0
-        while niter < 100:
-            aux = Mean_anomc - M0c
-            E1c = E0c + aux/(1 - ec*np.cos(E0c))
-            M1c = E0c - ec*np.sin(E0c)
-            niter += 1
-            E0c = E1c
-            M0c = M1c
-        nu = 2*np.arctan(np.sqrt((1+ec)/(1-ec))*np.tan(E0c/2))
-        RVc = Kc*(ec*np.cos(wc)+np.cos(wc+nu))
-        #mean anomaly
-        T0d = t[0] - (Pd*phid)/(2.*np.pi)
-        Mean_anomd = 2*np.pi*(t-T0d)/Pd
-        #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
-        E0d = Mean_anomd + ed*np.sin(Mean_anomd) + 0.5*(ed**2)*np.sin(2*Mean_anomd)
-        #mean anomaly -> M0=E0 - e*sin(E0)
-        M0d = E0d - ed*np.sin(E0d)
-        niter=0
-        while niter < 100:
-            aux = Mean_anomd - M0d
-            E1d = E0d + aux/(1 - ed*np.cos(E0d))
-            M1d = E0d - ed*np.sin(E0d)
-            niter += 1
-            E0d = E1d
-            M0d = M1d
-        nu = 2*np.arctan(np.sqrt((1+ed)/(1-ed))*np.tan(E0d/2))
-        RVd = Kd*(ed*np.cos(wd)+np.cos(wd+nu))
-        offset = np.full(t.shape, self.pars[-1])
-        finalRV = RVb + RVc + RVd + offset
-        return finalRV
-
-
-##### Underdamped harmonic oscillator mean #####################################
+##### Underdamped harmonic oscillator mean ####################################
 class UdHO(MeanModel):
     """
     Underdamped harmonic oscillator mean
@@ -346,3 +278,5 @@ class UdHO(MeanModel):
         return self.pars[0]**2 * np.exp(-self.pars[1]*t) \
                     * np.cos(self.pars[2]*t + self.pars[3])
 
+
+### END
