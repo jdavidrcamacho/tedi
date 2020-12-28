@@ -373,11 +373,43 @@ class PiecewiseSE(kernel):
         self.eta3 = eta3
         self.params_number = 3
     def __call__(self, r):
-        SE_term = self.eta1**2 + exp(-0.5 * r**2 / self.eta2**2)
+        SE_term = self.eta1**2 * exp(-0.5 * r**2 / self.eta2**2)
         r = r/(0.5*self.eta3)
         piecewise = (3*np.abs(r) +1) * (1 - np.abs(r))**3
         piecewise = np.where(np.abs(r)>1, 0, piecewise)
         k = SE_term*piecewise
+        return k
+
+
+###############################################################################
+class PiecewiseRQ(kernel):
+    """
+    Product of the Rational Quadratic and Piecewice kernels
+    
+    Parameters
+    ----------
+    eta1: float
+        Amplitude of the kernel
+    alpha: float
+        alpha of the rational quadratic kernel
+    eta2: float
+        Aperiodic lenght scale
+    eta3: float
+        Periodic repetitions of the kernel
+    """
+    def __init__(self, eta1, alpha, eta2, eta3):
+        super(PiecewiseSE, self).__init__(eta1, alpha, eta2, eta3)
+        self.eta1 = eta1
+        self.alpha = alpha
+        self.eta2 = eta2
+        self.eta3 = eta3
+        self.params_number = 3
+    def __call__(self, r):
+        RQ_term = self.eta1**2 * (1+0.5*r**2/(self.alpha*self.eta2**2))**(-self.alpha)
+        r = r/(0.5*self.eta3)
+        piecewise = (3*np.abs(r) +1) * (1 - np.abs(r))**3
+        piecewise = np.where(np.abs(r)>1, 0, piecewise)
+        k = RQ_term*piecewise
         return k
 
 
