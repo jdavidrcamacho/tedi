@@ -398,7 +398,7 @@ class PiecewiseRQ(kernel):
         Periodic repetitions of the kernel
     """
     def __init__(self, eta1, alpha, eta2, eta3):
-        super(PiecewiseSE, self).__init__(eta1, alpha, eta2, eta3)
+        super(PiecewiseRQ, self).__init__(eta1, alpha, eta2, eta3)
         self.eta1 = eta1
         self.alpha = alpha
         self.eta2 = eta2
