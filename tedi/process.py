@@ -162,7 +162,8 @@ class GP(object):
             K = K + shift * np.identity(self.time.size)
         return K
 
-    def log_likelihood(self, kernel=None, mean=None, nugget=False, shift=False):
+    def log_likelihood(self, kernel=None, mean=None, nugget=False, shift=False,
+                       separate=False):
         """ 
         Calculates the marginal log likelihood. See Rasmussen & Williams (2006),
         page 113.
@@ -176,8 +177,10 @@ class GP(object):
         nugget: bool
             True if K is not positive definite, False otherwise
         shift: bool
-            True if K is not positive definite, False otherwis
-        
+            True if K is not positive definite, False otherwise
+        shift: bool
+            True to return the separated terms of the marginal log likelihood,
+            False otherwise
         Returns
         -------
         log_like: float
@@ -200,9 +203,14 @@ class GP(object):
         #log marginal likelihood calculation
         try:
             L1 = cho_factor(K, overwrite_a=True, lower=False, check_finite=False)
-            log_like = - 0.5*np.dot(y.T, cho_solve(L1, y)) \
-                       - np.sum(np.log(np.diag(L1[0]))) \
-                       - 0.5*y.size*np.log(2*np.pi)
+            if separate:
+                log_like = [- 0.5*np.dot(y.T, cho_solve(L1, y)),
+                            - np.sum(np.log(np.diag(L1[0]))),
+                            - 0.5*y.size*np.log(2*np.pi)]
+            else:
+                log_like = - 0.5*np.dot(y.T, cho_solve(L1, y)) \
+                           - np.sum(np.log(np.diag(L1[0]))) \
+                           - 0.5*y.size*np.log(2*np.pi)
         except LinAlgError:
             return -np.inf
         return log_like
