@@ -219,14 +219,8 @@ class GP(object):
     def marginalLikelihood(self, kernel=None, mean=None, jitter=None, 
                            N=1000 , file = "saved_results.txt"):
         f = open(file, "a")
-        if mean:
-            m = mean(self.time)
-        else:
-            m = self.mean(self.time)
-        if jitter:
-            err = jitter**2 + self.yerr2
-        else:
-            err = self.yerr2
+        m = mean(self.time) if mean else self.mean(self.time)
+        err = jitter**2 + self.yerr2 if jitter else self.yerr2
         n = 0
         llhood = 0
         while n<N:
