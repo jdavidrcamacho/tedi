@@ -267,7 +267,7 @@ class GP(object):
             seeds = int(seedValue)
         else:
             seeds = int(np.random.uniform(0,10000))
-        #print('Seed used:', seeds)
+        print('Seed used:', seeds)
         np.random.seed(seeds)
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)
