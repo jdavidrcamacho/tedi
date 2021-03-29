@@ -5,7 +5,7 @@ import numpy as np
 from tedi import kernels
 from scipy.linalg import cho_factor, cho_solve, LinAlgError
 from scipy.special import loggamma
-from scipy.stats import multivariate_normal
+from scipy.stats import multivariate_normal, norm
 
 
 ##### Gaussian processes #######################################################
@@ -35,7 +35,8 @@ class GP(object):
             self.yerr = 1e-12 * np.identity(self.time.size)
         else:
             self.yerr = yerr        #measurements errors
-
+        self.yerr2 = yerr**2
+        
     def _kernel_pars(self, kernel):
         """ Returns a kernel parameters """
         return kernel.pars
@@ -214,6 +215,29 @@ class GP(object):
         except LinAlgError:
             return -np.inf
         return log_like
+    
+    def marginalLikelihood(self, kernel=None, mean=None, jitter=None, 
+                           N=1000 , file = "saved_results.txt"):
+        f = open(file, "a")
+        if mean:
+            m = mean(self.time)
+        else:
+            m = self.mean(self.time)
+        if jitter:
+            err = jitter**2 + self.yerr2
+        else:
+            err = self.yerr2
+        n = 0
+        llhood = 0
+        while n<N:
+            sample = self.sample(kernel, self.time) + m
+            llhood += norm(loc=sample, scale=err).pdf(self.y).prod()
+            n += 1
+            if n%100 ==0:
+                 print('n:',n, '- margLL:', np.log(llhood/n))
+                 print('n:',n, '- margLL:', np.log(llhood/n), file=f)
+        f.close()
+        return np.log(llhood/N)
 
 
 ##### GP sample funtion
@@ -243,7 +267,7 @@ class GP(object):
             seeds = int(seedValue)
         else:
             seeds = int(np.random.uniform(0,10000))
-        print('Seed used:', seeds)
+        #print('Seed used:', seeds)
         np.random.seed(seeds)
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)

@@ -7,7 +7,6 @@ import numpy as np
 import scipy.stats
 from tedi import lib
 
-
 # Original functions taken from https://github.com/exord/bayev
 def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
                               nsamples=1000, lnlikeargs=(), lnpriorargs=(),
@@ -69,7 +68,6 @@ def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
     #error estimation
     K = 100
     if errorestimation:
-        print('Estimating error...')
         batchSize = initial_sample.shape[0]//K
         meanErr = [_perrakis_error(initial_sample[0:batchSize, :],
                                    lnlikefunc, lnpriorfunc, nsamples=nsamples,
@@ -84,7 +82,6 @@ def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
         return perr, stdErr
     return perr
 
-
 def _perrakis_error(marginal_samples, lnlikefunc, lnpriorfunc, nsamples=1000,
                     densityestimation='histogram', errorestimation=False):
     """ To use when estimating the error of the perrakis method """
@@ -92,7 +89,6 @@ def _perrakis_error(marginal_samples, lnlikefunc, lnpriorfunc, nsamples=1000,
                                      nsamples=nsamples,
                                      densityestimation=densityestimation,
                                      errorestimation=errorestimation)
-
 
 def estimate_density(x, method='histogram', **kwargs):
     """
