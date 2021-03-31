@@ -220,14 +220,14 @@ class GP(object):
                            N=1000 , file = "saved_results.txt"):
         f = open(file, "a")
         m = mean(self.time) if mean else self.mean(self.time)
-        err = jitter**2 + self.yerr2 if jitter else self.yerr2
+        err = np.sqrt(jitter**2 + self.yerr2) if jitter else self.yerr
         n = 0
         llhood = 0
         while n<N:
             sample = self.sample(kernel, self.time) + m
             llhood += norm(loc=sample, scale=err).pdf(self.y).prod()
             n += 1
-            if n%100 ==0:
+            if n%500 ==0:
                  print('n:',n, '- margLL:', np.log(llhood/n))
                  print('n:',n, '- margLL:', np.log(llhood/n), file=f)
         f.close()
@@ -261,7 +261,7 @@ class GP(object):
             seeds = int(seedValue)
         else:
             seeds = int(np.random.uniform(0,10000))
-        print('Seed used:', seeds)
+        #print('Seed used:', seeds)
         np.random.seed(seeds)
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)
@@ -270,7 +270,6 @@ class GP(object):
             cov = (1 - nugget_value)*cov + nugget_value*np.diag(np.diag(cov))
         norm = multivariate_normal(mean, cov, allow_singular=True).rvs()
         return norm
-
 
 ##### GP prediction funtion
     def prediction(self, kernel=None, mean=None, time=False, std=True):
