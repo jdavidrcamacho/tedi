@@ -216,27 +216,27 @@ class GP(object):
             return -np.inf
         return log_like
     
-    def marginalLikelihood(self, kernel=None, mean=None, jitter=None, 
+    def marginalLikelihood(self, kernel1=None, mean=None, jitter=None, 
                            N=1000 , file = "saved_results.txt"):
         f = open(file, "a")
-        m = mean(self.time) if mean else self.mean(self.time)
-        err = np.sqrt(jitter**2 + self.yerr2) if jitter else self.yerr
+        m = mean(self.time) 
+        err = np.sqrt(jitter**2 + self.yerr2) 
         n = 0
         llhood = 0
         while n<N:
-            sample = self.sample(kernel, self.time) + m
-            llhood += norm(loc=sample, scale=err).pdf(self.y).prod()
+            sample = self.sample(kernel1, self.time) + m
+            normpdf = norm(loc=sample, scale=err).pdf(self.y)
+            llhood += normpdf.prod()
+            sigmaN = np.std(normpdf)
             n += 1
             if n%500 ==0:
-                 print('n:',n, '- margLL:', np.log(llhood/n))
-                 print('n:',n, '- margLL:', np.log(llhood/n), file=f)
+                 print(n, np.log(llhood/n), sigmaN/np.sqrt(n), file=f)
         f.close()
         return np.log(llhood/N)
 
 
 ##### GP sample funtion
-    def sample(self, kernel, time, nugget=False, 
-               seed=False, seedValue=23011990):
+    def sample(self, kernel, time, nugget=False):
         """
         Returns samples from the kernel
         
@@ -257,12 +257,6 @@ class GP(object):
         norm: array
             Sample of K 
         """
-        if seed:
-            seeds = int(seedValue)
-        else:
-            seeds = int(np.random.uniform(0,10000))
-        #print('Seed used:', seeds)
-        np.random.seed(seeds)
         mean = np.zeros_like(time)
         cov = self._kernel_matrix(kernel, time)
         if nugget:
@@ -270,6 +264,34 @@ class GP(object):
             cov = (1 - nugget_value)*cov + nugget_value*np.diag(np.diag(cov))
         norm = multivariate_normal(mean, cov, allow_singular=True).rvs()
         return norm
+
+    def posteriorSample(self, kernel, mean, a, time, nugget=False):
+        """
+        Returns samples from the kernel
+        
+        Parameters
+        ----------
+        kernel: func
+            Covariance function
+        time: array
+            Time array
+        nugget: bool
+            True if K is not positive definite, False otherwise
+        seed: bool
+            True to include a seed
+        seedValue: int
+            Integer of the seed
+        Returns
+        -------
+        norm: array
+            Sample of K 
+        """
+        m, _, v = self.prediction(kernel, mean, time)
+        #mean = np.zeros_like(time)
+        #cov = self._kernel_matrix(kernel, time)
+        #norm = multivariate_normal(mean, cov, allow_singular=True).pdf(a)
+        return np.random.multivariate_normal(m, v, 1).T
+        #return norm
 
 ##### GP prediction funtion
     def prediction(self, kernel=None, mean=None, time=False, std=True):
@@ -304,7 +326,7 @@ class GP(object):
             r = self.y - mean(self.time)
         else:
             r = self.y
-        cov = self._kernel_matrix(kernel, self.time) #K
+        cov = self._kernel_matrix(kernel, self.time) + np.diag(self.yerr2) #K
         L1 = cho_factor(cov)
         sol = cho_solve(L1, r)
         #Kstar

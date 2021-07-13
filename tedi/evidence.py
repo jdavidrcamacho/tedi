@@ -66,7 +66,7 @@ def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
                     np.log(prod_marginal_densities[cond]))
     perr = log_sum(log_summands) - log(len(log_summands))
     #error estimation
-    K = 100
+    K = 10
     if errorestimation:
         batchSize = initial_sample.shape[0]//K
         meanErr = [_perrakis_error(initial_sample[0:batchSize, :],

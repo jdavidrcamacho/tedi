@@ -97,6 +97,7 @@ class WhiteNoise(kernel):
         self.derivatives = 1    #number of derivatives in this kernel
         self.params_number = 1  #number of hyperparameters
     def __call__(self, r):
+#        return self.wn**2 * np.identity(len(r))
         return self.wn**2 * np.diag(np.diag(np.ones_like(r)))
 
 
