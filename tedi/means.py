@@ -146,7 +146,7 @@ class Cosine(MeanModel):
 ##### Keplerian means #########################################################
 class Keplerian(MeanModel):
     """
-    Keplerian mean function
+    Keplerian mean function adapted from radvel
     tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
     E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
     M(t) = (2*pi*t/tau) + M0 = Mean anomaly
@@ -178,76 +178,31 @@ class Keplerian(MeanModel):
     @array_input
     def __call__(self, t):
         p, k, e, w, phi, offset = self.pars
-        #mean anomaly
         T0 = t[0] - (p*phi)/(2.*np.pi)
-        Mean_anom = 2*np.pi*(t-T0)/p
-        #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
-        E0 = Mean_anom + e*np.sin(Mean_anom) + 0.5*(e**2)*np.sin(2*Mean_anom)
-        #mean anomaly -> M0=E0 - e*sin(E0)
-        M0 = E0 - e*np.sin(E0)
-        niter=0
-        while niter < 500:
-            aux = Mean_anom - M0
-            E1 = E0 + aux/(1 - e*np.cos(E0))
-            M1 = E0 - e*np.sin(E0)
-            niter += 1
-            E0 = E1
-            M0 = M1
+        M0 = 2*np.pi*(t-T0)/p #first guess at M
+        E0 = M0 + e*np.sin(M0) + 0.5*(e**2)*np.sin(2*M0)  #first guess at E
+        M1 = ( E0 - e * np.sin(E0) - M0) #goes to zero when converges
+        criteria = 1e-10
+        convd = np.where(np.abs(M1) > criteria)[0]  # which indices have not converged
+        nd = len(convd)  # number of unconverged elements
+        count = 0
+        while nd > 0:
+            count += 1
+            E = E0
+            M1p = 1 - e * np.cos(E)
+            M1pp = e * np.sin(E)
+            M1ppp = 1 - M1p
+            d1 = -M1 / M1p
+            d2 = -M1 / (M1p + d1 * M1pp / 2.0)
+            d3 = -M1 / (M1p + d2 * M1pp / 2.0 + d2 * d2 * M1ppp / 6.0)
+            E = E + d3
+            E0 = E
+            M0 = E0 - e*np.sin(E0)
+            M1 = ( E0 - e * np.sin( E0 ) - M0)
+            convergence_criteria = np.abs(M1) > criteria
+            nd = np.sum(convergence_criteria is True)
         nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
         RV = k*(e*np.cos(w)+np.cos(w+nu)) + offset
-        return RV
-
-
-class otherKeplerian(MeanModel):
-    """
-    Keplerian function with T0
-    tan[phi(t) / 2 ] = sqrt(1+e / 1-e) * tan[E(t) / 2] = true anomaly
-    E(t) - e*sin[E(t)] = M(t) = eccentric anomaly
-    M(t) = (2*pi*t/tau) + M0 = Mean anomaly
-    
-    Parameters
-    ----------
-    P: float
-        Period in days
-    e: float
-        Eccentricity
-    K: float
-        RV amplitude in m/s 
-    w: float
-        Longitude of the periastron
-    T0: float
-        Time of periastron passage
-    offset: float
-        Offset
-        
-    Returns
-    -------
-    RV: array
-        RV signal generated = K[cos(w+v) + e*cos(w)] + offset
-    """
-    _parsize = 5
-    def __init__(self, P, K, e, w, T0, offset):
-        super(otherKeplerian, self).__init__(P, K, e, w, T0, offset)
-
-    @array_input
-    def __call__(self, t):
-        P, K, e, w, T0, offset = self.pars
-        #mean anomaly
-        Mean_anom = 2*np.pi*(t-T0)/P
-        #eccentric anomaly -> E0=M + e*sin(M) + 0.5*(e**2)*sin(2*M)
-        E0 = Mean_anom + e*np.sin(Mean_anom) + 0.5*(e**2)*np.sin(2*Mean_anom)
-        #mean anomaly -> M0=E0 - e*sin(E0)
-        M0 = E0 - e*np.sin(E0)
-        niter=0
-        while niter < 100:
-            aux = Mean_anom - M0
-            E1 = E0 + aux/(1 - e*np.cos(E0))
-            M1 = E0 - e*np.sin(E0)
-            niter += 1
-            E0 = E1
-            M0 = M1
-        nu = 2*np.arctan(np.sqrt((1+e)/(1-e))*np.tan(E0/2))
-        RV = K*(e*np.cos(w)+np.cos(w+nu)) + offset
         return RV
 
 

@@ -35,6 +35,35 @@ def semi_amplitude(period, Mplanet, Mstar, ecc):
     return 28.435 * per * Pmass* Smass * Ecc
 
 
+##### Minimum mass calculation #################################################
+def minimum_mass(P, K, ecc, Mstar):
+    """
+    Calculates the minimum mass (M sin i) of a planet with a given period P,
+    semi.amplitude K, and eccentricity ecc.
+    Note: M planet << M star
+    
+    Parameters
+    ----------
+    P: float
+        Period (days)
+    K: float
+        Semi-amplitude (m/s)
+    ecc: float
+        Eccentricity
+    Mstar: float
+        Star mass (Solar masses)
+    
+    Returns
+    -------
+    Msini: array
+        Minimum mass defined as np.array([Jupiter masses, Earth masses])
+    """
+    #Jmass = 317.8 *Emass
+    Msini = 4.919e-3 *K *np.sqrt(1 - ecc**2) *np.cbrt(P) *np.cbrt(Mstar)**2
+    return np.array([Msini, Msini *317.8])
+
+
+
 ##### Keplerian function ######################################################
 def keplerian(P=365, K=.1, e=0,  w=np.pi, T=0, phi=None, gamma=0, t=None):
     """
@@ -164,15 +193,12 @@ def invGamma(lower, upper, x0=[1, 5], showit=False):
 
 
 ##### RMS ######################################################################
-def rms(array, weights):
+def rms(array):
     """ Root mean square of array
         Parameters
         ----------
         array: array
             Measurements
-        weights: array
-            weights = 1 / errors**2
-            To add jitter do 1 / (errors*2 + jitter**2)
             
         Returns
         -------

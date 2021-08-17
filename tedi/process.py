@@ -287,11 +287,7 @@ class GP(object):
             Sample of K 
         """
         m, _, v = self.prediction(kernel, mean, time)
-        #mean = np.zeros_like(time)
-        #cov = self._kernel_matrix(kernel, time)
-        #norm = multivariate_normal(mean, cov, allow_singular=True).pdf(a)
         return np.random.multivariate_normal(m, v, 1).T
-        #return norm
 
 ##### GP prediction funtion
     def prediction(self, kernel=None, mean=None, time=False, std=True):
@@ -315,8 +311,8 @@ class GP(object):
             Mean vector
         y_std: array
             Standard deviation vector
-        y_cov: array
-            Covariance matrix
+        time: array
+            Time array
         """
         if not kernel:
             #To use the one we defined earlier 
@@ -344,8 +340,8 @@ class GP(object):
         y_var = np.diag(y_cov) #variance
         if std:
             y_std = np.sqrt(y_var) #standard deviation
-            return y_mean, y_std, y_cov
-        return y_mean, np.zeros_like(y_mean), y_cov
+            return y_mean, y_std, time
+        return y_mean, np.zeros_like(y_mean), time
 
 
 ##### Student-t processes ######################################################

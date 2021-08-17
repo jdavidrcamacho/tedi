@@ -10,7 +10,7 @@ from tedi import kernels, means
 from tedi import process
 
 #useful function to have
-from tedi import utils
+from tedi import utils, time
 
 #Evidence estimation
 from tedi import evidence, lib
