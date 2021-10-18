@@ -5,7 +5,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jdavidrcamacho/tedi/blob/master/LICENSE) \
 [![PyPI version fury.io](https://badge.fury.io/py/tedi.svg)](https://pypi.org/project/tedi/)\
 [![Build Status](https://travis-ci.org/jdavidrcamacho/tedi.svg?branch=master)](https://travis-ci.org/jdavidrcamacho/tedi)\
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4313077.svg)](https://doi.org/10.5281/zenodo.4313077)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5575861.svg)](https://doi.org/10.5281/zenodo.5575861)
+
 
 \
 \
