@@ -77,7 +77,7 @@ class Constant(kernel):
         self.c = c
         self.params_number = 1  #number of hyperparameters
     def __call__(self, r):
-        return self.c * np.ones_like(r)
+        return self.c**2 * np.ones_like(r)
 
 
 ##### White noise kernel ######################################################
@@ -150,9 +150,9 @@ class Periodic(kernel):
 ##### Quasi periodic kernel ###################################################
 class QuasiPeriodic(kernel):
     """
-    This kernel is the product between the exponential sine squared kernel 
-    and the squared exponential kernel, commonly known as the quasi-periodic 
-    kernel.
+    This kernel is the product between the periodic and the squared 
+    exponential kernels. 
+    It is commonly known as the quasi-periodic kernel.
     
     Parameters
     ----------
@@ -291,39 +291,13 @@ class Matern52(kernel):
                                          *exp(-np.sqrt(5.0)*np.abs(r)/self.ell)
 
 
-##### Paciorek's kernel #######################################################
-class Paciorek(kernel):
-    """
-    Definition of the modified Paciorek's kernel (stationary version). 
-    
-    Parameters
-    ----------
-    amplitude: float
-        Amplitude/amplitude of the kernel
-    ell_1: float
-        First lenght scale
-    ell_2: float
-        Second lenght scale
-    """
-    def __init__(self, amplitude, ell_1, ell_2):
-        super(Paciorek, self).__init__(amplitude, ell_1, ell_2)
-        self.amplitude = amplitude
-        self.ell_1 = ell_1
-        self.ell_2 = ell_2
-        self.params_number = 3
-    def __call__(self, r):
-        a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
-        b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
-        return self.amplitude**2 * a *b
-
-
 ##### RQP kernel ##############################################################
 class RQP(kernel):
     """
     Definition of the product between the periodic kernel and the rational 
     quadratic kernel that we called RQP kernel.
     
-    Info: Test show that if alpha goes to infinity the RQP tends to the quasi
+    Info: Tests show that, if alpha goes to infinity, the RQP tends to the quasi
     periodic kernel, if alpha goes to zero it tends to the periodic kernel.
         There is a goldilocks region of alpha where this kernel is much better 
     than the quasi periodic kernel.
@@ -351,6 +325,32 @@ class RQP(kernel):
         a = exp(- 2*sine(pi*np.abs(r)/self.P)**2 / self.ell_p**2)
         b = (1+ r**2/ (2*self.alpha*self.ell_e**2))#**self.alpha
         return self.amplitude**2 * a / (np.sign(b) * (np.abs(b)) ** self.alpha)
+
+
+##### Paciorek's kernel #######################################################
+class Paciorek(kernel):
+    """
+    Definition of the modified Paciorek's kernel (stationary version). 
+    
+    Parameters
+    ----------
+    amplitude: float
+        Amplitude/amplitude of the kernel
+    ell_1: float
+        First lenght scale
+    ell_2: float
+        Second lenght scale
+    """
+    def __init__(self, amplitude, ell_1, ell_2):
+        super(Paciorek, self).__init__(amplitude, ell_1, ell_2)
+        self.amplitude = amplitude
+        self.ell_1 = ell_1
+        self.ell_2 = ell_2
+        self.params_number = 3
+    def __call__(self, r):
+        a = sqrt(2*self.ell_1*self.ell_2 / (self.ell_1**2+self.ell_2**2))
+        b = exp(-2*r*r / (self.ell_1**2+self.ell_2**2))
+        return self.amplitude**2 * a *b
 
 
 ###############################################################################
@@ -444,7 +444,7 @@ class NewPeriodic(kernel):
 
 
 ##### New periodic kernel ######################################################
-class NewQuasiPeriodic(kernel):
+class QuasiNewPeriodic(kernel):
     """
     Definition of a new quasi-periodic kernel. Derived from mapping the rational
     quadratic kernel to the 2D space u(x) = (cos x, sin x) and multiplying it by
@@ -464,7 +464,7 @@ class NewQuasiPeriodic(kernel):
         Periodic lenght scale
     """
     def __init__(self, amplitude, alpha2, ell_e, P, ell_p):
-        super(NewQuasiPeriodic, self).__init__(amplitude, alpha2, ell_e, P, ell_p)
+        super(QuasiNewPeriodic, self).__init__(amplitude, alpha2, ell_e, P, ell_p)
         self.amplitude = amplitude
         self.alpha2 = alpha2
         self.ell_e = ell_e
@@ -512,6 +512,144 @@ class NewRQP(kernel):
         a = (1 + 2*sine(pi*np.abs(r)/self.P)**2/(self.alpha2*self.ell_p**2))**(-self.alpha2)
         b = (1+ 0.5*r**2/ (self.alpha1*self.ell_e**2))**(-self.alpha1)
         return self.amplitude**2 * a * b
+
+
+##### New periodic kernel ######################################################
+class HarmonicPeriodic(kernel):
+    """
+    Definition of a periodic kernel that models a periodic signal
+    with a N number of harmonics
+    
+    Parameters
+    ----------
+    N: int
+        Number of harmonics
+    amplitude: float
+        Amplitude of the kernel
+    P: float
+        Period
+    ell: float
+        Periodic lenght scale
+    """
+    def __init__(self, N, amplitude, P, ell):
+        super(HarmonicPeriodic, self).__init__(N, amplitude, P, ell)
+        self.N = N
+        self.amplitude = amplitude
+        self.ell = ell
+        self.P = P
+        self.params_number = 4  #number of hyperparameters
+    def __call__(self, r, s):
+        # r = np.abs(r)
+        # s = np.abs(s)
+        first = sine((self.N+0.5)*2*pi*r/self.P) / 2*sine(pi*r/self.P)
+        second = sine((self.N+0.5)*2*pi*s/self.P) / 2*sine(pi*s/self.P)
+        firstPart = (first - second)**2
+        first = 0.5/np.tan(pi*r/self.P)
+        second = cosine((self.N+0.5)*2*pi*r/self.P) / 2*sine(pi*r/self.P)
+        third = 0.5/np.tan(pi*s/self.P)
+        fourth = cosine((self.N+0.5)*2*pi*s/self.P) / 2*sine(pi*s/self.P)
+        secondPart = (first-second-third+fourth)**2
+        return self.amplitude**2*exp(-0.5*(firstPart + secondPart)/self.ell**2)
+
+
+##### New quasi-periodic kernel ################################################
+class QuasiHarmonicPeriodic(kernel):
+    """
+    Definition of a quasi-periodic kernel that models a periodic signals 
+    with a N number of harmonics
+    
+    Parameters
+    ----------
+    N: int
+        Number of harmonics
+    amplitude: float
+        Amplitude of the kernel
+    ell_e: float
+        Aperiodic lenght scale
+    P: float
+        Period
+    ell_p: float
+        Periodic lenght scale
+    """
+    def __init__(self, N, amplitude, ell_e, P, ell_p):
+        super(QuasiHarmonicPeriodic, self).__init__(amplitude, ell_e, P, ell_p)
+        self.N = N
+        self.amplitude = amplitude
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.params_number = 5  #number of hyperparameters
+    def __call__(self, r, s):
+        first = sine((self.N+0.5)*2*pi*r/self.P) / 2*sine(pi*r/self.P)
+        second = sine((self.N+0.5)*2*pi*s/self.P) / 2*sine(pi*s/self.P)
+        firstPart = (first - second)**2
+        first = 0.5/np.tan(pi*r/self.P)
+        second = cosine((self.N+0.5)*2*pi*r/self.P) / 2*sine(pi*r/self.P)
+        third = 0.5/np.tan(pi*s/self.P)
+        fourth = cosine((self.N+0.5)*2*pi*s/self.P) / 2*sine(pi*s/self.P)
+        secondPart = (first-second-third+fourth)**2
+        a = exp(-0.5*(firstPart + secondPart)/self.ell_p**2)
+        b =  exp(-0.5 * (r-s)**2 / self.ell_e**2)
+        return self.amplitude**2 * a * b
+
+
+##### New quasi-periodic kernel ################################################
+class CosPeriodic(kernel):
+    """
+    Periodic kernel derived by mapping the squared exponential kernel into thw
+    2D space u(t) = [cos(t + phi), sin(t + phi)]
+    
+    SPOILER ALERT: If you do the math the phi terms disappear 
+    
+    Parameters
+    ----------
+    amplitude: float
+        Amplitude of the kernel
+    P: float
+        Period
+    ell_p: float
+        Periodic lenght scale
+    phi: float
+        Phase
+    """
+    def __init__(self, amplitude, P, ell):
+        super(CosPeriodic, self).__init__(P, ell)
+        self.amplitude = amplitude
+        self.ell = ell
+        self.P = P
+        self.params_number = 3  #number of hyperparameters
+    def __call__(self, r):
+        return self.amplitude**2*exp(-2*cosine(pi*np.abs(r)/self.P)**2/self.ell**2)
+
+
+##### New quasi-periodic kernel ################################################
+class QuasiCosPeriodic(kernel):
+    """
+    This kernel is the product between the cosPeriodic kernel 
+    and the squared exponential kernel, it is just another the quasi-periodic 
+    kernel.
+    
+    Parameters
+    ----------
+    amplitude: float
+        Amplitude of the kernel
+    ell_e: float
+        Evolutionary time scale
+    ell_p: float
+        Length scale of the periodic component
+    P: float
+        Kernel periodicity
+    """
+    def __init__(self, amplitude, ell_e, P, ell_p):
+        super(QuasiCosPeriodic, self).__init__(amplitude, ell_e, P, ell_p)
+        self.amplitude = amplitude
+        self.ell_e = ell_e
+        self.P = P
+        self.ell_p = ell_p
+        self.params_number = 4
+    def __call__(self, r):
+        return self.amplitude**2 *exp(- 2*cosine(pi*np.abs(r)/self.P)**2 \
+                                      /self.ell_p**2 - r**2/(2*self.ell_e**2))
 
 
 ### END

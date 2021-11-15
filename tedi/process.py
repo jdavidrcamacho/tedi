@@ -43,6 +43,19 @@ class GP(object):
 
     def _kernel_matrix(self, kernel, time):
         """ Returns a cov matrix when evaluating a given kernel at inputs time """
+        if isinstance(kernel, kernels.Sum):
+            if isinstance(kernel.k1, (kernels.HarmonicPeriodic, 
+                                      kernels.QuasiHarmonicPeriodic)):
+                r = time[:, None]
+                s = time[None, :]
+                k1 = kernel.k1(r, s)
+                r = time[:, None] - time[None, :]
+                return k1 + kernel.k2(r)
+        if isinstance(kernel, (kernels.HarmonicPeriodic, 
+                               kernels.QuasiHarmonicPeriodic)):
+            r = time[:, None]
+            s = time[None, :]
+            return kernel(r, s)
         r = time[:, None] - time[None, :]
         K = kernel(r)
         return K
@@ -52,6 +65,11 @@ class GP(object):
         if isinstance(kernel, kernels.Sum):
             if isinstance(kernel.k2, kernels.WhiteNoise):
                 kernel = kernel.k1
+        if isinstance(kernel, (kernels.HarmonicPeriodic, 
+                               kernels.QuasiHarmonicPeriodic)):
+            r = time[:, None]
+            s = self.time[None, :]
+            return kernel(r, s)
         r = time[:, None] - self.time[None, :]
         K = kernel(r)
         return K
@@ -286,7 +304,7 @@ class GP(object):
         norm: array
             Sample of K 
         """
-        m, _, v = self.prediction(kernel, mean, time)
+        m, _, v, _ = self.prediction(kernel, mean, time)
         return np.random.multivariate_normal(m, v, 1).T
 
 ##### GP prediction funtion
