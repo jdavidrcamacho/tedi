@@ -653,3 +653,26 @@ class QuasiCosPeriodic(kernel):
 
 
 ### END
+
+##### New periodic kernel ######################################################
+class unknown(kernel):
+    """
+    
+    Parameters
+    ----------
+    
+    """
+    def __init__(self, amplitude, P, ell, phi):
+        super(unknown, self).__init__(amplitude, P, ell, phi)
+        self.amplitude = amplitude
+        self.ell = ell
+        self.P = P
+        self.phi = phi
+        self.params_number = 4  #number of hyperparameters
+    def __call__(self, r, s):
+        # r = np.abs(r)
+        # s = np.abs(s)
+        first = sine(2*pi*r/self.P - self.phi) - sine(2*pi*s/self.P - self.phi)
+        second = sine(2*pi*r/self.P + self.phi) - sine(2*pi*s/self.P - self.phi)
+        firstPart = first**2 + second**2
+        return self.amplitude**2*exp(-0.5*(firstPart)/self.ell**2)

@@ -45,14 +45,16 @@ class GP(object):
         """ Returns a cov matrix when evaluating a given kernel at inputs time """
         if isinstance(kernel, kernels.Sum):
             if isinstance(kernel.k1, (kernels.HarmonicPeriodic, 
-                                      kernels.QuasiHarmonicPeriodic)):
+                                      kernels.QuasiHarmonicPeriodic, 
+                                      kernels.unknown)):
                 r = time[:, None]
                 s = time[None, :]
                 k1 = kernel.k1(r, s)
                 r = time[:, None] - time[None, :]
                 return k1 + kernel.k2(r)
         if isinstance(kernel, (kernels.HarmonicPeriodic, 
-                               kernels.QuasiHarmonicPeriodic)):
+                               kernels.QuasiHarmonicPeriodic, 
+                               kernels.unknown)):
             r = time[:, None]
             s = time[None, :]
             return kernel(r, s)
@@ -66,7 +68,8 @@ class GP(object):
             if isinstance(kernel.k2, kernels.WhiteNoise):
                 kernel = kernel.k1
         if isinstance(kernel, (kernels.HarmonicPeriodic, 
-                               kernels.QuasiHarmonicPeriodic)):
+                               kernels.QuasiHarmonicPeriodic, 
+                               kernels.unknown)):
             r = time[:, None]
             s = self.time[None, :]
             return kernel(r, s)
