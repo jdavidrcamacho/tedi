@@ -17,6 +17,6 @@ Using either Gaussian or Student-t processes to model the stellar activity signa
 Check the [wiki page](https://github.com/jdavidrcamacho/tedi/wiki) to learn a bit more about it!
 
 -------------------------
-2018-2020 [João Camacho](https://github.com/jdavidrcamacho)
+2018-2021 [João Camacho](https://github.com/jdavidrcamacho)
 
 
