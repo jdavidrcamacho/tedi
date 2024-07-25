@@ -44,4 +44,4 @@ static-fix: format-fix lint-check type-check
 
 .PHONY: unit-test
 unit-test:
-	pytest --cov-report term-missing --cov=src/ -vv -W ignore::DeprecationWarning
+	pytest --cov-report term-missing --cov=tedi/ -vv -W ignore::DeprecationWarning

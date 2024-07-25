@@ -1,17 +1,28 @@
 """
 Computation of the evidence using the method developed by Perrakis et al. (2014)
 """
+
 import random
-from math import sqrt, log
+from math import log, sqrt
+
 import numpy as np
 import scipy.stats
-from tedi import lib
+
+from src.tedi import lib
+
 
 # Original functions taken from https://github.com/exord/bayev
-def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
-                              nsamples=1000, lnlikeargs=(), lnpriorargs=(),
-                              densityestimation='kde', errorestimation=False,
-                              **kwargs):
+def compute_perrakis_estimate(
+    marginal_sample,
+    lnlikefunc,
+    lnpriorfunc,
+    nsamples=1000,
+    lnlikeargs=(),
+    lnpriorargs=(),
+    densityestimation="kde",
+    errorestimation=False,
+    **kwargs
+):
     """
     Computes the Perrakis estimate of the bayesian evidence.
     The estimation is based on n marginal posterior samples
@@ -47,50 +58,75 @@ def compute_perrakis_estimate(marginal_sample, lnlikefunc, lnpriorfunc,
     if not isinstance(marginal_sample, np.ndarray):
         marginal_sample = np.array(marginal_sample)
     number_parameters = marginal_sample.shape[1]
-    print('Estimating marginal posterior density for each parameter...')
+    print("Estimating marginal posterior density for each parameter...")
     marginal_posterior_density = np.zeros(marginal_sample.shape)
     for parameter_index in range(number_parameters):
-        #Extract samples for this parameter._perrakis_error(
+        # Extract samples for this parameter._perrakis_error(
         x = marginal_sample[:, parameter_index]
-        #Estimate density with method "densityestimation".
-        marginal_posterior_density[:, parameter_index] = \
-            estimate_density(x, method=densityestimation, **kwargs)
-    print('Computing produt of marginal posterior densities for all parameters...')
+        # Estimate density with method "densityestimation".
+        marginal_posterior_density[:, parameter_index] = estimate_density(
+            x, method=densityestimation, **kwargs
+        )
+    print("Computing produt of marginal posterior densities for all parameters...")
     prod_marginal_densities = marginal_posterior_density.prod(axis=1)
-    print('Computing lnprior and likelihood in marginal sample...')
+    print("Computing lnprior and likelihood in marginal sample...")
     log_prior = lnpriorfunc(marginal_sample, *lnpriorargs)
     log_likelihood = lnlikefunc(marginal_sample, *lnlikeargs)
-    print('Masking values with zero likelihood...')
+    print("Masking values with zero likelihood...")
     cond = log_likelihood != 0
-    log_summands = (log_likelihood[cond] + log_prior[cond] -
-                    np.log(prod_marginal_densities[cond]))
+    log_summands = (
+        log_likelihood[cond] + log_prior[cond] - np.log(prod_marginal_densities[cond])
+    )
     perr = log_sum(log_summands) - log(len(log_summands))
-    #error estimation
+    # error estimation
     K = 10
     if errorestimation:
-        batchSize = initial_sample.shape[0]//K
-        meanErr = [_perrakis_error(initial_sample[0:batchSize, :],
-                                   lnlikefunc, lnpriorfunc, nsamples=nsamples,
-                                   densityestimation=densityestimation)]
+        batchSize = initial_sample.shape[0] // K
+        meanErr = [
+            _perrakis_error(
+                initial_sample[0:batchSize, :],
+                lnlikefunc,
+                lnpriorfunc,
+                nsamples=nsamples,
+                densityestimation=densityestimation,
+            )
+        ]
         for i in range(K):
-            meanErr.append(_perrakis_error(initial_sample[i*batchSize:(i+1)*batchSize, :],
-                                           lnlikefunc, lnpriorfunc,
-                                           nsamples=nsamples,
-                                           densityestimation=densityestimation))
+            meanErr.append(
+                _perrakis_error(
+                    initial_sample[i * batchSize : (i + 1) * batchSize, :],
+                    lnlikefunc,
+                    lnpriorfunc,
+                    nsamples=nsamples,
+                    densityestimation=densityestimation,
+                )
+            )
         stdErr = np.std(meanErr)
         meanErr = np.mean(meanErr)
         return perr, stdErr
     return perr
 
-def _perrakis_error(marginal_samples, lnlikefunc, lnpriorfunc, nsamples=1000,
-                    densityestimation='histogram', errorestimation=False):
-    """ To use when estimating the error of the perrakis method """
-    return compute_perrakis_estimate(marginal_samples, lnlikefunc, lnpriorfunc,
-                                     nsamples=nsamples,
-                                     densityestimation=densityestimation,
-                                     errorestimation=errorestimation)
 
-def estimate_density(x, method='histogram', **kwargs):
+def _perrakis_error(
+    marginal_samples,
+    lnlikefunc,
+    lnpriorfunc,
+    nsamples=1000,
+    densityestimation="histogram",
+    errorestimation=False,
+):
+    """To use when estimating the error of the perrakis method"""
+    return compute_perrakis_estimate(
+        marginal_samples,
+        lnlikefunc,
+        lnpriorfunc,
+        nsamples=nsamples,
+        densityestimation=densityestimation,
+        errorestimation=errorestimation,
+    )
+
+
+def estimate_density(x, method="histogram", **kwargs):
     """
     Estimate probability density based on a sample. Return value of density at
     sample points.
@@ -105,21 +141,22 @@ def estimate_density(x, method='histogram', **kwargs):
         Number of bins used in "histogram method".
     :return: density estimation at the sample points.
     """
-    nbins = kwargs.pop('nbins', 100)
-    if method == 'normal':
-        #Approximate each parameter distribution by a normal.
+    nbins = kwargs.pop("nbins", 100)
+    if method == "normal":
+        # Approximate each parameter distribution by a normal.
         return scipy.stats.norm.pdf(x, loc=x.mean(), scale=sqrt(x.var()))
-    if method == 'kde':
-        #Approximate each parameter distribution using a gaussian kernel estimation
+    if method == "kde":
+        # Approximate each parameter distribution using a gaussian kernel estimation
         return scipy.stats.gaussian_kde(x)(x)
-    if method == 'histogram':
-        #Approximate each parameter distribution based on the histogram
+    if method == "histogram":
+        # Approximate each parameter distribution based on the histogram
         density, bin_edges = np.histogram(x, nbins, density=True)
-        #Find to which bin each element corresponds
-        density_indexes = np.searchsorted(bin_edges, x, side='left')
-        #Correct to avoid index zero from being assiged to last element
-        density_indexes = np.where(density_indexes > 0, density_indexes,
-                                   density_indexes + 1)
+        # Find to which bin each element corresponds
+        density_indexes = np.searchsorted(bin_edges, x, side="left")
+        # Correct to avoid index zero from being assiged to last element
+        density_indexes = np.where(
+            density_indexes > 0, density_indexes, density_indexes + 1
+        )
         return density[density_indexes - 1]
 
 
@@ -146,7 +183,7 @@ def make_marginal_samples(joint_samples, nsamples=None):
 
 
 def log_sum(log_summands):
-    """ log_sum operation """
+    """log_sum operation"""
     a = np.inf
     x = log_summands.copy()
     while a == np.inf or a == -np.inf or np.isnan(a):
@@ -155,8 +192,9 @@ def log_sum(log_summands):
     return a
 
 
-def compute_harmonicmean(lnlike_post, posterior_sample=None, lnlikefunc=None,
-                         lnlikeargs=(), **kwargs):
+def compute_harmonicmean(
+    lnlike_post, posterior_sample=None, lnlikefunc=None, lnlikeargs=(), **kwargs
+):
     """
     Computes the harmonic mean estimate of the marginal likelihood.
     The estimation is based on n posterior samples
@@ -184,34 +222,42 @@ def compute_harmonicmean(lnlike_post, posterior_sample=None, lnlikefunc=None,
     Kass & Raftery (1995), JASA vol. 90, N. 430, pp. 773-795
     """
     if len(lnlike_post) == 0 and posterior_sample is not None:
-        samplesize = kwargs.pop('size', len(posterior_sample))
+        samplesize = kwargs.pop("size", len(posterior_sample))
         if samplesize < len(posterior_sample):
-            posterior_subsample = np.random.choice(posterior_sample,
-                                                   size=samplesize,
-                                                   replace=False)
+            posterior_subsample = np.random.choice(
+                posterior_sample, size=samplesize, replace=False
+            )
         else:
             posterior_subsample = posterior_sample.copy()
-        #Compute log likelihood in posterior sample.
+        # Compute log likelihood in posterior sample.
         log_likelihood = lnlikefunc(posterior_subsample, *lnlikeargs)
     elif len(lnlike_post) > 0:
-        samplesize = kwargs.pop('size', len(lnlike_post))
-        log_likelihood = np.random.choice(lnlike_post, size=samplesize,
-                                          replace=False)
+        samplesize = kwargs.pop("size", len(lnlike_post))
+        log_likelihood = np.random.choice(lnlike_post, size=samplesize, replace=False)
     hme = -log_sum(-log_likelihood) + log(len(log_likelihood))
     return hme
 
 
 def run_hme_mc(log_likelihood, nmc, samplesize):
-    """ Harmonic mean """
+    """Harmonic mean"""
     hme = np.zeros(nmc)
     for i in range(nmc):
         hme[i] = compute_harmonicmean(log_likelihood, size=samplesize)
     return hme
 
 
-def compute_cj_estimate(posterior_sample, lnlikefunc, lnpriorfunc,
-                        param_post, nsamples, qprob=None, lnlikeargs=(),
-                        lnpriorargs=(), lnlike_post=None, lnprior_post=None):
+def compute_cj_estimate(
+    posterior_sample,
+    lnlikefunc,
+    lnpriorfunc,
+    param_post,
+    nsamples,
+    qprob=None,
+    lnlikeargs=(),
+    lnpriorargs=(),
+    lnlike_post=None,
+    lnprior_post=None,
+):
     """
     Computes the Chib & Jeliazkov estimate of the bayesian evidence.
     The estimation is based on an posterior sample with n elements
@@ -251,66 +297,77 @@ def compute_cj_estimate(posterior_sample, lnlikefunc, lnpriorfunc,
     ----------
     Chib & Jeliazkov (2001): Journal of the Am. Stat. Assoc.; Mar 2001; 96, 453
     """
-    #Find fixed point on which to estimate posterior ordinate.
+    # Find fixed point on which to estimate posterior ordinate.
     if lnlike_post is not None:
-        #Pass values of log(likelihood) in posterior sample.
-        arg_fp = [lnlike_post, ]
+        # Pass values of log(likelihood) in posterior sample.
+        arg_fp = [
+            lnlike_post,
+        ]
     else:
-        #Pass function that computes log(likelihood).
-        arg_fp = [lnlikefunc, ]
+        # Pass function that computes log(likelihood).
+        arg_fp = [
+            lnlikefunc,
+        ]
     if lnlike_post is not None:
-        #Pass values of log(prior) in posterior sample.
+        # Pass values of log(prior) in posterior sample.
         arg_fp.append(lnprior_post)
     else:
-        #Pass function that computes log(prior).
+        # Pass function that computes log(prior).
         arg_fp.append(lnpriorfunc)
-    fp, lnpost0 = get_fixed_point(posterior_sample, param_post, lnlikefunc, lnpriorfunc,
-                                  lnlikeargs=lnlikeargs,
-                                  lnpriorargs=lnpriorargs)
-    #If proposal distribution is not given, define as multivariate Gaussian.
+    fp, lnpost0 = get_fixed_point(
+        posterior_sample,
+        param_post,
+        lnlikefunc,
+        lnpriorfunc,
+        lnlikeargs=lnlikeargs,
+        lnpriorargs=lnpriorargs,
+    )
+    # If proposal distribution is not given, define as multivariate Gaussian.
     if qprob is None:
-        #Get covariance from posterior sample
+        # Get covariance from posterior sample
         k = np.cov(posterior_sample.T)
         qprob = lib.MultivariateGaussian(fp, k)
     else:
-        #Check that qprob has the necessary attributes
-        for method in ('pdf', 'rvs'):
+        # Check that qprob has the necessary attributes
+        for method in ("pdf", "rvs"):
             try:
                 att = getattr(qprob, method)
             except AttributeError:
-                raise AttributeError('qprob does not have method '
-                                     '\'{}\''.format(method))
+                raise AttributeError(
+                    "qprob does not have method " "'{}'".format(method)
+                )
             if not callable(att):
-                raise TypeError('{} method of qprob is not '
-                                'callable'.format(method))
-    #Compute proposal density in posterior sample
+                raise TypeError("{} method of qprob is not " "callable".format(method))
+    # Compute proposal density in posterior sample
     q_post = qprob.pdf(posterior_sample)
-    #If likelihood over posterior sample is not given, compute it
+    # If likelihood over posterior sample is not given, compute it
     if lnlike_post is None:
         lnlike_post = lnlikefunc(posterior_sample, *lnlikeargs)
-    #Idem for prior
+    # Idem for prior
     if lnprior_post is None:
         lnprior_post = lnpriorfunc(posterior_sample, *lnpriorargs)
-    #Compute Metropolis ratio with respect to fixed point over posterior sample
+    # Compute Metropolis ratio with respect to fixed point over posterior sample
     lnalpha_post = metropolis_ratio(lnprior_post + lnlike_post, lnpost0)
-    #Sample from the proposal distribution with respect to fixed point
+    # Sample from the proposal distribution with respect to fixed point
     proposal_sample = qprob.rvs(nsamples)
-    #Compute likelihood and prior on proposal_sample
+    # Compute likelihood and prior on proposal_sample
     lnprior_prop = lnpriorfunc(proposal_sample, *lnpriorargs)
     if np.all(lnprior_prop == -np.inf):
-        raise ValueError('All samples from proposal density have zero prior'
-                         'probability. Increase nsample.')
-    #Now compute likelihood only on the samples where prior != 0.
+        raise ValueError(
+            "All samples from proposal density have zero prior"
+            "probability. Increase nsample."
+        )
+    # Now compute likelihood only on the samples where prior != 0.
     lnlike_prop = np.full_like(lnprior_prop, -np.inf)
     ind = lnprior_prop != -np.inf
     lnlike_prop[ind] = lnlikefunc(proposal_sample[ind, :], *lnlikeargs)
-    #Get Metropolis ratio with respect to fixed point over proposal sample
+    # Get Metropolis ratio with respect to fixed point over proposal sample
     lnalpha_prop = metropolis_ratio(lnpost0, lnprior_prop + lnlike_prop)
-    #Compute estimate of posterior ordinate (see Eq. 9 from reference)
+    # Compute estimate of posterior ordinate (see Eq. 9 from reference)
     num = log_sum(lnalpha_post + q_post) - log(len(posterior_sample))
     den = log_sum(lnalpha_prop) - log(len(proposal_sample))
     lnpostord = num - den
-    #Return log(Evidence) estimation
+    # Return log(Evidence) estimation
     return lnpost0 - lnpostord
 
 
@@ -324,13 +381,18 @@ def metropolis_ratio(lnpost0, lnpost1):
     :raises ValueError: if lnpost0 and lnpost1 have different lengths.
     :return: log(Metropolis ratio)
     """
-    if (hasattr(lnpost0, '__iter__') and hasattr(lnpost1, '__iter__') and
-            len(lnpost0) != len(lnpost1)):
-        raise ValueError('lnpost0 and lnpost1 have different lenghts.')
+    if (
+        hasattr(lnpost0, "__iter__")
+        and hasattr(lnpost1, "__iter__")
+        and len(lnpost0) != len(lnpost1)
+    ):
+        raise ValueError("lnpost0 and lnpost1 have different lenghts.")
     return np.minimum(lnpost1 - lnpost0, 0.0)
 
 
-def get_fixed_point(posterior_samples, param_post, lnlike, lnprior, lnlikeargs=(), lnpriorargs=()):
+def get_fixed_point(
+    posterior_samples, param_post, lnlike, lnprior, lnlikeargs=(), lnpriorargs=()
+):
     """
     Find the posterior point closest to the model of the lnlike distribution.
     :param array posterior_samples:
@@ -362,28 +424,32 @@ def get_fixed_point(posterior_samples, param_post, lnlike, lnprior, lnlikeargs=(
         log(prior * likelihood) evaluated at this point.
     """
     if param_post is not None:
-        #Use median of param_post as fixed point.
+        # Use median of param_post as fixed point.
         param0 = np.median(param_post)
-        #Find argument closest to median.
+        # Find argument closest to median.
         ind0 = np.argmin(np.abs(param_post - param0))
         fixed_point = posterior_samples[ind0, :]
-        #Compute log(likelihood) at fixed_point
-        if hasattr(lnlike, '__iter__'):
+        # Compute log(likelihood) at fixed_point
+        if hasattr(lnlike, "__iter__"):
             if len(lnlike) != len(posterior_samples):
-                raise IndexError('Number of elements in lnlike array and in '
-                                 'posterior sample must match.')
+                raise IndexError(
+                    "Number of elements in lnlike array and in "
+                    "posterior sample must match."
+                )
             lnlike0 = lnlike[ind0]
         else:
-            #Evaluate lnlike function at fixed point.
+            # Evaluate lnlike function at fixed point.
             lnlike0 = lnlike(fixed_point, *lnlikeargs)
-        #Compute log(prior) at fixed_point
-        if hasattr(lnprior, '__iter__'):
+        # Compute log(prior) at fixed_point
+        if hasattr(lnprior, "__iter__"):
             if len(lnprior) != len(posterior_samples):
-                raise IndexError('Number of elements in lnprior array and in '
-                                 'posterior sample must match.')
+                raise IndexError(
+                    "Number of elements in lnprior array and in "
+                    "posterior sample must match."
+                )
             lnprior0 = lnprior[ind0]
         else:
-            #Evaluate lnlike function at fixed point.
+            # Evaluate lnlike function at fixed point.
             lnprior0 = lnprior(fixed_point, *lnpriorargs)
         return fixed_point, lnlike0 + lnprior0
     raise NotImplementedError
