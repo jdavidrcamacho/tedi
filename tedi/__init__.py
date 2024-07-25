@@ -1,16 +1,3 @@
-"""
-    __init file___
-"""
-__version__ = '2.0'
+"""Main folder containing tedi scripts"""
 
-#covariance and mean functions
-from tedi import kernels, means
-
-#Gaussian and Student-t processes
-from tedi import process
-
-#useful function to have
-from tedi import utils, time
-
-#Evidence estimation
-from tedi import evidence, lib
+__version__ = '3.0'
