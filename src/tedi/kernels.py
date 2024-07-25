@@ -17,6 +17,14 @@ __all__ = [
     "Matern32",
     "Matern52",
     "RQP",
+    "Paciorek",
+    "PiecewiseSE",
+    "PiecewiseRQ",
+    "NewPeriodic",
+    "QuasiNewPeriodic",
+    "NewRQP",
+    "HarmonicPeriodic",
+    "QuasiHarmonicPeriodic",
 ]
 
 
@@ -160,7 +168,9 @@ class Periodic(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Periodic function.
         """
-        return self.amp**2 * exp(-2 * sine(pi * abs(r) / self.p) ** 2 / self.ell**2)
+        return self.amp**2 * exp(
+            -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell**2
+        )  # NOQA
 
 
 class QuasiPeriodic(Kernel):
@@ -177,7 +187,9 @@ class QuasiPeriodic(Kernel):
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amp: float, ell_e: float, p: float, ell_p: float) -> None:
+    def __init__(
+        self, amp: float, ell_e: float, p: float, ell_p: float
+    ) -> None:  # NOQA
         """Initialize the QuasiPeriodic kernel with its parameters.
 
         Args:
@@ -244,7 +256,7 @@ class RationalQuadratic(Kernel):
             r (np.ndarray): Difference between two data points.
 
         Returns:
-            np.ndarray: Kernel value computed using the Rational Quadratic function.
+            np.ndarray: Kernel value computed.
         """
         return self.amp**2 * (1 + 0.5 * r**2 / (self.alpha * self.ell**2)) ** (
             -self.alpha
@@ -399,21 +411,25 @@ class Matern52(Kernel):
         minus_sqrt_5_r_ell = -sqrt_5 * abs_r / self.ell
         return (
             self.amp**2
-            * (1 + (3 * sqrt_5 * self.ell * abs_r + 5 * abs_r**2) / (3 * self.ell**2))
+            * (
+                1
+                + (3 * sqrt_5 * self.ell * abs_r + 5 * abs_r**2)
+                / (3 * self.ell**2)  # NOQA
+            )
             * exp(minus_sqrt_5_r_ell)
         )
 
 
 class RQP(Kernel):
     """
-    RQP kernel: Product of the periodic kernel and the rational quadratic kernel.
+    Product of the periodic kernel and the rational quadratic kernel.
 
     This kernel combines the properties of the periodic kernel and the rational
     quadratic kernel. The behavior of the RQP kernel changes with the parameter
     alpha:
 
-    - As alpha approaches infinity, the RQP kernel approaches the quasi-periodic
-    kernel.
+    - As alpha approaches infinity, the RQP kernel approaches the
+    quasi-periodic kernel.
     - As alpha approaches zero, the RQP kernel approaches the periodic kernel.
 
     There exists an optimal range for alpha where the RQP kernel often performs
@@ -449,7 +465,9 @@ class RQP(Kernel):
         self.params_number = 5
 
     def __call__(self, r):
-        per_component = exp(-2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2)
+        per_component = exp(
+            -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2
+        )  # NOQA
         rq_component = 1 + r**2 / (2 * self.alpha * self.ell_e**2)
         return (
             self.amp**2
@@ -501,7 +519,7 @@ class Paciorek(Kernel):
 
 class PiecewiseSE(Kernel):
     """
-    Product of the Squared Exponential kernel and a piecewise polynomial kernel.
+    Product of the Squared Exp kernel and a piecewise polynomial kernel.
 
     This kernel combines a squared exponential (SE) kernel with a piecewise
     polynomial kernel to model data with both smooth and piecewise behaviors.
@@ -557,7 +575,9 @@ class PiecewiseRQ(Kernel):
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, eta1: float, alpha: float, eta2: float, eta3: float) -> None:
+    def __init__(
+        self, eta1: float, alpha: float, eta2: float, eta3: float
+    ) -> None:  # NOQA
         """Initialize the PiecewiseRQ kernel with its parameters.
 
         Args:
@@ -636,7 +656,7 @@ class NewPeriodic(Kernel):
             np.ndarray: Kernel value computed.
         """
         return self.amp**2 * (
-            1 + 2 * sine(pi * abs(r) / self.p) ** 2 / (self.alpha * self.ell**2)
+            1 + 2 * sine(pi * abs(r) / self.p) ** 2 / (self.alpha * self.ell**2)  # NOQA
         ) ** (-self.alpha)
 
 
@@ -689,7 +709,8 @@ class QuasiNewPeriodic(Kernel):
         """
         abs_r = abs(r)
         per_component = (
-            1 + 2 * sine(pi * abs_r / self.p) ** 2 / (self.alpha * self.ell_p**2)
+            1
+            + 2 * sine(pi * abs_r / self.p) ** 2 / (self.alpha * self.ell_p**2)  # NOQA
         ) ** (-self.alpha)
         exp_component = exp(-0.5 * abs_r**2 / self.ell_e**2)
         return self.amp**2 * per_component * exp_component
@@ -697,9 +718,9 @@ class QuasiNewPeriodic(Kernel):
 
 class NewRQP(Kernel):
     """
-    Definition of a new quasi-periodic kernel. Derived from mapping the rational
-    quadratic kernel to the 2D space u(x) = (cos x, sin x) to then multiply it
-    by a rational quadratic kernel
+    Definition of a new quasi-periodic kernel. Derived from mapping the
+    rational quadratic kernel to the 2D space u(x) = (cos x, sin x) to then
+    multiply it by a rational quadratic kernel
 
     Args:
         amp  (float): Amplitude of the kernel.
@@ -750,11 +771,14 @@ class NewRQP(Kernel):
             np.ndarray: Computed kernel value.
         """
         abs_r = np.abs(r)
-        alpha1_component = (1 + 0.5 * abs_r**2 / (self.alpha1 * self.ell_e**2)) ** (
+        alpha1_component = (
+            1 + 0.5 * abs_r**2 / (self.alpha1 * self.ell_e**2)
+        ) ** (  # NOQA
             -self.alpha1
         )
         alpha2_component = (
-            1 + 2 * sine(pi * abs_r / self.P) ** 2 / (self.alpha2 * self.ell_p**2)
+            1
+            + 2 * sine(pi * abs_r / self.P) ** 2 / (self.alpha2 * self.ell_p**2)  # NOQA
         ) ** (-self.alpha2)
         return self.amp**2 * alpha1_component * alpha2_component
 
@@ -799,23 +823,33 @@ class HarmonicPeriodic(Kernel):
         Returns:
             np.ndarray: Computed kernel values.
         """
-        first_sine = (
-            sine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        first_sin = (
+            sine((self.n + 0.5) * 2 * pi * r / self.p)
+            / 2
+            * sine(pi * r / self.p)  # NOQA
         )
-        second_sine = (
-            sine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        second_sin = (
+            sine((self.n + 0.5) * 2 * pi * s / self.p)
+            / 2
+            * sine(pi * s / self.p)  # NOQA
         )
-        sine_component = (first_sine - second_sine) ** 2
+        sine_component = (first_sin - second_sin) ** 2
 
         first_cot = 0.5 / np.tan(pi * r / self.p)
         first_cos = (
-            cosine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+            cosine((self.n + 0.5) * 2 * pi * r / self.p)
+            / 2
+            * sine(pi * r / self.p)  # NOQA
         )
         second_cot = 0.5 / np.tan(pi * s / self.p)
         second_cos = (
-            cosine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+            cosine((self.n + 0.5) * 2 * pi * s / self.p)
+            / 2
+            * sine(pi * s / self.p)  # NOQA
         )
-        cot_cos_component = (first_cot - first_cos - second_cot + second_cos) ** 2
+        cot_cos_component = (
+            first_cot - first_cos - second_cot + second_cos
+        ) ** 2  # NOQA
 
         return self.amp**2 * exp(
             -0.5 * (sine_component + cot_cos_component) / self.ell**2
@@ -867,25 +901,37 @@ class QuasiHarmonicPeriodic(Kernel):
         Returns:
             np.ndarray: Computed kernel values.
         """
-        first_sine = (
-            sine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        first_sin = (
+            sine((self.n + 0.5) * 2 * pi * r / self.p)
+            / 2
+            * sine(pi * r / self.p)  # NOQA
         )
-        second_sine = (
-            sine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        second_sin = (
+            sine((self.n + 0.5) * 2 * pi * s / self.p)
+            / 2
+            * sine(pi * s / self.p)  # NOQA
         )
 
-        sine_component = (first_sine - second_sine) ** 2
+        sine_component = (first_sin - second_sin) ** 2
 
         first_cot = 0.5 / np.tan(pi * r / self.p)
         first_cos = (
-            cosine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+            cosine((self.n + 0.5) * 2 * pi * r / self.p)
+            / 2
+            * sine(pi * r / self.p)  # NOQA
         )
         second_cot = 0.5 / np.tan(pi * s / self.p)
         second_cos = (
-            cosine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+            cosine((self.n + 0.5) * 2 * pi * s / self.p)
+            / 2
+            * sine(pi * s / self.p)  # NOQA
         )
-        cot_cos_component = (first_cot - first_cos - second_cot + second_cos) ** 2
+        cot_cos_component = (
+            first_cot - first_cos - second_cot + second_cos
+        ) ** 2  # NOQA
 
-        hp_kernel = exp(-0.5 * (sine_component + cot_cos_component) / self.ell_p**2)
+        hp_kernel = exp(
+            -0.5 * (sine_component + cot_cos_component) / self.ell_p**2
+        )  # NOQA
         se_kernel = exp(-0.5 * abs(r - s) ** 2 / self.ell_e**2)
         return self.amp**2 * hp_kernel * se_kernel
