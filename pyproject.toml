@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "tedi"
+version = "3.0"
+description = "A python library for Gaussian or Student-t processes regression"
+authors = ["joao.camacho <joao.camacho@astro.up.pt>"]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^2.0.1"
+scipy = "^1.14.0"
+emcee = "^3.1.6"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
