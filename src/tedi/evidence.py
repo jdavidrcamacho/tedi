@@ -1,6 +1,4 @@
-"""
-Computation of the evidence using the method developed by Perrakis et al. (2014)
-"""
+"""Computation of the evidence using the method of Perrakis et al. (2014)"""
 
 import random
 from math import log, sqrt
@@ -8,10 +6,9 @@ from math import log, sqrt
 import numpy as np
 import scipy.stats
 
-from src.tedi import lib
+from .utils.evidence import MultivariateGaussian
 
 
-# Original functions taken from https://github.com/exord/bayev
 def compute_perrakis_estimate(
     marginal_sample,
     lnlikefunc,
@@ -25,8 +22,10 @@ def compute_perrakis_estimate(
 ):
     """
     Computes the Perrakis estimate of the bayesian evidence.
-    The estimation is based on n marginal posterior samples
-    (indexed by s, with s = 0, ..., n-1).
+
+    The estimation is based on n marginal posterior samples indexed by s, with
+    s = 0, ..., n-1.
+
     :param array marginal_sample:
         A sample from the parameter marginal posterior distribution.
         Dimensions are (n x k), where k is the number of parameters.
@@ -41,8 +40,8 @@ def compute_perrakis_estimate(
     :param tuple lnpriorargs:
         Extra arguments passed to the lnprior function.
     :param str densityestimation:
-        The method used to estimate theinitial_samples marginal posterior density of each
-        model parameter ("normal", "kde", or "histogram").
+        The method used to estimate theinitial_samples marginal posterior
+        density of each model parameter ("normal", "kde", or "histogram").
     Other parameters
     ----------------
     :param kwargs:
@@ -326,7 +325,7 @@ def compute_cj_estimate(
     if qprob is None:
         # Get covariance from posterior sample
         k = np.cov(posterior_sample.T)
-        qprob = lib.MultivariateGaussian(fp, k)
+        qprob = MultivariateGaussian(fp, k)
     else:
         # Check that qprob has the necessary attributes
         for method in ("pdf", "rvs"):
