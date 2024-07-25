@@ -6,15 +6,14 @@ calendar in 1582. No support for proleptic Gregorian/Julian calendars.
 :Author: Matt Davis
 :Website: http://github.com/jiffyclub
 
+Note: The Python datetime module assumes an infinitely valid Gregorian calendar.
+      The Gregorian calendar took effect after 10-15-1582 and the dates 10-05 
+      through 10-14-1582 never occurred. Python datetime objects will produce 
+      incorrect time deltas if one date is from before 10-15-1582.
 """
 
 import datetime as dt
 import math
-
-# Note: The Python datetime module assumes an infinitely valid Gregorian calendar.
-#       The Gregorian calendar took effect after 10-15-1582 and the dates 10-05 through
-#       10-14-1582 never occurred. Python datetime objects will produce incorrect
-#       time deltas if one date is from before 10-15-1582.
 
 
 def mjd_to_jd(mjd):
