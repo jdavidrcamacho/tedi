@@ -82,7 +82,7 @@ class Kernel(object):
             b (Kernel): Another kernel object.
 
         Returns:
-            Product: Product kernel object representing the product of the two kernels.
+            Product: Object representing the product of the two kernels.
         """
         return Product(self, b)
 
@@ -94,7 +94,7 @@ class Kernel(object):
             b (Kernel): Another kernel object.
 
         Returns:
-            Product: Product kernel object representing the product of the two kernels.
+            Product: Object representing the product of the two kernels.
         """
         return self.__mul__(b)
 
@@ -123,7 +123,7 @@ class CompositeKernel(Kernel, ABC):
     @abstractmethod
     def _operate(self, r: np.ndarray) -> np.ndarray:
         """
-        Abstract method defining the operation performed by the composite kernel.
+        Abstract method defining the operation of the composite kernel.
 
         This method should be implemented by subclasses to specify the
         way base kernels are combined (e.g., addition or multiplication).
@@ -160,7 +160,7 @@ class CompositeKernel(Kernel, ABC):
                  and base kernels.
         """
         op = "+" if isinstance(self, Sum) else "*"
-        return f"{op}.join([{str(self.base_kernels)} for k in self.base_kernels])"
+        return op.join([{str(k)} for k in self.base_kernels])
 
 
 class Sum(CompositeKernel):
@@ -221,7 +221,7 @@ class Product(CompositeKernel):
     """
     Product kernel representing the product of two base kernels.
 
-    This kernel computes the product of the evaluations of two provided base kernels.
+    This kernel computes the product of the evaluations of two base kernels.
 
     Attributes:
         base_kernels (list[Kernel]): List of the base kernels being multiplied.

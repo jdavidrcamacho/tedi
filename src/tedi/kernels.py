@@ -94,20 +94,20 @@ class SquaredExponential(Kernel):
     amplitude and length-scale parameters.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         ell (float): Length-scale parameter.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, ell: float) -> None:
+    def __init__(self, amp: float, ell: float) -> None:
         """Initialize the Squared Exponential kernel.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             ell (float): Length-scale.
         """
-        super().__init__(amplitude, ell)
-        self.amplitude = amplitude
+        super().__init__(amp, ell)
+        self.amp = amp
         self.ell = ell
         self.params_number = 2
 
@@ -120,7 +120,7 @@ class SquaredExponential(Kernel):
         Returns:
             np.ndarray: Kernel value computed with the Squared Exponential.
         """
-        return self.amplitude**2 * exp(-0.5 * r**2 / self.ell**2)
+        return self.amp**2 * exp(-0.5 * r**2 / self.ell**2)
 
 
 class Periodic(Kernel):
@@ -131,22 +131,22 @@ class Periodic(Kernel):
     length-scale, and period.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         ell (float): Length-scale parameter.
         p (float): Period of the kernel.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, p: float, ell: float) -> None:
+    def __init__(self, amp: float, p: float, ell: float) -> None:
         """Initialize the Periodic kernel.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             p (float): Period of the kernel.
             ell (float): Length-scale.
         """
-        super().__init__(amplitude, p, ell)
-        self.amplitude: float = amplitude
+        super().__init__(amp, p, ell)
+        self.amp: float = amp
         self.ell: float = ell
         self.p: float = p
         self.params_number: int = 3
@@ -160,9 +160,7 @@ class Periodic(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Periodic function.
         """
-        return self.amplitude**2 * exp(
-            -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell**2
-        )
+        return self.amp**2 * exp(-2 * sine(pi * abs(r) / self.p) ** 2 / self.ell**2)
 
 
 class QuasiPeriodic(Kernel):
@@ -172,24 +170,24 @@ class QuasiPeriodic(Kernel):
     This kernel is the product of the periodic and squared exponential kernels.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp(float): Amplitude of the kernel.
         ell_e (float): Evolutionary time scale.
         ell_p (float): Length scale of the periodic component.
         p (float): Kernel periodicity.
-        params_number (int): Number of hyperparameters (always 4 for QuasiPeriodic kernel).
+        params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, ell_e: float, p: float, ell_p: float) -> None:
+    def __init__(self, amp: float, ell_e: float, p: float, ell_p: float) -> None:
         """Initialize the QuasiPeriodic kernel with its parameters.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp (float): Amplitude of the kernel.
             ell_e (float): Evolutionary time scale.
             p (float): Kernel periodicity.
             ell_p (float): Length scale of the periodic component.
         """
-        super().__init__(amplitude, ell_e, p, ell_p)
-        self.amplitude: float = amplitude
+        super().__init__(amp, ell_e, p, ell_p)
+        self.amp: float = amp
         self.ell_e: float = ell_e
         self.p: float = p
         self.ell_p: float = ell_p
@@ -204,7 +202,7 @@ class QuasiPeriodic(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the QuasiPeriodic function.
         """
-        return self.amplitude**2 * exp(
+        return self.amp**2 * exp(
             -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2
             - r**2 / (2 * self.ell_e**2)
         )
@@ -219,22 +217,22 @@ class RationalQuadratic(Kernel):
     It is used to model functions with varying length scales.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
-        alpha (float): Relative weighting of large-scale and small-scale variations.
-        ell (float): Characteristic length scale that defines the kernel's smoothness.
+        amp (float): Amplitude of the kernel.
+        alpha (float): Weight of large-scale and small-scale variations.
+        ell (float): Characteristic length scale that defines smoothness.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, alpha: float, ell: float) -> None:
+    def __init__(self, amp: float, alpha: float, ell: float) -> None:
         """Initialize the Rational Quadratic kernel with its parameters.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
-            alpha (float): Relative weighting of large-scale and small-scale variations.
-            ell (float): Characteristic length scale that defines the kernel's smoothness.
+            amp (float): Amplitude of the kernel.
+            alpha (float): Weight of large-scale and small-scale variations.
+            ell (float): Characteristic length scale that defines smoothness.
         """
-        super().__init__(amplitude, alpha, ell)
-        self.amplitude: float = amplitude
+        super().__init__(amp, alpha, ell)
+        self.amp: float = amp
         self.alpha: float = alpha
         self.ell: float = ell
         self.params_number: int = 3
@@ -248,12 +246,11 @@ class RationalQuadratic(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Rational Quadratic function.
         """
-        return self.amplitude**2 * (
-            1 + 0.5 * r**2 / (self.alpha * self.ell**2)
-        ) ** (-self.alpha)
+        return self.amp**2 * (1 + 0.5 * r**2 / (self.alpha * self.ell**2)) ** (
+            -self.alpha
+        )
 
 
-##### Cosine kernel ###########################################################
 class Cosine(Kernel):
     """
     Cosine kernel.
@@ -262,20 +259,20 @@ class Cosine(Kernel):
     and period.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp (float): Amplitude of the kernel.
         P (float): Period of the kernel.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, p: float) -> None:
-        """Initialize the Cosine kernel with its amplitude and period.
+    def __init__(self, amp: float, p: float) -> None:
+        """Initialize the Cosine kernel with its amp and period.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp (float): Amplitude of the kernel.
             p (float): Period of the kernel.
         """
-        super().__init__(amplitude, p)
-        self.amplitude: float = amplitude
+        super().__init__(amp, p)
+        self.amp: float = amp
         self.p: float = p
         self.params_number: int = 2
 
@@ -288,7 +285,7 @@ class Cosine(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Cosine function.
         """
-        return self.amplitude**2 * cosine(2 * pi * abs(r) / self.p)
+        return self.amp**2 * cosine(2 * pi * abs(r) / self.p)
 
 
 class Exponential(Kernel):
@@ -299,20 +296,20 @@ class Exponential(Kernel):
     parameter v = 1/2.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp (float): Amplitude of the kernel.
         ell (float): Characteristic length scale.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, ell: float) -> None:
-        """Initialize the Exponential kernel with its amplitude and length scale.
+    def __init__(self, amp: float, ell: float) -> None:
+        """Initialize the Exponential kernel with its amp and length scale.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp (float): Amplitude of the kernel.
             ell (float): Characteristic length scale.
         """
-        super().__init__(amplitude, ell)
-        self.amplitude: float = amplitude
+        super().__init__(amp, ell)
+        self.amp: float = amp
         self.ell: float = ell
         self.params_number: int = 2
 
@@ -325,7 +322,7 @@ class Exponential(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Exponential function.
         """
-        return self.amplitude**2 * exp(-abs(r) / self.ell)
+        return self.amp**2 * exp(-abs(r) / self.ell)
 
 
 class Matern32(Kernel):
@@ -335,20 +332,20 @@ class Matern32(Kernel):
     This kernel is a special case of the Matern family with parameter v = 3/2.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp (float): Amplitude of the kernel.
         ell (float): Characteristic length scale.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, ell: float) -> None:
-        """Initialize the Matern 3/2 kernel with its amplitude and length scale.
+    def __init__(self, amp: float, ell: float) -> None:
+        """Initialize the Matern 3/2 kernel with its amp and length scale.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp (float): Amplitude of the kernel.
             ell (float): Characteristic length scale.
         """
-        super().__init__(amplitude, ell)
-        self.amplitude: float = amplitude
+        super().__init__(amp, ell)
+        self.amp: float = amp
         self.ell: float = ell
         self.params_number: int = 2
 
@@ -362,10 +359,9 @@ class Matern32(Kernel):
             np.ndarray: Kernel value computed using the Matern 3/2 function.
         """
         sqrt_3_r_ell = sqrt(3) * abs(r) / self.ell
-        return self.amplitude**2 * (1 + sqrt_3_r_ell) * exp(-sqrt_3_r_ell)
+        return self.amp**2 * (1 + sqrt_3_r_ell) * exp(-sqrt_3_r_ell)
 
 
-#### Matern 5/2 kernel ########################################################
 class Matern52(Kernel):
     """
     Matern 5/2 kernel.
@@ -373,20 +369,20 @@ class Matern52(Kernel):
     This kernel is a special case of the Matern family with parameter v = 5/2.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp (float): Amplitude of the kernel.
         ell (float): Characteristic length scale.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, ell: float) -> None:
-        """Initialize the Matern 5/2 kernel with its amplitude and length scale.
+    def __init__(self, amp: float, ell: float) -> None:
+        """Initialize the Matern 5/2 kernel with its amp and length scale.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp (float): Amplitude of the kernel.
             ell (float): Characteristic length scale.
         """
-        super().__init__(amplitude, ell)
-        self.amplitude: float = amplitude
+        super().__init__(amp, ell)
+        self.amp: float = amp
         self.ell: float = ell
         self.params_number: int = 2
 
@@ -402,13 +398,12 @@ class Matern52(Kernel):
         abs_r, sqrt_5 = abs(r), sqrt(5)
         minus_sqrt_5_r_ell = -sqrt_5 * abs_r / self.ell
         return (
-            self.amplitude**2
+            self.amp**2
             * (1 + (3 * sqrt_5 * self.ell * abs_r + 5 * abs_r**2) / (3 * self.ell**2))
             * exp(minus_sqrt_5_r_ell)
         )
 
 
-##### RQP kernel ##############################################################
 class RQP(Kernel):
     """
     RQP kernel: Product of the periodic kernel and the rational quadratic kernel.
@@ -425,7 +420,7 @@ class RQP(Kernel):
     better than the quasi-periodic kernel.
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp (float): Amplitude of the kernel.
         alpha (float): Parameter of the rational quadratic kernel.
         ell_e (float): Aperiodic length scale.
         P (float): Periodicity of the kernel.
@@ -434,19 +429,19 @@ class RQP(Kernel):
     """
 
     def __init__(
-        self, amplitude: float, alpha: float, ell_e: float, p: float, ell_p: float
+        self, amp: float, alpha: float, ell_e: float, p: float, ell_p: float
     ) -> None:
         """Initialize the RQP kernel with its parameters.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             alpha (float): Parameter of the rational quadratic kernel.
             ell_e (float): Aperiodic length scale.
             P (float): Periodicity of the kernel.
             ell_p (float): Periodic length scale.
         """
-        super().__init__(amplitude, alpha, ell_e, p, ell_p)
-        self.amplitude = amplitude
+        super().__init__(amp, alpha, ell_e, p, ell_p)
+        self.amp = amp
         self.alpha = alpha
         self.ell_e = ell_e
         self.p = p
@@ -457,7 +452,7 @@ class RQP(Kernel):
         per_component = exp(-2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2)
         rq_component = 1 + r**2 / (2 * self.alpha * self.ell_e**2)
         return (
-            self.amplitude**2
+            self.amp**2
             * per_component
             / (np.sign(rq_component) * abs(rq_component) ** self.alpha)
         )
@@ -468,22 +463,22 @@ class Paciorek(Kernel):
     Modified Paciorek's kernel (stationary version).
 
     Attributes:
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         ell_1 (float): First length scale.
         ell_2 (float): Second length scale.
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, ell_1: float, ell_2: float) -> None:
-        """Initialize the Paciorek kernel with its amplitude and length scales.
+    def __init__(self, amp: float, ell_1: float, ell_2: float) -> None:
+        """Initialize the Paciorek kernel with its amp  and length scales.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             ell_1 (float): First length scale.
             ell_2 (float): Second length scale.
         """
-        super().__init__(amplitude, ell_1, ell_2)
-        self.amplitude: float = amplitude
+        super().__init__(amp, ell_1, ell_2)
+        self.amp: float = amp
         self.ell_1: float = ell_1
         self.ell_2: float = ell_2
         self.params_number: int = 3
@@ -501,7 +496,7 @@ class Paciorek(Kernel):
             2 * self.ell_1 * self.ell_2 / (self.ell_1**2 + self.ell_2**2)
         )
         exp_decay = exp(-2 * r * r / (self.ell_1**2 + self.ell_2**2))
-        return self.amplitude**2 * length_scales * exp_decay
+        return self.amp**2 * length_scales * exp_decay
 
 
 class PiecewiseSE(Kernel):
@@ -546,8 +541,7 @@ class PiecewiseSE(Kernel):
         abs_r_normalized = abs(r / (0.5 * self.eta3))
         piecewise = (3 * abs_r_normalized + 1) * (1 - abs_r_normalized) ** 3
         piecewise = np.where(abs_r_normalized > 1, 0, piecewise)
-        k = SE_term * piecewise
-        return k
+        return SE_term * piecewise
 
 
 class PiecewiseRQ(Kernel):
@@ -605,27 +599,27 @@ class NewPeriodic(Kernel):
 
 
     Args:
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         alpha2 (float): Alpha parameter of the Rational Quadratic mapping.
         p (float): Period of the kernel.
-        l (float): Length scale of the periodic component.
+        ell (float): Length scale of the periodic component.
     """
 
-    def __init__(self, amplitude: float, alpha: float, p: float, l: float) -> None:
+    def __init__(self, amp: float, alpha: float, p: float, ell: float) -> None:
         """
         Initialize the NewPeriodic kernel with its parameters.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             alpha (float): Alpha parameter of the Rational Quadratic kernel.
             p (float): Period of the kernel.
-            l (float): Length scale of the periodic component.
+            ell (float): Length scale of the periodic component.
         """
-        super().__init__(amplitude, alpha, p, l)
-        self.amplitude: float = amplitude
+        super().__init__(amp, alpha, p, ell)
+        self.amp: float = amp
         self.alpha: float = alpha
         self.p: float = p
-        self.l: float = l
+        self.ell: float = ell
         self.params_number: int = 4
 
     def __call__(self, r: np.ndarray) -> np.ndarray:
@@ -641,8 +635,8 @@ class NewPeriodic(Kernel):
         Returns:
             np.ndarray: Kernel value computed.
         """
-        return self.amplitude**2 * (
-            1 + 2 * sine(pi * abs(r) / self.p) ** 2 / (self.alpha * self.l**2)
+        return self.amp**2 * (
+            1 + 2 * sine(pi * abs(r) / self.p) ** 2 / (self.alpha * self.ell**2)
         ) ** (-self.alpha)
 
 
@@ -654,7 +648,7 @@ class QuasiNewPeriodic(Kernel):
 
 
     Args:
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         alpha (float): Alpha parameter of the Rational Quadratic kernel.
         ell_e (float): Length scale of the aperiodic component.
         p (float): Period of the periodic component.
@@ -662,20 +656,21 @@ class QuasiNewPeriodic(Kernel):
     """
 
     def __init__(
-        self, amplitude: float, alpha: float, ell_e: float, p: float, ell_p: float
+        self, amp: float, alpha: float, ell_e: float, p: float, ell_p: float
     ) -> None:
         """
         Initialize the QuasiNewPeriodic kernel with its parameters.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
-            alpha2 (float): Alpha parameter of the Rational Quadratic kernel used in the mapping.
+            amp (float): Amplitude of the kernel.
+            alpha2 (float): Alpha parameter of the Rational Quadratic kernel
+                used in the mapping.
             ell_e (float): Length scale of the aperiodic component.
             P (float): Period of the periodic component.
             ell_p (float): Length scale of the periodic component.
         """
-        super().__init__(amplitude, alpha, ell_e, p, ell_p)
-        self.amplitude: float = amplitude
+        super().__init__(amp, alpha, ell_e, p, ell_p)
+        self.amp: float = amp
         self.alpha: float = alpha
         self.ell_e: float = ell_e
         self.p: float = p
@@ -697,7 +692,7 @@ class QuasiNewPeriodic(Kernel):
             1 + 2 * sine(pi * abs_r / self.p) ** 2 / (self.alpha * self.ell_p**2)
         ) ** (-self.alpha)
         exp_component = exp(-0.5 * abs_r**2 / self.ell_e**2)
-        return self.amplitude**2 * per_component * exp_component
+        return self.amp**2 * per_component * exp_component
 
 
 class NewRQP(Kernel):
@@ -707,7 +702,7 @@ class NewRQP(Kernel):
     by a rational quadratic kernel
 
     Args:
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         alpha1 (float): Alpha parameter of the Rational Quadratic kernel.
         alpha2 (float): Alpha parameter of the Rational Quadratic mapping.
         ell_e (float): Length scale of the aperiodic component.
@@ -717,7 +712,7 @@ class NewRQP(Kernel):
 
     def __init__(
         self,
-        amplitude: float,
+        amp: float,
         alpha1: float,
         alpha2: float,
         ell_e: float,
@@ -728,15 +723,15 @@ class NewRQP(Kernel):
         Initialize the NewRQP kernel with its parameters.
 
         Args:
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             alpha1 (float): Alpha parameter of the Rational Quadratic kernel.
             alpha2 (float): Alpha parameter of the Rational Quadratic mapping.
             ell_e (float): Length scale of the aperiodic component.
             P (float): Period of the periodic component.
             ell_p (float): Length scale of the periodic component.
         """
-        super().__init__(amplitude, alpha1, alpha2, ell_e, p, ell_p)
-        self.amplitude: float = amplitude
+        super().__init__(amp, alpha1, alpha2, ell_e, p, ell_p)
+        self.amp: float = amp
         self.alpha1: float = alpha1
         self.alpha2: float = alpha2
         self.ell_e: float = ell_e
@@ -761,7 +756,7 @@ class NewRQP(Kernel):
         alpha2_component = (
             1 + 2 * sine(pi * abs_r / self.P) ** 2 / (self.alpha2 * self.ell_p**2)
         ) ** (-self.alpha2)
-        return self.amplitude**2 * alpha1_component * alpha2_component
+        return self.amp**2 * alpha1_component * alpha2_component
 
 
 class HarmonicPeriodic(Kernel):
@@ -771,24 +766,24 @@ class HarmonicPeriodic(Kernel):
 
     Args:
         n (int): Number of harmonics in the periodic signal.
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         p (float): Period of the kernel.
         ell (float): Length scale for the periodic component.
     """
 
-    def __init__(self, n: int, amplitude: float, p: float, ell: float) -> None:
+    def __init__(self, n: int, amp: float, p: float, ell: float) -> None:
         """
         Initialize the HarmonicPeriodic kernel with its parameters.
 
         Args:
             n (int): Number of harmonics in the periodic signal.
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             p (float): Period of the kernel.
             ell (float): Length scale for the periodic component.
         """
-        super().__init__(n, amplitude, p, ell)
+        super().__init__(n, amp, p, ell)
         self.n: int = n
-        self.amplitude: float = amplitude
+        self.amp: float = amp
         self.ell: float = ell
         self.p: float = p
         self.params_number: int = 4
@@ -818,11 +813,11 @@ class HarmonicPeriodic(Kernel):
         )
         second_cot = 0.5 / np.tan(pi * s / self.p)
         second_cos = (
-            cosine((self.n + 0.5) * 2 * pi * s / self.P) / 2 * sine(pi * s / self.p)
+            cosine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
         )
         cot_cos_component = (first_cot - first_cos - second_cot + second_cos) ** 2
 
-        return self.amplitude**2 * exp(
+        return self.amp**2 * exp(
             -0.5 * (sine_component + cot_cos_component) / self.ell**2
         )
 
@@ -834,28 +829,28 @@ class QuasiHarmonicPeriodic(Kernel):
 
     Args:
         n (int): Number of harmonics in the periodic signal.
-        amplitude (float): Amplitude of the kernel.
+        amp  (float): Amplitude of the kernel.
         ell_e (float): Aperiodic length scale.
         p (float): Period of the kernel.
         ell_p (float): Periodic length scale.
     """
 
     def __init__(
-        self, n: int, amplitude: float, ell_e: float, p: float, ell_p: float
+        self, n: int, amp: float, ell_e: float, p: float, ell_p: float
     ) -> None:
         """
         Initialize the QuasiHarmonicPeriodic kernel with its parameters.
 
         Args:
             n (int): Number of harmonics in the periodic signal.
-            amplitude (float): Amplitude of the kernel.
+            amp  (float): Amplitude of the kernel.
             ell_e (float): Aperiodic length scale.
             p (float): Period of the kernel.
             ell_p (float): Periodic length scale.
         """
-        super().__init__(n, amplitude, ell_e, p, ell_p)
+        super().__init__(n, amp, ell_e, p, ell_p)
         self.n: int = n
-        self.amplitude: float = amplitude
+        self.amp: float = amp
         self.ell_e: float = ell_e
         self.p: float = p
         self.ell_p: float = ell_p
@@ -878,6 +873,7 @@ class QuasiHarmonicPeriodic(Kernel):
         second_sine = (
             sine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
         )
+
         sine_component = (first_sine - second_sine) ** 2
 
         first_cot = 0.5 / np.tan(pi * r / self.p)
@@ -892,4 +888,4 @@ class QuasiHarmonicPeriodic(Kernel):
 
         hp_kernel = exp(-0.5 * (sine_component + cot_cos_component) / self.ell_p**2)
         se_kernel = exp(-0.5 * abs(r - s) ** 2 / self.ell_e**2)
-        return self.amplitude**2 * hp_kernel * se_kernel
+        return self.amp**2 * hp_kernel * se_kernel
