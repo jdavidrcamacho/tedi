@@ -1,12 +1,10 @@
-"""
-Created on Tue Sep 25 15:06:55 2018
-
-@author: joaocamacho
-"""
+"""Calculate log-likelihood example"""
 
 import numpy as np
 
 from src.tedi import kernels, means, process
+
+np.random.seed(23011990)
 
 # Data
 time = np.linspace(1, 10, 50)
@@ -20,8 +18,27 @@ print(kernel)
 
 # Gaussian processes
 gpOBJ = process.GP(kernel, mean, time, y, yerr)
-print(gpOBJ.log_likelihood(kernel))
+gp_loglike = gpOBJ.log_likelihood(kernel)
+print(f"GP log-likelihood = {gp_loglike}")
 
 # Student-t processes
 tpOBJ = process.TP(kernel, 5, mean, time, y, yerr)
-print(tpOBJ.log_likelihood(kernel, 5))
+tp_loglike = tpOBJ.log_likelihood(kernel, 5)
+print(f"TP log-likelihood = {tp_loglike}")
+
+# Assert values are the expected ones
+assert gp_loglike == -134.7964846941749
+assert tp_loglike == -106.93685196354443
+
+
+kernel = kernels.Matern32(10, 1) + kernels.WhiteNoise(0.1)
+gpOBJ = process.GP(kernel, mean, time, y, yerr)
+gp_loglike = gpOBJ.log_likelihood(kernel)
+print(f"GP log-likelihood = {gp_loglike}")
+assert gp_loglike == -88.89074571448118
+
+kernel = kernels.PiecewiseSE(1, 2, 10) + kernels.WhiteNoise(0.1)
+gpOBJ = process.GP(kernel, mean, time, y, yerr)
+gp_loglike = gpOBJ.log_likelihood(kernel)
+print(f"GP log-likelihood = {gp_loglike}")
+assert gp_loglike == -199.4120846074714

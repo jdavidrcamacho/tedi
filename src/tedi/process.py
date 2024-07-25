@@ -1,6 +1,4 @@
-"""
-Gaussian and Student-t processes functions
-"""
+"""Gaussian and Student-t processes functions"""
 
 import numpy as np
 from scipy.linalg import LinAlgError, cho_factor, cho_solve
@@ -8,12 +6,12 @@ from scipy.special import loggamma
 from scipy.stats import multivariate_normal, norm
 
 from src.tedi import kernels
+from src.tedi.utils.kernels import Sum, Product
 
 
-##### Gaussian processes #######################################################
 class GP(object):
     """
-    Class to create our Gaussian process.
+    Class to create a Gaussian process.
 
     Parameters
     ----------
@@ -46,9 +44,9 @@ class GP(object):
 
     def _kernel_matrix(self, kernel, time):
         """Returns a cov matrix when evaluating a given kernel at inputs time"""
-        if isinstance(kernel, kernels.Sum):
+        if isinstance(kernel, Sum):
             if isinstance(
-                kernel.k1,
+                kernel.base_kernels[0],
                 (
                     kernels.HarmonicPeriodic,
                     kernels.QuasiHarmonicPeriodic,
@@ -56,9 +54,9 @@ class GP(object):
             ):
                 r = time[:, None]
                 s = time[None, :]
-                k1 = kernel.k1(r, s)
+                k1 = kernel.base_kernels[0](r, s)
                 r = time[:, None] - time[None, :]
-                return k1 + kernel.k2(r)
+                return k1 + kernel.base_kernels[1](r)
         if isinstance(
             kernel,
             (kernels.HarmonicPeriodic, kernels.QuasiHarmonicPeriodic),
@@ -72,9 +70,9 @@ class GP(object):
 
     def _predict_kernel_matrix(self, kernel, time):
         """To be used in prediction()"""
-        if isinstance(kernel, kernels.Sum):
-            if isinstance(kernel.k2, kernels.WhiteNoise):
-                kernel = kernel.k1
+        if isinstance(kernel, Sum):
+            if isinstance(kernel.base_kernels[1], kernels.WhiteNoise):
+                kernel = kernel.base_kernels[0]
         if isinstance(
             kernel,
             (kernels.HarmonicPeriodic, kernels.QuasiHarmonicPeriodic, kernels.unknown),
@@ -121,25 +119,25 @@ class GP(object):
             Updated kernel
         """
         # if we are working with the sum of kernels
-        if isinstance(kernel, kernels.Sum):
+        if isinstance(kernel, Sum):
             k1_params = []
-            for i, j in enumerate(kernel.k1.pars):
+            for i, j in enumerate(kernel.base_kernels[0].pars):
                 k1_params.append(new_pars[i])
             k2_params = []
-            for i, j in enumerate(kernel.k2.pars):
-                k2_params.append(new_pars[len(kernel.k1.pars) + i])
-            new_k1 = type(kernel.k1)(*k1_params)
-            new_k2 = type(kernel.k2)(*k2_params)
+            for i, j in enumerate(kernel.base_kernels[1].pars):
+                k2_params.append(new_pars[len(kernel.base_kernels[0].pars) + i])
+            new_k1 = type(kernel.base_kernels[0])(*k1_params)
+            new_k2 = type(kernel.base_kernels[1])(*k2_params)
             return new_k1 + new_k2
         # if we are working with the product of kernels
-        elif isinstance(kernel, kernels.Multiplication):
+        elif isinstance(kernel, Product):
             k1_params = []
-            for i, _ in enumerate(kernel.k1.pars):
+            for i, _ in enumerate(kernel.base_kernels[0].pars):
                 k1_params.append(new_pars[i])
             k2_params = []
-            for j, _ in enumerate(kernel.k2.pars):
-                k2_params.append(new_pars[len(kernel.k1.pars) + j])
-            new_k = type(kernel.k1)(*k1_params) * type(kernel.k1)(*k2_params)
+            for j, _ in enumerate(kernel.base_kernels[1].pars):
+                k2_params.append(new_pars[len(kernel.base_kernels[0].pars) + j])
+            new_k = type(kernel.base_kernels[0])(*k1_params) * type(kernel.base_kernels[1])(*k2_params)
             return new_k
         # if we are working with a "single" kernel
         else:
@@ -469,23 +467,23 @@ class TP(object):
         # if we are working with a sum of kernels
         if isinstance(kernel, kernels.Sum):
             k1_params = []
-            for i, j in enumerate(kernel.k1.pars):
+            for i, j in enumerate(kernel.base_kernels[0].pars):
                 k1_params.append(new_pars[i])
             k2_params = []
-            for i, j in enumerate(kernel.k2.pars):
-                k2_params.append(new_pars[len(kernel.k1.pars) + i])
-            new_k1 = type(kernel.k1)(*k1_params)
-            new_k2 = type(kernel.k2)(*k2_params)
+            for i, j in enumerate(kernel.base_kernels[1].pars):
+                k2_params.append(new_pars[len(kernel.base_kernels[0].pars) + i])
+            new_k1 = type(kernel.base_kernels[0])(*k1_params)
+            new_k2 = type(kernel.base_kernels[1])(*k2_params)
             return new_k1 + new_k2
         # if we are working with the product of kernels
-        elif isinstance(kernel, kernels.Multiplication):
+        elif isinstance(kernel, Product):
             k1_params = []
-            for i, _ in enumerate(kernel.k1.pars):
+            for i, _ in enumerate(kernel.base_kernels[0].pars):
                 k1_params.append(new_pars[i])
             k2_params = []
-            for j, _ in enumerate(kernel.k2.pars):
-                k2_params.append(new_pars[len(kernel.k1.pars) + j])
-            new_k = type(kernel.k1)(*k1_params) * type(kernel.k2)(*k2_params)
+            for j, _ in enumerate(kernel.base_kernels[1].pars):
+                k2_params.append(new_pars[len(kernel.base_kernels[0].pars) + j])
+            new_k = type(kernel.base_kernels[0])(*k1_params) * type(kernel.base_kernels[1])(*k2_params)
             return new_k
         # if we are working with a "single" kernel
         else:
