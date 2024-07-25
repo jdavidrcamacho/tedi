@@ -1,8 +1,8 @@
 """Covariance functions for Gaussian or Student-t processes regression."""
 
 import numpy as np
-from .utils.kernels import Kernel
 
+from .utils.kernels import Kernel
 
 pi, exp, sine, cosine, sqrt = np.pi, np.exp, np.sin, np.cos, np.sqrt
 __all__ = [
@@ -18,6 +18,8 @@ __all__ = [
     "Matern52",
     "RQP",
 ]
+
+
 #
 class Constant(Kernel):
     """
@@ -86,9 +88,9 @@ class WhiteNoise(Kernel):
 class SquaredExponential(Kernel):
     """
     Squared Exponential kernel.
-    
-    Also known as radial basis function (RBF) kernel, is commonly used in 
-    Gaussian processes for regression and classification. It is defined by its 
+
+    Also known as radial basis function (RBF) kernel, is commonly used in
+    Gaussian processes for regression and classification. It is defined by its
     amplitude and length-scale parameters.
 
     Attributes:
@@ -96,6 +98,7 @@ class SquaredExponential(Kernel):
         ell (float): Length-scale parameter.
         params_number (int): Number of hyperparameters.
     """
+
     def __init__(self, amplitude: float, ell: float) -> None:
         """Initialize the Squared Exponential kernel.
 
@@ -157,7 +160,9 @@ class Periodic(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Periodic function.
         """
-        return self.amplitude**2 * exp( -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell**2)
+        return self.amplitude**2 * exp(
+            -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell**2
+        )
 
 
 class QuasiPeriodic(Kernel):
@@ -199,15 +204,18 @@ class QuasiPeriodic(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the QuasiPeriodic function.
         """
-        return self.amplitude**2 * exp(-2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2 - r**2 / (2 * self.ell_e**2))
+        return self.amplitude**2 * exp(
+            -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2
+            - r**2 / (2 * self.ell_e**2)
+        )
 
 
 class RationalQuadratic(Kernel):
     """
     Rational Quadratic kernel.
 
-    This kernel can be seen as a scale mixture (infinite sum) of squared 
-    exponential kernels with different characteristic length scales. 
+    This kernel can be seen as a scale mixture (infinite sum) of squared
+    exponential kernels with different characteristic length scales.
     It is used to model functions with varying length scales.
 
     Attributes:
@@ -229,7 +237,7 @@ class RationalQuadratic(Kernel):
         self.amplitude: float = amplitude
         self.alpha: float = alpha
         self.ell: float = ell
-        self.params_number: int = 3 
+        self.params_number: int = 3
 
     def __call__(self, r: np.ndarray) -> np.ndarray:
         """Compute the Rational Quadratic kernel value.
@@ -240,7 +248,9 @@ class RationalQuadratic(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Rational Quadratic function.
         """
-        return self.amplitude**2 * (1 + 0.5 * r**2 / (self.alpha * self.ell**2)) ** (-self.alpha)
+        return self.amplitude**2 * (
+            1 + 0.5 * r**2 / (self.alpha * self.ell**2)
+        ) ** (-self.alpha)
 
 
 ##### Cosine kernel ###########################################################
@@ -248,7 +258,7 @@ class Cosine(Kernel):
     """
     Cosine kernel.
 
-    This kernel is used to model periodic functions with a specified amplitude 
+    This kernel is used to model periodic functions with a specified amplitude
     and period.
 
     Attributes:
@@ -342,7 +352,6 @@ class Matern32(Kernel):
         self.ell: float = ell
         self.params_number: int = 2
 
-
     def __call__(self, r: np.ndarray) -> np.ndarray:
         """Compute the Matern 3/2 kernel value.
 
@@ -352,8 +361,8 @@ class Matern32(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Matern 3/2 function.
         """
-        sqrt_3_r_ell = sqrt(3) * abs(r)/self.ell
-        return (self.amplitude**2 * (1 + sqrt_3_r_ell) * exp(-sqrt_3_r_ell))
+        sqrt_3_r_ell = sqrt(3) * abs(r) / self.ell
+        return self.amplitude**2 * (1 + sqrt_3_r_ell) * exp(-sqrt_3_r_ell)
 
 
 #### Matern 5/2 kernel ########################################################
@@ -390,12 +399,13 @@ class Matern52(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Matern 5/2 function.
         """
-        abs_r, sqrt_5 =  abs(r), sqrt(5)
-        minus_sqrt_5_r_ell = -sqrt_5 * abs_r/self.ell
+        abs_r, sqrt_5 = abs(r), sqrt(5)
+        minus_sqrt_5_r_ell = -sqrt_5 * abs_r / self.ell
         return (
             self.amplitude**2
-            * (1+ (3 * sqrt_5 * self.ell * abs_r + 5 * abs_r ** 2)/ (3 * self.ell**2))
-            * exp(minus_sqrt_5_r_ell))
+            * (1 + (3 * sqrt_5 * self.ell * abs_r + 5 * abs_r**2) / (3 * self.ell**2))
+            * exp(minus_sqrt_5_r_ell)
+        )
 
 
 ##### RQP kernel ##############################################################
@@ -411,7 +421,7 @@ class RQP(Kernel):
     kernel.
     - As alpha approaches zero, the RQP kernel approaches the periodic kernel.
 
-    There exists an optimal range for alpha where the RQP kernel often performs 
+    There exists an optimal range for alpha where the RQP kernel often performs
     better than the quasi-periodic kernel.
 
     Attributes:
@@ -423,7 +433,9 @@ class RQP(Kernel):
         params_number (int): Number of hyperparameters.
     """
 
-    def __init__(self, amplitude: float, alpha: float, ell_e: float, p: float, ell_p: float) -> None:
+    def __init__(
+        self, amplitude: float, alpha: float, ell_e: float, p: float, ell_p: float
+    ) -> None:
         """Initialize the RQP kernel with its parameters.
 
         Args:
@@ -442,9 +454,13 @@ class RQP(Kernel):
         self.params_number = 5
 
     def __call__(self, r):
-        per_component  = exp(-2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2)
+        per_component = exp(-2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2)
         rq_component = 1 + r**2 / (2 * self.alpha * self.ell_e**2)
-        return self.amplitude**2 * per_component / (np.sign(rq_component) * abs(rq_component)**self.alpha)
+        return (
+            self.amplitude**2
+            * per_component
+            / (np.sign(rq_component) * abs(rq_component) ** self.alpha)
+        )
 
 
 class Paciorek(Kernel):
@@ -457,6 +473,7 @@ class Paciorek(Kernel):
         ell_2 (float): Second length scale.
         params_number (int): Number of hyperparameters.
     """
+
     def __init__(self, amplitude: float, ell_1: float, ell_2: float) -> None:
         """Initialize the Paciorek kernel with its amplitude and length scales.
 
@@ -480,7 +497,9 @@ class Paciorek(Kernel):
         Returns:
             np.ndarray: Kernel value computed using the Paciorek function.
         """
-        length_scales = sqrt(2 * self.ell_1 * self.ell_2 / (self.ell_1**2 + self.ell_2**2))
+        length_scales = sqrt(
+            2 * self.ell_1 * self.ell_2 / (self.ell_1**2 + self.ell_2**2)
+        )
         exp_decay = exp(-2 * r * r / (self.ell_1**2 + self.ell_2**2))
         return self.amplitude**2 * length_scales * exp_decay
 
@@ -490,7 +509,7 @@ class PiecewiseSE(Kernel):
     Product of the Squared Exponential kernel and a piecewise polynomial kernel.
 
     This kernel combines a squared exponential (SE) kernel with a piecewise
-    polynomial kernel to model data with both smooth and piecewise behaviors. 
+    polynomial kernel to model data with both smooth and piecewise behaviors.
     The resulting kernel adapts to both smooth variations and abrupt changes.
 
     Attributes:
@@ -523,7 +542,7 @@ class PiecewiseSE(Kernel):
         Returns:
             np.ndarray: Kernel value computed.
         """
-        SE_term = self.eta1**2 * exp(-0.5 * abs(r)**2 / self.eta2**2)
+        SE_term = self.eta1**2 * exp(-0.5 * abs(r) ** 2 / self.eta2**2)
         abs_r_normalized = abs(r / (0.5 * self.eta3))
         piecewise = (3 * abs_r_normalized + 1) * (1 - abs_r_normalized) ** 3
         piecewise = np.where(abs_r_normalized > 1, 0, piecewise)
@@ -537,7 +556,7 @@ class PiecewiseRQ(Kernel):
 
     Attributes:
         eta1 (float): Amplitude of the Rational Quadratic kernel.
-        alpha (float): Parameter of the Rational Quadratic kernel that 
+        alpha (float): Parameter of the Rational Quadratic kernel that
             controls the scale of variations.
         eta2 (float): Length scale of the Rational Quadratic kernel.
         eta3 (float): Periodic repetition scale for the piecewise kernel.
@@ -569,7 +588,9 @@ class PiecewiseRQ(Kernel):
         Returns:
             np.ndarray: Kernel value computed.
         """
-        rq_term = self.eta1**2 * (1 + 0.5 * abs(r)**2 / (self.alpha * self.eta2**2)) ** (-self.alpha)
+        rq_term = self.eta1**2 * (
+            1 + 0.5 * abs(r) ** 2 / (self.alpha * self.eta2**2)
+        ) ** (-self.alpha)
         abs_r_normalized = abs(r / (0.5 * self.eta3))
         piecewise = (3 * abs_r_normalized + 1) * (1 - abs_r_normalized) ** 3
         piecewise = np.where(abs_r_normalized > 1, 0, piecewise)
@@ -579,7 +600,7 @@ class PiecewiseRQ(Kernel):
 
 class NewPeriodic(Kernel):
     """
-    Definition of a periodic kernel derived from mapping the Rational Quadratic 
+    Definition of a periodic kernel derived from mapping the Rational Quadratic
     kernel to the 2D space defined by u(x) = (cos(x), sin(x)).
 
 
@@ -640,7 +661,9 @@ class QuasiNewPeriodic(Kernel):
         ell_p (float): Length scale of the periodic component.
     """
 
-    def __init__(self, amplitude: float, alpha: float, ell_e: float, p: float, ell_p: float) -> None:
+    def __init__(
+        self, amplitude: float, alpha: float, ell_e: float, p: float, ell_p: float
+    ) -> None:
         """
         Initialize the QuasiNewPeriodic kernel with its parameters.
 
@@ -692,7 +715,15 @@ class NewRQP(Kernel):
         ell_p (float): Length scale of the periodic component.
     """
 
-    def __init__(self, amplitude: float, alpha1: float, alpha2: float, ell_e: float, p: float, ell_p: float) -> None:
+    def __init__(
+        self,
+        amplitude: float,
+        alpha1: float,
+        alpha2: float,
+        ell_e: float,
+        p: float,
+        ell_p: float,
+    ) -> None:
         """
         Initialize the NewRQP kernel with its parameters.
 
@@ -724,14 +755,18 @@ class NewRQP(Kernel):
             np.ndarray: Computed kernel value.
         """
         abs_r = np.abs(r)
-        alpha1_component = (1 + 0.5 * abs_r**2 / (self.alpha1 * self.ell_e**2)) ** (-self.alpha1)
-        alpha2_component = (1 + 2 * sine(pi * abs_r / self.P) ** 2 / (self.alpha2 * self.ell_p**2)) ** (-self.alpha2)
+        alpha1_component = (1 + 0.5 * abs_r**2 / (self.alpha1 * self.ell_e**2)) ** (
+            -self.alpha1
+        )
+        alpha2_component = (
+            1 + 2 * sine(pi * abs_r / self.P) ** 2 / (self.alpha2 * self.ell_p**2)
+        ) ** (-self.alpha2)
         return self.amplitude**2 * alpha1_component * alpha2_component
 
 
 class HarmonicPeriodic(Kernel):
     """
-    Definition of a periodic kernel that models a periodic signal with a 
+    Definition of a periodic kernel that models a periodic signal with a
     specified number of harmonics.
 
     Args:
@@ -740,6 +775,7 @@ class HarmonicPeriodic(Kernel):
         p (float): Period of the kernel.
         ell (float): Length scale for the periodic component.
     """
+
     def __init__(self, n: int, amplitude: float, p: float, ell: float) -> None:
         """
         Initialize the HarmonicPeriodic kernel with its parameters.
@@ -768,23 +804,32 @@ class HarmonicPeriodic(Kernel):
         Returns:
             np.ndarray: Computed kernel values.
         """
-        first_sine = sine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
-        second_sine = sine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        first_sine = (
+            sine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        )
+        second_sine = (
+            sine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        )
         sine_component = (first_sine - second_sine) ** 2
 
         first_cot = 0.5 / np.tan(pi * r / self.p)
-        first_cos = cosine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        first_cos = (
+            cosine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        )
         second_cot = 0.5 / np.tan(pi * s / self.p)
-        second_cos = cosine((self.n + 0.5) * 2 * pi * s / self.P) / 2 * sine(pi * s / self.p)
+        second_cos = (
+            cosine((self.n + 0.5) * 2 * pi * s / self.P) / 2 * sine(pi * s / self.p)
+        )
         cot_cos_component = (first_cot - first_cos - second_cot + second_cos) ** 2
 
-        return self.amplitude**2 * exp(-0.5 * (sine_component + cot_cos_component) / self.ell**2)
+        return self.amplitude**2 * exp(
+            -0.5 * (sine_component + cot_cos_component) / self.ell**2
+        )
 
 
-##### New quasi-periodic kernel ################################################
 class QuasiHarmonicPeriodic(Kernel):
     """
-    Definition of a quasi-periodic kernel that models periodic signals with a 
+    Definition of a quasi-periodic kernel that models periodic signals with a
     specified number of harmonics.
 
     Args:
@@ -795,7 +840,9 @@ class QuasiHarmonicPeriodic(Kernel):
         ell_p (float): Periodic length scale.
     """
 
-    def __init__(self, n: int, amplitude: float, ell_e: float, p: float, ell_p: float) -> None:
+    def __init__(
+        self, n: int, amplitude: float, ell_e: float, p: float, ell_p: float
+    ) -> None:
         """
         Initialize the QuasiHarmonicPeriodic kernel with its parameters.
 
@@ -825,18 +872,24 @@ class QuasiHarmonicPeriodic(Kernel):
         Returns:
             np.ndarray: Computed kernel values.
         """
-        first_sine = sine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
-        second_sine = sine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        first_sine = (
+            sine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        )
+        second_sine = (
+            sine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        )
         sine_component = (first_sine - second_sine) ** 2
 
         first_cot = 0.5 / np.tan(pi * r / self.p)
-        first_cos = cosine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        first_cos = (
+            cosine((self.n + 0.5) * 2 * pi * r / self.p) / 2 * sine(pi * r / self.p)
+        )
         second_cot = 0.5 / np.tan(pi * s / self.p)
-        second_cos = cosine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        second_cos = (
+            cosine((self.n + 0.5) * 2 * pi * s / self.p) / 2 * sine(pi * s / self.p)
+        )
         cot_cos_component = (first_cot - first_cos - second_cot + second_cos) ** 2
 
         hp_kernel = exp(-0.5 * (sine_component + cot_cos_component) / self.ell_p**2)
         se_kernel = exp(-0.5 * abs(r - s) ** 2 / self.ell_e**2)
         return self.amplitude**2 * hp_kernel * se_kernel
-
-

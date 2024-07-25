@@ -6,7 +6,7 @@ from scipy.special import loggamma
 from scipy.stats import multivariate_normal, norm
 
 from src.tedi import kernels
-from src.tedi.utils.kernels import Sum, Product
+from src.tedi.utils.kernels import Product, Sum
 
 
 class GP(object):
@@ -137,7 +137,9 @@ class GP(object):
             k2_params = []
             for j, _ in enumerate(kernel.base_kernels[1].pars):
                 k2_params.append(new_pars[len(kernel.base_kernels[0].pars) + j])
-            new_k = type(kernel.base_kernels[0])(*k1_params) * type(kernel.base_kernels[1])(*k2_params)
+            new_k = type(kernel.base_kernels[0])(*k1_params) * type(
+                kernel.base_kernels[1]
+            )(*k2_params)
             return new_k
         # if we are working with a "single" kernel
         else:
@@ -483,7 +485,9 @@ class TP(object):
             k2_params = []
             for j, _ in enumerate(kernel.base_kernels[1].pars):
                 k2_params.append(new_pars[len(kernel.base_kernels[0].pars) + j])
-            new_k = type(kernel.base_kernels[0])(*k1_params) * type(kernel.base_kernels[1])(*k2_params)
+            new_k = type(kernel.base_kernels[0])(*k1_params) * type(
+                kernel.base_kernels[1]
+            )(*k2_params)
             return new_k
         # if we are working with a "single" kernel
         else:

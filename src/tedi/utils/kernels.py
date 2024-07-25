@@ -2,6 +2,7 @@
 
 from abc import ABC, abstractmethod
 from typing import List
+
 import numpy as np
 
 
@@ -49,7 +50,7 @@ class Kernel(object):
             self.__class__.__name__, ", ".join(map(str, self.pars))
         )
 
-    def __add__(self, b: 'Kernel') -> 'Sum':
+    def __add__(self, b: "Kernel") -> "Sum":
         """
         Define addition operation between two kernels.
 
@@ -61,7 +62,7 @@ class Kernel(object):
         """
         return Sum(self, b)
 
-    def __radd__(self, b: 'Kernel') -> 'Sum':
+    def __radd__(self, b: "Kernel") -> "Sum":
         """
         Define right addition operation for compatibility.
 
@@ -73,7 +74,7 @@ class Kernel(object):
         """
         return self.__add__(b)
 
-    def __mul__(self, b: 'Kernel') -> 'Product':
+    def __mul__(self, b: "Kernel") -> "Product":
         """
         Define multiplication operation between two kernels.
 
@@ -85,7 +86,7 @@ class Kernel(object):
         """
         return Product(self, b)
 
-    def __rmul__(self, b: 'Kernel') -> 'Product':
+    def __rmul__(self, b: "Kernel") -> "Product":
         """
         Define right multiplication operation for compatibility.
 

@@ -20,14 +20,12 @@ print(kernel)
 gpOBJ = process.GP(kernel, mean, time, y, yerr)
 gp_loglike = gpOBJ.log_likelihood(kernel)
 print(f"GP log-likelihood = {gp_loglike}")
+assert gp_loglike == -134.7964846941749
 
 # Student-t processes
 tpOBJ = process.TP(kernel, 5, mean, time, y, yerr)
 tp_loglike = tpOBJ.log_likelihood(kernel, 5)
 print(f"TP log-likelihood = {tp_loglike}")
-
-# Assert values are the expected ones
-assert gp_loglike == -134.7964846941749
 assert tp_loglike == -106.93685196354443
 
 

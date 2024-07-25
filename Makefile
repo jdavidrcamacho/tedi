@@ -16,25 +16,25 @@ help:
 
 .PHONY: format-check
 format-check:
-	black --check examples/ tedi/ tests/
-	isort --check-only --profile black examples/ tedi/ tests/
+	black --check examples/ src/ tests/
+	isort --check-only --profile black examples/ src/ tests/
 
 .PHONY: format-fix
 format-fix:
-	black examples/ tedi/ tests/
-	isort --profile black examples/ tedi/ tests/
+	black examples/ src/ tests/
+	isort --profile black examples/ src/ tests/
 
 .PHONY: lint-check
 lint-check:
-	flake8 examples/ tedi/ tests/
+	flake8 examples/ src/ tests/
 
 .PHONY: type-check
 type-check:
-	mypy examples/ tedi/ tests/
+	mypy examples/ src/ tests/
 
 .PHONY: docstring-check
 docstring-check:
-	pydocstyle examples/ tedi/ tests/
+	pydocstyle examples/ src/ tests/
 
 .PHONY: static-check
 static-check: format-check lint-check type-check
