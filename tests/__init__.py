@@ -1,1 +1,1 @@
-"""Folder containing the unit tests"""
+"""Folder containing unit tests for /src/tedi"""
