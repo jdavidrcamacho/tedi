@@ -17,7 +17,7 @@ class DummyKernel(Kernel):
         return r**2
 
 
-def test_kernel_base_class() -> None:
+def test_Kernel() -> None:
     kernel = Kernel(1.0, 2.0)
     assert np.allclose(
         kernel.pars, np.array([1.0, 2.0])
@@ -34,7 +34,7 @@ def test_kernel_base_class() -> None:
     ), f"Expected 'Kernel(1.0, 2.0)', got {repr(kernel)}"
 
 
-def test_sum_kernel() -> None:
+def test_Sum() -> None:
     k1 = DummyKernel(1.0)
     k2 = DummyKernel(2.0)
     sum_kernel = Sum(k1, k2)
@@ -49,7 +49,7 @@ def test_sum_kernel() -> None:
     ), f"Expected 'DummyKernel(1.0) + DummyKernel(2.0)', got {repr(sum_kernel)}"  # NOQA
 
 
-def test_product_kernel() -> None:
+def test_Product() -> None:
     k1 = DummyKernel(1.0)
     k2 = DummyKernel(2.0)
     prod_kernel = Product(k1, k2)
