@@ -13,32 +13,26 @@ class CreateProcess:
     A class to represent a Gaussian Process (GP).
 
     Attributes:
-        kernel (Callable): The covariance function of the Gaussian process.
-        mean (Callable): The mean function of the Gaussian process.
+        kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The covariance
+            function of the Gaussian process.
+        mean (Callable[[np.ndarray], np.ndarray]): The mean function of the
+            Gaussian process.
         time (np.ndarray): The time points at which the Gaussian process is
             observed.
         y (np.ndarray): The observed measurements.
         yerr (Optional[np.ndarray]): The measurement errors. Defaults to a
             small identity matrix if not provided.
         yerr2 (np.ndarray): Squared measurement errors.
-
-    Args:
-        kernel (Callable): The covariance function.
-        mean (Callable): The mean function.
-        time (np.ndarray): The time array.
-        y (np.ndarray): The measurements array.
-        yerr (Optional[np.ndarray], default=None): The measurement errors.
-            Defaults to a small identity matrix if None.
     """
 
     def __init__(
         self,
-        kernel: Callable,
-        mean: Callable,
+        kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        mean: Callable[[np.ndarray], np.ndarray],
         time: np.ndarray,
         y: np.ndarray,
         yerr: Optional[np.ndarray] = None,
-    ):  # NOQA
+    ):
         self.kernel = kernel
         self.mean = mean
         self.time = time
@@ -48,24 +42,32 @@ class CreateProcess:
         )  # NOQA
         self.yerr2 = self.yerr**2
 
-    def _kernel_pars(self, kernel: Callable) -> np.ndarray:
+    def _kernel_parameters(
+        self, kernel: Callable[[np.ndarray, np.ndarray], np.ndarray]
+    ) -> np.ndarray:
         """
         Retrieve the parameters of the specified kernel.
 
         Args:
-            kernel (Callable): The kernel function.
+            kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The kernel
+                function.
 
         Returns:
             np.ndarray: The parameters of the kernel.
         """
         return kernel.pars
 
-    def _kernel_matrix(self, kernel: Callable, time: np.ndarray) -> np.ndarray:
+    def _compute_kernel_matrix(
+        self,
+        kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        time: np.ndarray,  # NOQA
+    ) -> np.ndarray:
         """
         Compute the covariance matrix given a kernel and time array.
 
         Args:
-            kernel (Callable): The kernel function.
+            kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The kernel
+                function.
             time (np.ndarray): The time points.
 
         Returns:
@@ -75,33 +77,38 @@ class CreateProcess:
             if isinstance(
                 kernel.base_kernels[0],
                 (kernels.HarmonicPeriodic, kernels.QuasiHarmonicPeriodic),
-            ):  # NOQA
+            ):
                 r = time[:, None]
                 s = time[None, :]
                 k1 = kernel.base_kernels[0](r, s)
                 r = time[:, None] - time[None, :]
                 return k1 + kernel.base_kernels[1](r)
+
         if isinstance(
             kernel, (kernels.HarmonicPeriodic, kernels.QuasiHarmonicPeriodic)
-        ):  # NOQA
+        ):
             r = time[:, None]
             s = time[None, :]
             return kernel(r, s)
+
         r = time[:, None] - time[None, :]
         return kernel(r)
 
-    def _predict_kernel_matrix(
-        self, kernel: Callable, time: np.ndarray
-    ) -> np.ndarray:  # NOQA
+    def _compute_predictive_kernel_matrix(
+        self,
+        kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        time: np.ndarray,  # NOQA
+    ) -> np.ndarray:
         """
-        Compute the prediction kernel matrix for the specified kernel.
+        Compute the predictive kernel matrix for the specified kernel.
 
         Args:
-            kernel (Callable): The kernel function.
+            kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The kernel
+                function.
             time (np.ndarray): The time points for prediction.
 
         Returns:
-            np.ndarray: The prediction kernel matrix.
+            np.ndarray: The predictive kernel matrix.
         """
         if isinstance(kernel, Sum):
             if isinstance(kernel.base_kernels[1], kernels.WhiteNoise):
@@ -111,23 +118,25 @@ class CreateProcess:
             (
                 kernels.HarmonicPeriodic,
                 kernels.QuasiHarmonicPeriodic,
-                kernels.unknown,
-            ),  # NOQA
-        ):  # NOQA
+                kernels.Unknown,
+            ),
+        ):
             r = time[:, None]
             s = self.time[None, :]
             return kernel(r, s)
         r = time[:, None] - self.time[None, :]
         return kernel(r)
 
-    def _mean_function(
-        self, mean: Callable, time: Optional[np.ndarray] = None
-    ) -> np.ndarray:  # NOQA
+    def _compute_mean_function(
+        self,
+        mean: Callable[[np.ndarray], np.ndarray],
+        time: Optional[np.ndarray] = None,
+    ) -> np.ndarray:
         """
         Compute the mean function values at the given time points.
 
         Args:
-            mean (Callable): The mean function.
+            mean (Callable[[np.ndarray], np.ndarray]): The mean function.
             time (Optional[np.ndarray], default=None): The time points.
                 Defaults to the time points provided during initialization.
 
@@ -138,244 +147,300 @@ class CreateProcess:
             time = self.time
         return mean(time) if mean is not None else np.zeros_like(time)
 
-    def new_kernel(self, kernel: Callable, new_pars: list) -> Callable:
+    def update_kernel(
+        self,
+        kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        new_params: list,  # NOQA
+    ) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
         """
         Update the parameters of the given kernel.
 
         Args:
-            kernel (Callable): The original kernel function.
-            new_pars (list): The new hyperparameters for the kernel.
+            kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The
+                original kernel function.
+            new_params (list): The new hyperparameters for the kernel.
 
         Returns:
-            Callable: The updated kernel function.
+            Callable[[np.ndarray, np.ndarray], np.ndarray]: The updated kernel
+                function.
         """
         if isinstance(kernel, Sum):
-            k1_params = new_pars[: len(kernel.base_kernels[0].pars)]
-            k2_params = new_pars[len(kernel.base_kernels[0].pars) :]  # NOQA
+            k1_params = new_params[: len(kernel.base_kernels[0].pars)]  # NOQA
+            k2_params = new_params[len(kernel.base_kernels[0].pars) :]  # NOQA
             new_k1 = type(kernel.base_kernels[0])(*k1_params)
             new_k2 = type(kernel.base_kernels[1])(*k2_params)
             return new_k1 + new_k2
         elif isinstance(kernel, Product):
-            k1_params = new_pars[: len(kernel.base_kernels[0].pars)]
-            k2_params = new_pars[len(kernel.base_kernels[0].pars) :]  # NOQA
+            k1_params = new_params[: len(kernel.base_kernels[0].pars)]
+            k2_params = new_params[len(kernel.base_kernels[0].pars) :]  # NOQA
             new_k1 = type(kernel.base_kernels[0])(*k1_params)
             new_k2 = type(kernel.base_kernels[1])(*k2_params)
             return new_k1 * new_k2
         else:
-            return type(kernel)(*new_pars)
+            return type(kernel)(*new_params)
 
-    def compute_matrix(
+    def compute_covariance_matrix(
         self,
-        kernel: Callable,
+        kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
         time: np.ndarray,
-        nugget: bool = False,
-        shift: bool = False,
-    ) -> np.ndarray:  # NOQA
+        add_nugget: bool = False,
+        add_shift: bool = False,
+    ) -> np.ndarray:
         """
         Construct the covariance matrix used in the log marginal likelihood
-        calculation.
+            calculation.
 
         Args:
-            kernel (Callable): The covariance kernel function.
+            kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The
+                covariance kernel function.
             time (np.ndarray): The time points.
-            nugget (bool, default=False): Whether to add a nugget term to the
-                matrix to ensure positive definiteness.
-            shift (bool, default=False): Whether to shift the eigenvalues to
-                ensure positive definiteness.
+            add_nugget (bool, default=False): Whether to add a nugget term to
+                the matrix to ensure positive definiteness.
+            add_shift (bool, default=False): Whether to shift the eigenvalues
+                to ensure positive definiteness.
 
         Returns:
             np.ndarray: The covariance matrix.
         """
-        K = np.zeros((time.size, time.size))
-        k = self._kernel_matrix(kernel, self.time)
-        diag = self.yerr**2 * np.identity(self.time.size)
-        K = k + diag
-        if nugget:
+        covariance_matrix = np.zeros((time.size, time.size))
+        kernel_matrix = self._compute_kernel_matrix(kernel, self.time)
+        diag_matrix = self.yerr2 * np.identity(self.time.size)
+        covariance_matrix = kernel_matrix + diag_matrix
+        if add_nugget:
             nugget_value = 0.01
-            K = nugget_value * np.identity(self.time.size) + K
-        if shift:
+            covariance_matrix = (
+                nugget_value * np.identity(self.time.size) + covariance_matrix
+            )
+        if add_shift:
             shift_value = 0.01
-            K += shift_value * np.identity(self.time.size)
-        return K
+            covariance_matrix += shift_value * np.identity(self.time.size)
+        return covariance_matrix
 
-    def log_likelihood(
+    def log_marginal_likelihood(
         self,
-        kernel: Optional[Callable] = None,
-        mean: Optional[Callable] = None,
-        nugget: bool = False,
-        shift: bool = False,
-        separate: bool = False,
-    ) -> Union[float, Tuple[float, float, float]]:  # NOQA
+        kernel: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = None,  # NOQA
+        mean: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+        add_nugget: bool = False,
+        add_shift: bool = False,
+        return_separated: bool = False,
+    ) -> Union[float, Tuple[float, float, float]]:
         """
         Compute the marginal log likelihood of the Gaussian process.
 
         Args:
-            kernel (Optional[Callable], default=None): The covariance function.
-                If None, uses the kernel provided during initialization.
-            mean (Optional[Callable], default=None): The mean function.
-                If None, uses the mean function provided during initialization.
-            nugget (bool, default=False): Whether to add a nugget term to the
-                covariance matrix.
-            shift (bool, default=False): Whether to shift the eigenvalues of
+            kernel (Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]],
+                default=None): The covariance function. If None, uses the
+                kernel provided during initialization.
+            mean (Optional[Callable[[np.ndarray], np.ndarray]], default=None):
+                The mean function. If None, uses the mean function provided
+                during initialization.
+            add_nugget (bool, default=False): Whether to add a nugget term to
                 the covariance matrix.
-            separate (bool, default=False): Whether to return the separated
-                terms of the log likelihood.
+            add_shift (bool, default=False): Whether to shift the eigenvalues
+                of the covariance matrix.
+            return_separated (bool, default=False): Whether to return the
+                separated terms of the log likelihood.
 
         Returns:
             Union[float, Tuple[float, float, float]]: The marginal log
-                likelihood, or a tuple of its separated terms if `separate`
-                is True.
+                likelihood, or a tuple of its separated terms if
+                `return_separated` is True.
         """
         kernel = kernel if kernel else self.kernel
-        K = self.compute_matrix(kernel, self.time, nugget=nugget, shift=shift)
-        y = self.y - (mean(self.time) if mean else self.mean(self.time))
+        covariance_matrix = self.compute_covariance_matrix(
+            kernel, self.time, add_nugget=add_nugget, add_shift=add_shift
+        )
+        residuals = self.y - (
+            self._compute_mean_function(mean) if mean else self.mean(self.time)
+        )
         try:
-            L1 = cho_factor(
-                K, overwrite_a=True, lower=False, check_finite=False
-            )  # NOQA
-            if separate:
-                log_like = [
-                    -0.5 * np.dot(y.T, cho_solve(L1, y)),
-                    -np.sum(np.log(np.diag(L1[0]))),
-                    -0.5 * y.size * np.log(2 * np.pi),
+            cholesky_factor = cho_factor(
+                covariance_matrix,
+                overwrite_a=True,
+                lower=False,
+                check_finite=False,  # NOQA
+            )
+            if return_separated:
+                log_likelihood = [
+                    -0.5
+                    * np.dot(
+                        residuals.T, cho_solve(cholesky_factor, residuals)
+                    ),  # NOQA
+                    -np.sum(np.log(np.diag(cholesky_factor[0]))),
+                    -0.5 * residuals.size * np.log(2 * np.pi),
                 ]
             else:
-                log_like = (
-                    -0.5 * np.dot(y.T, cho_solve(L1, y))
-                    - np.sum(np.log(np.diag(L1[0])))
-                    - 0.5 * y.size * np.log(2 * np.pi)
+                log_likelihood = (
+                    -0.5
+                    * np.dot(residuals.T, cho_solve(cholesky_factor, residuals))  # NOQA
+                    - np.sum(np.log(np.diag(cholesky_factor[0])))
+                    - 0.5 * residuals.size * np.log(2 * np.pi)
                 )
         except LinAlgError:
-            return -np.inf
-        return log_like
+            return float("-inf")
+        return log_likelihood
 
-    def marginal_likelihood(
+    def compute_marginal_likelihood_sample(
         self,
-        kernel1: Optional[Callable] = None,
-        mean: Optional[Callable] = None,
+        kernel: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = None,  # NOQA
+        mean: Optional[Callable[[np.ndarray], np.ndarray]] = None,
         jitter: Optional[float] = None,
-        N: int = 1000,
-        file: str = "saved_results.txt",
-    ) -> float:  # NOQA
+        num_samples: int = 1000,
+        output_file: str = "results.txt",
+    ) -> float:
         """
         Compute the marginal likelihood by sampling.
 
         Args:
-            kernel1 (Optional[Callable], default=None): The covariance kernel
-                function. If None, uses the kernel provided during
-                initialization.
-            mean (Optional[Callable], default=None): The mean function.
-                If None, uses the mean function provided during initialization.
+            kernel (Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]],
+                default=None): The covariance kernel function. If None, uses
+                the kernel provided during initialization.
+            mean (Optional[Callable[[np.ndarray], np.ndarray]], default=None):
+                The mean function. If None, uses the mean function provided
+                during initialization.
             jitter (Optional[float], default=None): The jitter value to be
                 added to the measurement errors.
-            N (int, default=1000): Number of samples to compute.
-            file (str, default="saved_results.txt"): File to write the
+            num_samples (int, default=1000): Number of samples to compute.
+            output_file (str, default="results.txt"): File to write the
                 progress.
 
         Returns:
             float: The log of the estimated marginal likelihood.
         """
-        with open(file, "a") as f:
-            m = self._mean_function(mean, self.time)
-            err = np.sqrt(jitter**2 + self.yerr2)
-            llhood = 0
-            for n in range(N):
-                sample = self.sample(kernel1, self.time) + m
-                normpdf = norm(loc=sample, scale=err).pdf(self.y)
-                llhood += normpdf.prod()
+        with open(output_file, "a") as f:
+            sample_mean = self._compute_mean_function(mean, self.time)
+            sample_error = np.sqrt(
+                (jitter if jitter else 0.0) ** 2 + self.yerr2
+            )  # NOQA
+            log_likelihood_sum = 0
+            for n in range(num_samples):
+                sample = self.sample(kernel, self.time) + sample_mean
+                norm_pdf = norm(loc=sample, scale=sample_error).pdf(self.y)
+                log_likelihood_sum += norm_pdf.prod()
                 if (n + 1) % 500 == 0:
-                    sigmaN = np.std(normpdf)
+                    sigma_n = np.std(norm_pdf)
                     print(
                         n + 1,
-                        np.log(llhood / (n + 1)),
-                        sigmaN / np.sqrt(n + 1),
-                        file=f,  # NOQA
-                    )  # NOQA
-        return np.log(llhood / N)
+                        np.log(log_likelihood_sum / (n + 1)),
+                        sigma_n / np.sqrt(n + 1),
+                        file=f,
+                    )
+        return np.log(log_likelihood_sum / num_samples)
 
     def sample(
-        self, kernel: Callable, time: np.ndarray, nugget: bool = False
-    ) -> np.ndarray:  # NOQA
+        self,
+        kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        time: np.ndarray,
+        add_nugget: bool = False,
+    ) -> np.ndarray:
         """
         Sample from the Gaussian process given a kernel function.
 
         Args:
-            kernel (Callable): The covariance function.
+            kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The
+                covariance function.
             time (np.ndarray): The time points for sampling.
-            nugget (bool, default=False): Whether to add a nugget term to the
-                covariance matrix.
+            add_nugget (bool, default=False): Whether to add a nugget term to
+                the covariance matrix.
 
         Returns:
             np.ndarray: A sample from the Gaussian process.
         """
-        mean = np.zeros_like(time)
-        cov = self._kernel_matrix(kernel, time)
-        if nugget:
+        sample_mean = np.zeros_like(time)
+        covariance_matrix = self._compute_kernel_matrix(kernel, time)
+        if add_nugget:
             nugget_value = 0.01
-            cov = (1 - nugget_value) * cov + nugget_value * np.diag(
-                np.diag(cov)
+            covariance_matrix = (
+                1 - nugget_value
+            ) * covariance_matrix + nugget_value * np.diag(
+                np.diag(covariance_matrix)
             )  # NOQA
-        return multivariate_normal(mean, cov, allow_singular=True).rvs()
+        return multivariate_normal(
+            sample_mean, covariance_matrix, allow_singular=True
+        ).rvs()
 
     def posterior_sample(
         self,
-        kernel: Callable,
-        mean: Callable,
+        kernel: Callable[[np.ndarray, np.ndarray], np.ndarray],
+        mean: Callable[[np.ndarray], np.ndarray],
         time: np.ndarray,
-    ) -> np.ndarray:  # NOQA
+    ) -> np.ndarray:
         """
         Sample from the posterior distribution of the Gaussian process.
 
         Args:
-            kernel (Callable): The covariance function.
-            mean (Callable): The mean function.
+            kernel (Callable[[np.ndarray, np.ndarray], np.ndarray]): The
+                covariance function.
+            mean (Callable[[np.ndarray], np.ndarray]): The mean function.
             time (np.ndarray): The time points for sampling.
 
         Returns:
             np.ndarray: A sample from the posterior distribution.
         """
-        m, _, v, _ = self.prediction(kernel, mean, time)
-        return np.random.multivariate_normal(m, v, 1).T
+        predicted_mean, _, predicted_covariance, _ = self.prediction(
+            kernel, mean, time
+        )  # NOQA
+        return np.random.multivariate_normal(
+            predicted_mean, predicted_covariance, 1
+        ).T  # NOQA
 
     def prediction(
         self,
-        kernel: Optional[Callable] = None,
-        mean: Optional[Callable] = None,
+        kernel: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = None,  # NOQA
+        mean: Optional[Callable[[np.ndarray], np.ndarray]] = None,
         time: Optional[np.ndarray] = None,
-        std: bool = True,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:  # NOQA
+        return_std: bool = True,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Predict the conditional distribution of the Gaussian process at new
         time points.
 
         Args:
-            kernel (Optional[Callable], default=None): The covariance function.
-                If None, uses the kernel provided during initialization.
-            mean (Optional[Callable], default=None): The mean function.
-                If None, uses the mean function provided during initialization.
+            kernel (Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]],
+                default=None): The covariance function. If None, uses the
+                kernel provided during initialization.
+            mean (Optional[Callable[[np.ndarray], np.ndarray]], default=None):
+                The mean function. If None, uses the mean function provided
+                during initialization.
             time (Optional[np.ndarray], default=None): The new time points for
                 prediction. If None, uses the time points provided during
                 initialization.
-            std (bool, default=True): Whether to return the standard deviation.
+            return_std (bool, default=True): Whether to return the standard
+                deviation.
 
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray]: The predicted mean,
-                standard deviation (if `std` is True), and the time points.
+                standard deviation (if `return_std` is True), and the time
+                points.
         """
         kernel = kernel if kernel else self.kernel
         mean = mean if mean else self.mean
         time = time if time is not None else self.time
-        r = self.y - mean(self.time) if mean else self.y
-        cov = self._kernel_matrix(kernel, self.time) + np.diag(self.yerr2)
-        L1 = cho_factor(cov)
-        sol = cho_solve(L1, r)
-        Kstar = self._predict_kernel_matrix(kernel, time)
-        Kstarstar = self._kernel_matrix(kernel, time)
-        y_mean = np.dot(Kstar, sol) + self._mean_function(mean, time)
+        residuals = self.y - mean(self.time) if mean else self.y
+        covariance_matrix = self._compute_kernel_matrix(
+            kernel, self.time
+        ) + np.diag(  # NOQA
+            self.yerr2
+        )
+        cholesky_factor = cho_factor(covariance_matrix)
+        solution = cho_solve(cholesky_factor, residuals)
+        predictive_kernel = self._compute_predictive_kernel_matrix(kernel, time)  # NOQA
+        predictive_cov_matrix = self._compute_kernel_matrix(kernel, time)
+        mean_prediction = np.dot(
+            predictive_kernel, solution
+        ) + self._compute_mean_function(mean, time)
         kstarT_k_kstar = [
-            np.dot(Kstar, cho_solve(L1, Kstar[i, :])) for i in range(time.size)
-        ]  # NOQA
-        y_cov = Kstarstar - np.array(kstarT_k_kstar)
-        y_var = np.diag(y_cov)
-        y_std = np.sqrt(y_var) if std else np.zeros_like(y_mean)
-        return y_mean, y_std, time
+            np.dot(
+                predictive_kernel,
+                cho_solve(cholesky_factor, predictive_kernel[i, :]),  # NOQA
+            )
+            for i in range(time.size)
+        ]
+        covariance_prediction = predictive_cov_matrix - np.array(kstarT_k_kstar)  # NOQA
+        variance_prediction = np.diag(covariance_prediction)
+        std_deviation = (
+            np.sqrt(variance_prediction)
+            if return_std
+            else np.zeros_like(mean_prediction)
+        )
+        return mean_prediction, std_deviation, time

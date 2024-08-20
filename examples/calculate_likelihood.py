@@ -20,18 +20,18 @@ mean = means.Cosine(1, 10, 0, 0)
 # Gaussian processes
 gpOBJ = gaussian_process.CreateProcess(kernel, mean, time, y, yerr)
 
-gp_loglike = gpOBJ.log_likelihood()
+gp_loglike = gpOBJ.log_marginal_likelihood()
 print(f"GP log-likelihood = {gp_loglike}")
 assert gp_loglike == -134.6115049347123, f"{gp_loglike} != -134.6115049347123"
 
 # Trying with a new kernels
-gp_loglike = gpOBJ.log_likelihood(
+gp_loglike = gpOBJ.log_marginal_likelihood(
     kernels.Matern32(10, 1) + kernels.WhiteNoise(0.1)
 )  # NOQA
 print(f"GP log-likelihood = {gp_loglike}")
 assert gp_loglike == -88.75761546043923, f"{gp_loglike} != -88.75761546043923"
 
-gp_loglike = gpOBJ.log_likelihood(
+gp_loglike = gpOBJ.log_marginal_likelihood(
     kernels.PiecewiseSE(1, 2, 10) + kernels.WhiteNoise(0.1)
 )
 print(f"GP log-likelihood = {gp_loglike}")

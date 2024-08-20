@@ -70,7 +70,7 @@ def log_transform(theta):
     mean = Constant(offset)
 
     gp = gaussian_process.CreateProcess(kernel, mean, time, y, yerr)
-    logpost = logprior + gp.log_likelihood()
+    logpost = logprior + gp.log_marginal_likelihood()
     return logpost
 
 
