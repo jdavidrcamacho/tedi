@@ -24,7 +24,7 @@ def test_multivariate_normal_invalid_method() -> None:
     r = np.array([1.0, 2.0])
     c = np.array([[2.0, 0.5], [0.5, 1.0]])
     with pytest.raises(ValueError, match="Invalid method"):
-        multivariate_normal(r, c, method="invalid")
+        multivariate_normal(r, c, method="invalid")  # type: ignore
 
 
 def test_MultivariateGaussian_pdf_single_sample() -> None:

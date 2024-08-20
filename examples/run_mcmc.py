@@ -2,13 +2,13 @@
 
 from multiprocessing import Pool
 
-import corner
-import emcee
+import corner  # type: ignore
+import emcee  # type: ignore
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy import stats
+from scipy import stats  # type: ignore
 
-from src.tedi import process
+from src.tedi import gaussian_process
 from src.tedi.kernels import Exponential, WhiteNoise
 from src.tedi.means import Constant
 
@@ -25,7 +25,7 @@ yerr = np.random.uniform(0, 0.5, time.size)
 kernel = Exponential(10, 1) + WhiteNoise(0.1)
 mean = Constant(0)
 
-gp = process.GP(kernel, mean, time, y, yerr)
+gp = gaussian_process.CreateProcess(kernel, mean, time, y, yerr)
 
 
 # Priors
@@ -69,7 +69,7 @@ def log_transform(theta):
     kernel = Exponential(neta1, neta2) + WhiteNoise(jitter)
     mean = Constant(offset)
 
-    gp = process.GP(kernel, mean, time, y, yerr)
+    gp = gaussian_process.CreateProcess(kernel, mean, time, y, yerr)
     logpost = logprior + gp.log_likelihood()
     return logpost
 
