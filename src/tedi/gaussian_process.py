@@ -2,7 +2,6 @@ from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 from scipy.linalg import LinAlgError, cho_factor, cho_solve
-from scipy.special import loggamma
 from scipy.stats import multivariate_normal, norm
 
 from src.tedi import kernels
@@ -322,9 +321,7 @@ class CreateProcess:
         self,
         kernel: Callable,
         mean: Callable,
-        a: np.ndarray,
         time: np.ndarray,
-        nugget: bool = False,
     ) -> np.ndarray:  # NOQA
         """
         Sample from the posterior distribution of the Gaussian process.
@@ -332,10 +329,7 @@ class CreateProcess:
         Args:
             kernel (Callable): The covariance function.
             mean (Callable): The mean function.
-            a (np.ndarray): The observed values.
             time (np.ndarray): The time points for sampling.
-            nugget (bool, default=False): Whether to add a nugget term to the
-                covariance matrix.
 
         Returns:
             np.ndarray: A sample from the posterior distribution.

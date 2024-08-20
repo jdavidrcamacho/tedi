@@ -199,7 +199,7 @@ class CreateProcess:
             float: The marginal log likelihood.
         """
         # covariance matrix calculation
-        K = self.compute_matrix(kernel, self.time, nugget=False, shift=False)
+        K = self.compute_matrix(kernel, self.time, nugget, shift)
         # calculation of y having into account the mean funtion
         if mean:
             y = self.y - mean(self.time)
