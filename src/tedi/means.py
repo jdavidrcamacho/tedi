@@ -306,7 +306,7 @@ class Keplerian(MeanModel):
             m1 = e0 - ecc * np.sin(e0) - m0
             convergence_criteria = np.abs(m1) > criteria
             nd = np.sum(convergence_criteria is True)
-        nu = 2 * np.arctan(np.sqrt((1 + ecc) / (1 - ecc)) * np.tan(e / 2))
+        nu = 2 * np.arctan(np.sqrt((1 + ecc) / (1 - ecc)) * np.tan(e0 / 2))
         rv = k * (ecc * np.cos(w) + np.cos(w + nu)) + offset
         return rv
 
