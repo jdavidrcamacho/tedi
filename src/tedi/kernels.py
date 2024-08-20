@@ -28,7 +28,6 @@ __all__ = [
 ]
 
 
-#
 class Constant(Kernel):
     """
     Constant kernel representing a constant offset.
@@ -778,7 +777,7 @@ class NewRQP(Kernel):
         )
         alpha2_component = (
             1
-            + 2 * sine(pi * abs_r / self.P) ** 2 / (self.alpha2 * self.ell_p**2)  # NOQA
+            + 2 * sine(pi * abs_r / self.p) ** 2 / (self.alpha2 * self.ell_p**2)  # NOQA
         ) ** (-self.alpha2)
         return self.amp**2 * alpha1_component * alpha2_component
 

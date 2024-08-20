@@ -14,11 +14,12 @@ from src.tedi.kernels import (
     QuasiPeriodic,
     RationalQuadratic,
     SquaredExponential,
-    WhiteNoise,
+    WhiteNoise, NewPeriodic, QuasiNewPeriodic, NewRQP, 
+    HarmonicPeriodic, QuasiHarmonicPeriodic
 )
 
 
-def test_constant_kernel() -> None:
+def test_Constant() -> None:
     c = 2.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = Constant(c)
@@ -27,7 +28,7 @@ def test_constant_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_white_noise_kernel() -> None:
+def test_WhiteNoise() -> None:
     wn = 0.5
     r = np.array([0.5, 1.0, 1.5])
     kernel = WhiteNoise(wn)
@@ -36,7 +37,7 @@ def test_white_noise_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_squared_exponential_kernel() -> None:
+def test_SquaredExponential() -> None:
     amp, ell = 1.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = SquaredExponential(amp, ell)
@@ -45,7 +46,7 @@ def test_squared_exponential_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_periodic_kernel() -> None:
+def test_Periodic() -> None:
     amp, p, ell = 1.0, 2.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = Periodic(amp, p, ell)
@@ -54,7 +55,7 @@ def test_periodic_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_quasi_periodic_kernel() -> None:
+def test_QuasiPeriodic() -> None:
     amp, ell_e, p, ell_p = 1.0, 1.0, 2.0, 2.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = QuasiPeriodic(amp, ell_e, p, ell_p)
@@ -66,7 +67,7 @@ def test_quasi_periodic_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_rational_quadratic_kernel() -> None:
+def test_RationalQuadratic() -> None:
     amp, alpha, ell = 1.0, 0.5, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = RationalQuadratic(amp, alpha, ell)
@@ -75,7 +76,7 @@ def test_rational_quadratic_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_cosine_kernel() -> None:
+def test_Cosine() -> None:
     amp, p = 1.0, 2.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = Cosine(amp, p)
@@ -84,7 +85,7 @@ def test_cosine_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_exponential_kernel() -> None:
+def test_Exponential() -> None:
     amp, ell = 1.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = Exponential(amp, ell)
@@ -93,7 +94,7 @@ def test_exponential_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_matern32_kernel() -> None:
+def test_Matern32() -> None:
     amp, ell = 1.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = Matern32(amp, ell)
@@ -103,7 +104,7 @@ def test_matern32_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_matern52_kernel() -> None:
+def test_Matern52() -> None:
     amp, ell = 1.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = Matern52(amp, ell)
@@ -118,7 +119,7 @@ def test_matern52_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_rqp_kernel() -> None:
+def test_RQP() -> None:
     amp, alpha, ell_e, p, ell_p = 1.0, 0.5, 1.0, 2.0, 2.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = RQP(amp, alpha, ell_e, p, ell_p)
@@ -129,7 +130,7 @@ def test_rqp_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_paciorek_kernel() -> None:
+def test_Paciorek() -> None:
     amp, ell_1, ell_2 = 1.0, 1.0, 2.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = Paciorek(amp, ell_1, ell_2)
@@ -140,7 +141,7 @@ def test_paciorek_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_piecewise_se_kernel() -> None:
+def test_PiecewiseSE() -> None:
     eta1, eta2, eta3 = 1.0, 2.0, 3.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = PiecewiseSE(eta1, eta2, eta3)
@@ -153,7 +154,7 @@ def test_piecewise_se_kernel() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_piecewise_rq_kernel() -> None:
+def test_PiecewiseRQ() -> None:
     eta1, alpha, eta2, eta3 = 1.0, 0.5, 2.0, 3.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = PiecewiseRQ(eta1, alpha, eta2, eta3)
@@ -165,4 +166,86 @@ def test_piecewise_rq_kernel() -> None:
     piecewise = np.where(abs_r_normalized > 1, 0, piecewise)
     expected = rq_term * piecewise
     result = kernel(r)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_NewPeriodic():
+    amp, alpha, p, ell = 1.0, 0.5, 2.0, 1.0
+    r = np.array([0.5, 1.0, 1.5])
+    kernel = NewPeriodic(amp, alpha, p, ell)
+    
+    expected = amp**2 * (1 + 2 * np.sin(np.pi * np.abs(r) / p)**2 / (alpha * ell**2))**(-alpha)
+    
+    result = kernel(r)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_QuasiNewPeriodic():
+    amp, alpha, ell_e, p, ell_p = 1.0, 0.5, 1.5, 2.0, 1.0
+    r = np.array([0.5, 1.0, 1.5])
+    kernel = QuasiNewPeriodic(amp, alpha, ell_e, p, ell_p)
+    
+    per_component = (1 + 2 * np.sin(np.pi * np.abs(r) / p)**2 / (alpha * ell_p**2))**(-alpha)
+    exp_component = np.exp(-0.5 * np.abs(r)**2 / ell_e**2)
+    expected = amp**2 * per_component * exp_component
+    
+    result = kernel(r)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+def test_NewRQP():
+    amp, alpha1, alpha2, ell_e, p, ell_p = 1.0, 0.5, 0.5, 1.5, 2.0, 1.0
+    r = np.array([0.5, 1.0, 1.5])
+    kernel = NewRQP(amp, alpha1, alpha2, ell_e, p, ell_p)
+    
+    abs_r = np.abs(r)
+    alpha1_component = (1 + 0.5 * abs_r**2 / (alpha1 * ell_e**2))**(-alpha1)
+    alpha2_component = (1 + 2 * np.sin(np.pi * abs_r / p)**2 / (alpha2 * ell_p**2))**(-alpha2)
+    expected = amp**2 * alpha1_component * alpha2_component
+    
+    result = kernel(r)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+
+def test_HarmonicPeriodic():
+    n, amp, p, ell = 2, 1.0, 2.0, 1.0
+    r = np.array([0.5, 1.0, 1.5])
+    s = np.array([0.25, 0.75, 1.25])
+    kernel = HarmonicPeriodic(n, amp, p, ell)
+    
+    first_sin = np.sin((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    second_sin = np.sin((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    sine_component = (first_sin - second_sin)**2
+    
+    first_cot = 0.5 / np.tan(np.pi * r / p)
+    first_cos = np.cos((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    second_cot = 0.5 / np.tan(np.pi * s / p)
+    second_cos = np.cos((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    cot_cos_component = (first_cot - first_cos - second_cot + second_cos)**2
+    
+    expected = amp**2 * np.exp(-0.5 * (sine_component + cot_cos_component) / ell**2)
+    
+    result = kernel(r, s)
+    assert np.allclose(result, expected), f"Expected {expected}, got {result}"
+
+def test_QuasiHarmonicPeriodicv():
+    n, amp, ell_e, p, ell_p = 2, 1.0, 1.5, 2.0, 1.0
+    r = np.array([0.5, 1.0, 1.5])
+    s = np.array([0.25, 0.75, 1.25])
+    kernel = QuasiHarmonicPeriodic(n, amp, ell_e, p, ell_p)
+    
+    first_sin = np.sin((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    second_sin = np.sin((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    sine_component = (first_sin - second_sin)**2
+    
+    first_cot = 0.5 / np.tan(np.pi * r / p)
+    first_cos = np.cos((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    second_cot = 0.5 / np.tan(np.pi * s / p)
+    second_cos = np.cos((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    cot_cos_component = (first_cot - first_cos - second_cot + second_cos)**2
+    
+    hp_kernel = np.exp(-0.5 * (sine_component + cot_cos_component) / ell_p**2)
+    se_kernel = np.exp(-0.5 * np.abs(r - s)**2 / ell_e**2)
+    expected = amp**2 * hp_kernel * se_kernel
+    
+    result = kernel(r, s)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
