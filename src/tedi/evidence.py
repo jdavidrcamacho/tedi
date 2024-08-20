@@ -2,6 +2,7 @@
 
 import random
 from math import log, sqrt
+from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
 import scipy.stats
@@ -10,46 +11,49 @@ from .utils.evidence import MultivariateGaussian
 
 
 def compute_perrakis_estimate(
-    marginal_sample,
-    lnlikefunc,
-    lnpriorfunc,
-    nsamples=1000,
-    lnlikeargs=(),
-    lnpriorargs=(),
-    densityestimation="kde",
-    errorestimation=False,
+    marginal_sample: np.ndarray,
+    lnlikefunc: Callable[[np.ndarray], np.ndarray],
+    lnpriorfunc: Callable[[np.ndarray], np.ndarray],
+    nsamples: int = 1000,
+    lnlikeargs: Tuple = (),
+    lnpriorargs: Tuple = (),
+    densityestimation: str = "kde",
+    errorestimation: bool = False,
     **kwargs
-):
+) -> Union[float, Tuple[float, float]]:
     """
-    Computes the Perrakis estimate of the bayesian evidence.
+    Computes the Perrakis estimate of the Bayesian evidence.
 
-    The estimation is based on n marginal posterior samples indexed by s, with
-    s = 0, ..., n-1.
+    The estimation is based on `m` marginal posterior samples.
 
-    :param array marginal_sample:
-        A sample from the parameter marginal posterior distribution.
-        Dimensions are (n x k), where k is the number of parameters.
-    :param callable lnlikefunc:
-        Function to compute ln(likelihood) on the marginal samples.
-    :param callable lnpriorfunc:
-        Function to compute ln(prior density) on the marginal samples.
-    :param nsamples:
-        Number of samples to produce.
-    :param tuple lnlikeargs:
-        Extra arguments passed to the likelihood function.
-    :param tuple lnpriorargs:
-        Extra arguments passed to the lnprior function.
-    :param str densityestimation:
-        The method used to estimate theinitial_samples marginal posterior
-        density of each model parameter ("normal", "kde", or "histogram").
-    Other parameters
-    ----------------
-    :param kwargs:
-        Additional arguments passed to estimate_density function.
-    :return:
-    References
-    ----------
-    Perrakis et al. (2014; arXiv:1311.0674)
+    Args:
+        marginal_sample (np.ndarray): A sample from the parameter marginal
+            posterior distribution. Dimensions are (n x k), where k is the
+            number of parameters.
+        lnlikefunc (Callable[[np.ndarray], np.ndarray]): Function to
+            compute ln(likelihood) on the marginal samples.
+        lnpriorfunc (Callable[[np.ndarray], np.ndarray]): Function to
+            compute ln(prior density) on the marginal samples.
+        nsamples (int, optional): Number of samples to produce.
+            Defaults to 1000.
+        lnlikeargs (Tuple, optional): Extra arguments passed to the likelihood
+            function. Defaults to empty tuple.
+        lnpriorargs (Tuple, optional): Extra arguments passed to the lnprior
+            function. Defaults to empty tuple.
+        densityestimation (str, optional): Method to estimate the marginal
+            posterior density ("normal", "kde", or "histogram").
+            Defaults to "kde".
+        errorestimation (bool, optional): Whether to estimate the error of the
+            Perrakis method. Defaults to False.
+        **kwargs: Additional arguments passed to estimate_density function.
+
+    Returns:
+        Union[float, Tuple[float, float]]: The Perrakis estimate of the
+            Bayesian evidence. If `errorestimation` is True, also returns the
+            standard error.
+
+    References:
+        Perrakis et al. (2014; arXiv:1311.0674)
     """
     if errorestimation:
         initial_sample = marginal_sample
@@ -60,21 +64,22 @@ def compute_perrakis_estimate(
     print("Estimating marginal posterior density for each parameter...")
     marginal_posterior_density = np.zeros(marginal_sample.shape)
     for parameter_index in range(number_parameters):
-        # Extract samples for this parameter._perrakis_error(
         x = marginal_sample[:, parameter_index]
         # Estimate density with method "densityestimation".
         marginal_posterior_density[:, parameter_index] = estimate_density(
             x, method=densityestimation, **kwargs
         )
-    print("Computing produt of marginal posterior densities for all parameters...")
+    print("Computing produt of marginal posterior densities for parameters")
     prod_marginal_densities = marginal_posterior_density.prod(axis=1)
-    print("Computing lnprior and likelihood in marginal sample...")
+    print("Computing lnprior and likelihood in marginal sample")
     log_prior = lnpriorfunc(marginal_sample, *lnpriorargs)
     log_likelihood = lnlikefunc(marginal_sample, *lnlikeargs)
-    print("Masking values with zero likelihood...")
+    print("Masking values with zero likelihood")
     cond = log_likelihood != 0
     log_summands = (
-        log_likelihood[cond] + log_prior[cond] - np.log(prod_marginal_densities[cond])
+        log_likelihood[cond]
+        + log_prior[cond]
+        - np.log(prod_marginal_densities[cond])  # NOQA
     )
     perr = log_sum(log_summands) - log(len(log_summands))
     # error estimation
@@ -93,7 +98,7 @@ def compute_perrakis_estimate(
         for i in range(K):
             meanErr.append(
                 _perrakis_error(
-                    initial_sample[i * batchSize : (i + 1) * batchSize, :],
+                    initial_sample[i * batchSize : (i + 1) * batchSize, :],  # NOQA
                     lnlikefunc,
                     lnpriorfunc,
                     nsamples=nsamples,
@@ -107,14 +112,35 @@ def compute_perrakis_estimate(
 
 
 def _perrakis_error(
-    marginal_samples,
-    lnlikefunc,
-    lnpriorfunc,
-    nsamples=1000,
-    densityestimation="histogram",
-    errorestimation=False,
-):
-    """To use when estimating the error of the perrakis method"""
+    marginal_samples: np.ndarray,
+    lnlikefunc: Callable[[np.ndarray], np.ndarray],
+    lnpriorfunc: Callable[[np.ndarray], np.ndarray],
+    nsamples: int = 1000,
+    densityestimation: str = "histogram",
+    errorestimation: bool = False,
+) -> float:
+    """
+    Helper function to estimate the error of the Perrakis method.
+
+    Args:
+        marginal_samples (np.ndarray): A sample from the parameter marginal
+            posterior distribution. Dimensions are (n x k), where k is the
+            number of parameters.
+        lnlikefunc (Callable[[np.ndarray], np.ndarray]): Function to
+            compute ln(likelihood) on the marginal samples.
+        lnpriorfunc (Callable[[np.ndarray], np.ndarray]): Function to
+            compute ln(prior density) on the marginal samples.
+        nsamples (int, optional): Number of samples to produce.
+            Defaults to 1000.
+        densityestimation (str, optional): Method to estimate the marginal
+            posterior density ("normal", "kde", or "histogram").
+            Defaults to "histogram".
+        errorestimation (bool, optional): Whether to estimate the error.
+            Defaults to False.
+
+    Returns:
+        float: The Perrakis estimate of the Bayesian evidence.
+    """
     return compute_perrakis_estimate(
         marginal_samples,
         lnlikefunc,
@@ -125,51 +151,52 @@ def _perrakis_error(
     )
 
 
-def estimate_density(x, method="histogram", **kwargs):
+def estimate_density(
+    x: np.ndarray, method: str = "histogram", **kwargs
+) -> np.ndarray:  # NOQA
     """
-    Estimate probability density based on a sample. Return value of density at
-    sample points.
-    :param array_like x: sample.
-    :param str method:
-        Method used for the estimation. 'histogram' estimates the density based
-        on a normalised histogram of nbins bins; 'kde' uses a 1D non-parametric
-        gaussian kernel; 'normal approximates the distribution by a normal
-        distribution.
-    Additional parameters
-    :param int nbins:
-        Number of bins used in "histogram method".
-    :return: density estimation at the sample points.
+    Estimate probability density based on a sample.
+
+    Args:
+        x (np.ndarray): Sample data.
+        method (str, optional): Method for density estimation
+            ("histogram", "kde", or "normal"). Defaults to "histogram".
+        **kwargs: Additional parameters for the density estimation method.
+
+    Returns:
+        np.ndarray: Density estimation at the sample points.
+
+    Raises:
+        ValueError: If an invalid method is specified.
     """
     nbins = kwargs.pop("nbins", 100)
     if method == "normal":
-        # Approximate each parameter distribution by a normal.
         return scipy.stats.norm.pdf(x, loc=x.mean(), scale=sqrt(x.var()))
     if method == "kde":
-        # Approximate each parameter distribution using a gaussian kernel estimation
         return scipy.stats.gaussian_kde(x)(x)
     if method == "histogram":
-        # Approximate each parameter distribution based on the histogram
         density, bin_edges = np.histogram(x, nbins, density=True)
-        # Find to which bin each element corresponds
         density_indexes = np.searchsorted(bin_edges, x, side="left")
-        # Correct to avoid index zero from being assiged to last element
         density_indexes = np.where(
             density_indexes > 0, density_indexes, density_indexes + 1
         )
         return density[density_indexes - 1]
 
 
-def make_marginal_samples(joint_samples, nsamples=None):
+def make_marginal_samples(
+    joint_samples: np.ndarray, nsamples: Optional[int] = None
+) -> np.ndarray:  # NOQA
     """
-    Reshuffles samples from joint distribution of k parameters to obtain samples
-    from the _marginal_ distribution of each parameter.
-    :param np.array joint_samples:
-        Samples from the parameter joint distribution. Dimensions are (n x k),
-        where k is the number of parameters.
-    :param nsamples:
-        Number of samples to produce. If 0, use number of joint samples.
-    :type nsamples:
-        int or None
+    Reshuffles samples from joint distribution to obtain samples from the
+    marginal distribution of each parameter.
+
+    Args:
+        joint_samples (np.ndarray): Samples from the joint distribution of
+            parameters. Dimensions are (n x k).
+        nsamples (Optional[int], optional): Number of samples to produce.
+
+    Returns:
+        np.ndarray: Samples from the marginal distribution of each parameter.
     """
     if nsamples > len(joint_samples) or nsamples is None:
         nsamples = len(joint_samples)
@@ -181,8 +208,16 @@ def make_marginal_samples(joint_samples, nsamples=None):
     return marginal_samples
 
 
-def log_sum(log_summands):
-    """log_sum operation"""
+def log_sum(log_summands: np.ndarray) -> float:
+    """
+    Compute the logarithm of the sum of exponentials of input elements.
+
+    Args:
+        log_summands (np.ndarray): Array of log values to sum.
+
+    Returns:
+        float: Logarithm of the sum of exponentials of the input elements.
+    """
     a = np.inf
     x = log_summands.copy()
     while a == np.inf or a == -np.inf or np.isnan(a):
@@ -192,33 +227,40 @@ def log_sum(log_summands):
 
 
 def compute_harmonicmean(
-    lnlike_post, posterior_sample=None, lnlikefunc=None, lnlikeargs=(), **kwargs
-):
+    lnlike_post: np.ndarray,
+    posterior_sample: Optional[np.ndarray] = None,
+    lnlikefunc: Optional[Callable[[np.ndarray], np.ndarray]] = None,
+    lnlikeargs: Tuple = (),
+    **kwargs
+) -> float:
     """
     Computes the harmonic mean estimate of the marginal likelihood.
-    The estimation is based on n posterior samples
-    (indexed by s, with s = 0, marginal likelihood error..., n-1), but can be done directly if the
-    log(likelihood) in this sample is passed.
-    :param array lnlike_post:
-        log(likelihood) computed over a posterior sample. 1-D array of length n.
-        If an emply array is given, then compute from posterior sample.
-    :param array posterior_sample:
-        A sample from the parameter posterior distribution.
-        Dimensions are (n x k), where k is the number of parameters. If None
-        the computation is done using the log(likelihood) obtained from the
-        posterior sample.
-    :param callable lnlikefunc:
-        Function to compute ln(likelihood) on the marginal samples.
-    :param tuple lnlikeargs:
-        Extra arguments passed to the likelihood function.
-    Other parameters
-    ----------------
-    :param int size:
-        Size of sample to use for computation. If none is given, use size of
-        given array or posterior sample.
-    References
-    ----------
-    Kass & Raftery (1995), JASA vol. 90, N. 430, pp. 773-795
+
+    The estimation is based on n posterior samples (indexed by s, with s = 0,
+    ..., n-1), but can be done directly if the log(likelihood) in this sample
+    is passed.
+
+    Args:
+        lnlike_post (np.ndarray): Log-likelihood computed over a posterior
+            sample. 1-D array of length n. If an empty array is given, then
+            compute from posterior sample.
+        posterior_sample (Optional[np.ndarray], optional): A sample from the
+            parameter posterior distribution. Dimensions are (n x k), where k
+            is the number of parameters. If None, the computation is done using
+            the log(likelihood) obtained from the posterior sample.
+        lnlikefunc (Optional[Callable[[np.ndarray], np.ndarray]], optional):
+            Function to compute ln(likelihood) on the marginal samples.
+        lnlikeargs (Tuple, optional): Extra arguments passed to the likelihood
+            function.
+        **kwargs: Additional parameters. The `size` parameter is expected to
+            specify the size of the sample used for computation. If none is
+            given, use the size of the given array or posterior sample.
+
+    Returns:
+        float: The harmonic mean estimate of the marginal likelihood.
+
+    References:
+        Kass & Raftery (1995), JASA vol. 90, N. 430, pp. 773-795
     """
     if len(lnlike_post) == 0 and posterior_sample is not None:
         samplesize = kwargs.pop("size", len(posterior_sample))
@@ -232,13 +274,27 @@ def compute_harmonicmean(
         log_likelihood = lnlikefunc(posterior_subsample, *lnlikeargs)
     elif len(lnlike_post) > 0:
         samplesize = kwargs.pop("size", len(lnlike_post))
-        log_likelihood = np.random.choice(lnlike_post, size=samplesize, replace=False)
+        log_likelihood = np.random.choice(
+            lnlike_post, size=samplesize, replace=False
+        )  # NOQA
     hme = -log_sum(-log_likelihood) + log(len(log_likelihood))
     return hme
 
 
-def run_hme_mc(log_likelihood, nmc, samplesize):
-    """Harmonic mean"""
+def run_hme_mc(
+    log_likelihood: np.ndarray, nmc: int, samplesize: int
+) -> np.ndarray:  # NOQA
+    """
+    Runs Monte Carlo simulations to compute the harmonic mean estimate.
+
+    Args:
+        log_likelihood (np.ndarray): Array of log-likelihood values.
+        nmc (int): Number of Monte Carlo simulations.
+        samplesize (int): Size of the sample used in each simulation.
+
+    Returns:
+        np.ndarray: Array of harmonic mean estimates from each simulation.
+    """
     hme = np.zeros(nmc)
     for i in range(nmc):
         hme[i] = compute_harmonicmean(log_likelihood, size=samplesize)
@@ -246,55 +302,57 @@ def run_hme_mc(log_likelihood, nmc, samplesize):
 
 
 def compute_cj_estimate(
-    posterior_sample,
-    lnlikefunc,
-    lnpriorfunc,
-    param_post,
-    nsamples,
-    qprob=None,
-    lnlikeargs=(),
-    lnpriorargs=(),
-    lnlike_post=None,
-    lnprior_post=None,
-):
+    posterior_sample: np.ndarray,
+    lnlikefunc: Callable[[np.ndarray], np.ndarray],
+    lnpriorfunc: Callable[[np.ndarray], np.ndarray],
+    param_post: np.ndarray,
+    nsamples: int,
+    qprob: Optional[
+        Union[scipy.stats.rv_continuous, MultivariateGaussian]
+    ] = None,  # NOQA
+    lnlikeargs: Tuple = (),
+    lnpriorargs: Tuple = (),
+    lnlike_post: Optional[np.ndarray] = None,
+    lnprior_post: Optional[np.ndarray] = None,
+) -> float:
     """
-    Computes the Chib & Jeliazkov estimate of the bayesian evidence.
-    The estimation is based on an posterior sample with n elements
-    (indexed by s, with s = 0, ..., n-1), and a sample from the proposal
-    distribution used in MCMC (qprob) of size nsample. Note that if qprob is
-    None, it is estimated as a multivariate Gaussian.
-    :param array posterior_sample:
-        A sample from the parameter posterior distribution. Dimensions are
-        (n x k), where k is the number of parameters.
-    :param callable lnlikefunc:
-        Function to compute ln(likelihood) on the marginal samples.
-    :param callable lnpriorfunc:
-        Function to compute ln(prior density) on the marginal samples.
-    :param array param_post:
-        Posterior parameter sample used to obtained fixed point needed by the
-        algorithm.
-    :param int nsamples:
-        Size of sample drawn from proposal distribution.
-    :param object or None qprob:
-        Proposal distribution function. If None, it will be estimated as a
-        multivariate Gaussian. If not None, it must possess the methods pdf and
-        rvs. See scipy.stats.rv_continuous.
-    :param tuple lnlikeargs:
-        Extra arguments passed to the likelihood function.
-    :param tuple lnpriorargs:
-        Extra arguments passed to the lnprior function.
-    :param array lnlike_post:
-        log(likelihood) computed over a posterior sample. 1-D array of length n.
-    :param array lnprior_post:
-        log(prior) computed over a posterior sample. 1-D array of length n.
-    :raises AttributeError:
-        if instace qprob does not have method 'pdf' or 'rvs'.
-    :raises TypeError:
-        if methods 'pdf' or 'rvs' from instance qprob are not callable.
-    :returns: Natural logarithm of estimated Bayesian evidence.
-    References
-    ----------
-    Chib & Jeliazkov (2001): Journal of the Am. Stat. Assoc.; Mar 2001; 96, 453
+    Computes the Chib & Jeliazkov estimate of the Bayesian evidence.
+
+    The estimation is based on a posterior sample with n elements and a sample
+    from the proposal distribution used in MCMC (`qprob`) of size `nsamples`.
+    If `qprob` is None, it is estimated as a multivariate Gaussian.
+
+    Args:
+        posterior_sample (np.ndarray): A sample from the parameter posterior
+            distribution. Dimensions are (n x k), where k is the number of
+            parameters.
+        lnlikefunc (Callable[[np.ndarray], np.ndarray]): Function to compute
+            ln(likelihood) on the marginal samples.
+        lnpriorfunc (Callable[[np.ndarray, np.ndarray]): Function to compute
+            ln(prior density) on the marginal samples.
+        param_post (np.ndarray): Posterior parameter sample used to obtain the
+            fixed point needed by the algorithm.
+        nsamples (int): Size of sample drawn from the proposal distribution.
+        qprob (Optional[Union[scipy.stats.rv_continuous, MultivariateGaussian]], optional):  # NOQA
+            Proposal distribution function. If None, it will be estimated as a
+            multivariate Gaussian. If not None, it must possess the methods
+            `pdf` and `rvs`. See `scipy.stats.rv_continuous`.
+        lnlikeargs (Tuple, optional): Arguments passed to the lnlikefunc.
+        lnpriorargs (Tuple, optional): Arguments passed to the lnpriorfunc.
+        lnlike_post (Optional[np.ndarray], optional): Log-likelihood computed
+            over a posterior sample. 1-D array of length n.
+        lnprior_post (Optional[np.ndarray], optional): Log-prior computed over
+            a posterior sample. 1-D array of length n.
+
+    Returns:
+        float: Natural logarithm of the estimated Bayesian evidence.
+
+    Raises:
+        AttributeError: If `qprob` does not have method 'pdf' or 'rvs'.
+        TypeError: If methods 'pdf' or 'rvs' from `qprob` are not callable.
+
+    References:
+        Chib & Jeliazkov (2001): Journal of the Am. Stat. Assoc.; Mar 2001; 96, 453
     """
     # Find fixed point on which to estimate posterior ordinate.
     if lnlike_post is not None:
@@ -336,49 +394,48 @@ def compute_cj_estimate(
                     "qprob does not have method " "'{}'".format(method)
                 )
             if not callable(att):
-                raise TypeError("{} method of qprob is not " "callable".format(method))
-    # Compute proposal density in posterior sample
+                raise TypeError(
+                    "{} method of qprob is not " "callable".format(method)
+                )  # NOQA
     q_post = qprob.pdf(posterior_sample)
-    # If likelihood over posterior sample is not given, compute it
     if lnlike_post is None:
         lnlike_post = lnlikefunc(posterior_sample, *lnlikeargs)
-    # Idem for prior
     if lnprior_post is None:
         lnprior_post = lnpriorfunc(posterior_sample, *lnpriorargs)
-    # Compute Metropolis ratio with respect to fixed point over posterior sample
+
     lnalpha_post = metropolis_ratio(lnprior_post + lnlike_post, lnpost0)
-    # Sample from the proposal distribution with respect to fixed point
     proposal_sample = qprob.rvs(nsamples)
-    # Compute likelihood and prior on proposal_sample
     lnprior_prop = lnpriorfunc(proposal_sample, *lnpriorargs)
     if np.all(lnprior_prop == -np.inf):
         raise ValueError(
             "All samples from proposal density have zero prior"
             "probability. Increase nsample."
         )
-    # Now compute likelihood only on the samples where prior != 0.
+
     lnlike_prop = np.full_like(lnprior_prop, -np.inf)
     ind = lnprior_prop != -np.inf
     lnlike_prop[ind] = lnlikefunc(proposal_sample[ind, :], *lnlikeargs)
-    # Get Metropolis ratio with respect to fixed point over proposal sample
     lnalpha_prop = metropolis_ratio(lnpost0, lnprior_prop + lnlike_prop)
-    # Compute estimate of posterior ordinate (see Eq. 9 from reference)
     num = log_sum(lnalpha_post + q_post) - log(len(posterior_sample))
     den = log_sum(lnalpha_prop) - log(len(proposal_sample))
     lnpostord = num - den
-    # Return log(Evidence) estimation
+
     return lnpost0 - lnpostord
 
 
-def metropolis_ratio(lnpost0, lnpost1):
+def metropolis_ratio(lnpost0: np.ndarray, lnpost1: np.ndarray) -> np.ndarray:
     """
-    Compute Metropolis ratio for two states.
-    :param float or array lnpost0:
-        Value of ln(likelihood * prior) for inital state.
-    :param float or array lnpost1:
-        Value of ln(likelihood * prior) for proposal state.
-    :raises ValueError: if lnpost0 and lnpost1 have different lengths.
-    :return: log(Metropolis ratio)
+    Computes the Metropolis ratio for two states.
+
+    Args:
+        lnpost0 (np.ndarray): Value of ln(likelihood*prior) for initial state.
+        lnpost1 (np.ndarray): Value of ln(likelihood*prior) for proposal state.
+
+    Returns:
+        np.ndarray: Log of the Metropolis ratio.
+
+    Raises:
+        ValueError: If `lnpost0` and `lnpost1` have different lengths.
     """
     if (
         hasattr(lnpost0, "__iter__")
@@ -390,37 +447,46 @@ def metropolis_ratio(lnpost0, lnpost1):
 
 
 def get_fixed_point(
-    posterior_samples, param_post, lnlike, lnprior, lnlikeargs=(), lnpriorargs=()
-):
+    posterior_samples: np.ndarray,
+    param_post: Optional[np.ndarray],
+    lnlike: Union[np.ndarray, Callable[[np.ndarray], np.ndarray]],
+    lnprior: Union[np.ndarray, Callable[[np.ndarray], np.ndarray]],
+    lnlikeargs: Tuple = (),
+    lnpriorargs: Tuple = (),
+) -> Tuple[np.ndarray, float]:
     """
-    Find the posterior point closest to the model of the lnlike distribution.
-    :param array posterior_samples:
-        A sample from the parameters posterior distribution. Array dimensions
-        must be (n x k), where n is the number of elements in the sample and
-        k is the number of parameters.
-    :param array or None param_post:
-        A sample from the marginal posterior distribution of the parameter
-        chosen to identify the high-density point to use as fixed point. This is
-        typically one of the columns of posterior_samples, but could be any
-        1-D array of size n. If None, then a multivariate Gaussian kernel
-        estimate of the joint posterior distribution is used.
-    :param array or callable lnlike:
-        Function to compute log(likelihood). If an array is given, this is
-        simply the log(likelihood) values at the posterior samples, and the
-         best value will be chosen from this array.
-    :param array or callable lnprior:
-        Function to compute log(prior). If an array is given, this is
-        simply the log(prior) values at the posterior samples, and the
-        best value will be chosen from this array.
-    :param tuple lnlikeargs:
-        Extra arguments passed to lnlike functions.
-    :param tuple lnpriorargs:
-        Extra arguments passed to lnprior functions.
-    :raises IndexError: if either lnlike or lnprior are arrays with length not
-        matching the number of posterior samples.
-    :return:
-        the fixed point in parameter space and the value of
-        log(prior * likelihood) evaluated at this point.
+    Finds the posterior point closest to the model of the lnlike distribution.
+
+    Args:
+        posterior_samples (np.ndarray): A sample from the parameters posterior
+            distribution. Dimensions must be (n x k), where n is the number of
+            elements in the sample and k is the number of parameters.
+        param_post (Optional[np.ndarray]): A sample from the marginal posterior
+            distribution of the parameter chosen to identify the high-density
+            point to use as a fixed point. This is typically one of the columns
+            of `posterior_samples`, but could be any 1-D array of size n.
+            If None, then a multivariate Gaussian kernel estimate of the joint
+            posterior distribution is used.
+        lnlike (Union[np.ndarray, Callable[[np.ndarray], np.ndarray]]):
+            Function to compute log(likelihood). If an array is given, this is
+            simply the log(likelihood) values at the posterior samples, and the
+            best value will be chosen from this array.
+        lnprior (Union[np.ndarray, Callable[[np.ndarray], np.ndarray]]):
+            Function to compute log(prior). If an array is given, this is
+            simply the log(prior) values at the posterior samples, and the best
+            value will be chosen from this array.
+        lnlikeargs (Tuple, optional): Extra arguments passed to lnlike
+            functions.
+        lnpriorargs (Tuple, optional): Extra arguments passed to lnprior
+            functions.
+
+    Returns:
+        Tuple[np.ndarray, float]: The fixed point in parameter space and the
+            value of log(prior * likelihood) evaluated at this point.
+
+    Raises:
+        IndexError: If either `lnlike` or `lnprior` are arrays with length not
+            matching the number of posterior samples.
     """
     if param_post is not None:
         # Use median of param_post as fixed point.
@@ -452,6 +518,3 @@ def get_fixed_point(
             lnprior0 = lnprior(fixed_point, *lnpriorargs)
         return fixed_point, lnlike0 + lnprior0
     raise NotImplementedError
-
-
-### END

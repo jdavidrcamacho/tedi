@@ -1,5 +1,7 @@
 """Run a MCMC example"""
 
+from multiprocessing import Pool
+
 import corner
 import emcee
 import matplotlib.pyplot as plt
@@ -76,8 +78,6 @@ def log_transform(theta):
 ndim = prior_transform().size
 nwalkers = 2 * ndim
 ncpu = 4
-
-from multiprocessing import Pool
 
 pool = Pool(ncpu)
 sampler = emcee.EnsembleSampler(nwalkers, ndim, log_transform, pool=pool)
