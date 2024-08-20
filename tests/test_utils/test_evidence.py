@@ -4,7 +4,7 @@ import pytest
 from src.tedi.utils.evidence import MultivariateGaussian, multivariate_normal
 
 
-def test_multivariate_normal_cholesky():
+def test_multivariate_normal_cholesky() -> None:
     r = np.array([1.0, 2.0])
     c = np.array([[2.0, 0.5], [0.5, 1.0]])
     result = multivariate_normal(r, c, method="cholesky")
@@ -12,7 +12,7 @@ def test_multivariate_normal_cholesky():
     assert np.isfinite(result)
 
 
-def test_multivariate_normal_solve():
+def test_multivariate_normal_solve() -> None:
     r = np.array([1.0, 2.0])
     c = np.array([[2.0, 0.5], [0.5, 1.0]])
     result = multivariate_normal(r, c, method="solve")
@@ -20,14 +20,14 @@ def test_multivariate_normal_solve():
     assert np.isfinite(result)
 
 
-def test_multivariate_normal_invalid_method():
+def test_multivariate_normal_invalid_method() -> None:
     r = np.array([1.0, 2.0])
     c = np.array([[2.0, 0.5], [0.5, 1.0]])
     with pytest.raises(ValueError, match="Invalid method"):
         multivariate_normal(r, c, method="invalid")
 
 
-def test_MultivariateGaussian_pdf_single_sample():
+def test_MultivariateGaussian_pdf_single_sample() -> None:
     mu = np.array([0.0, 0.0])
     cov = np.array([[1.0, 0.0], [0.0, 1.0]])
     x = np.array([1.0, 2.0])
@@ -37,7 +37,7 @@ def test_MultivariateGaussian_pdf_single_sample():
     assert np.isfinite(result)
 
 
-def test_MultivariateGaussian_pdf_multiple_samples():
+def test_MultivariateGaussian_pdf_multiple_samples() -> None:
     mu = np.array([0.0, 0.0])
     cov = np.array([[1.0, 0.0], [0.0, 1.0]])
     x = np.array([[1.0, 2.0], [0.5, 1.5], [-1.0, -2.0]])
@@ -48,16 +48,18 @@ def test_MultivariateGaussian_pdf_multiple_samples():
     assert np.all(np.isfinite(result))
 
 
-def test_MultivariateGaussian_pdf_invalid_dimensions():
+def test_MultivariateGaussian_pdf_invalid_dimensions() -> None:
     mu = np.array([0.0, 0.0])
     cov = np.array([[1.0, 0.0], [0.0, 1.0]])
     x = np.array([[1.0], [2.0]])  # Mismatched dimensions
     mvg = MultivariateGaussian(mu, cov)
-    with pytest.raises(ValueError, match="Input array not aligned with covariance"):
+    with pytest.raises(
+        ValueError, match="Input array not aligned with covariance"
+    ):  # NOQA
         mvg.pdf(x)
 
 
-def test_MultivariateGaussian_rvs():
+def test_MultivariateGaussian_rvs() -> None:
     mu = np.array([0.0, 0.0])
     cov = np.array([[1.0, 0.0], [0.0, 1.0]])
     mvg = MultivariateGaussian(mu, cov)

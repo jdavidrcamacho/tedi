@@ -20,9 +20,9 @@ def semi_amplitude(
     Returns:
         float: The semi-amplitude k (in m/s) of the planet signal.
     """
-    per = np.float(np.power(1 / period, 1 / 3))
+    per = float(np.power(1 / period, 1 / 3))
     p_mass = m_planet / 1
-    s_mass = np.float(np.power(1 / m_star, 2 / 3))
+    s_mass = float(np.power(1 / m_star, 2 / 3))
     ecc = 1 / np.sqrt(1 - ecc**2)
     k = 28.435 * per * p_mass * s_mass * ecc
     return k

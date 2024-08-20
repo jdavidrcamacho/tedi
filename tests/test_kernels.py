@@ -173,7 +173,7 @@ def test_PiecewiseRQ() -> None:
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_NewPeriodic():
+def test_NewPeriodic() -> None:
     amp, alpha, p, ell = 1.0, 0.5, 2.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = NewPeriodic(amp, alpha, p, ell)
@@ -186,7 +186,7 @@ def test_NewPeriodic():
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_QuasiNewPeriodic():
+def test_QuasiNewPeriodic() -> None:
     amp, alpha, ell_e, p, ell_p = 1.0, 0.5, 1.5, 2.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = QuasiNewPeriodic(amp, alpha, ell_e, p, ell_p)
@@ -201,7 +201,7 @@ def test_QuasiNewPeriodic():
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_NewRQP():
+def test_NewRQP() -> None:
     amp, alpha1, alpha2, ell_e, p, ell_p = 1.0, 0.5, 0.5, 1.5, 2.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     kernel = NewRQP(amp, alpha1, alpha2, ell_e, p, ell_p)
@@ -217,42 +217,60 @@ def test_NewRQP():
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_HarmonicPeriodic():
+def test_HarmonicPeriodic() -> None:
     n, amp, p, ell = 2, 1.0, 2.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     s = np.array([0.25, 0.75, 1.25])
     kernel = HarmonicPeriodic(n, amp, p, ell)
 
-    first_sin = np.sin((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
-    second_sin = np.sin((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    first_sin = (
+        np.sin((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    )  # NOQA
+    second_sin = (
+        np.sin((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    )  # NOQA
     sine_component = (first_sin - second_sin) ** 2
 
     first_cot = 0.5 / np.tan(np.pi * r / p)
-    first_cos = np.cos((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    first_cos = (
+        np.cos((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    )  # NOQA
     second_cot = 0.5 / np.tan(np.pi * s / p)
-    second_cos = np.cos((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    second_cos = (
+        np.cos((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    )  # NOQA
     cot_cos_component = (first_cot - first_cos - second_cot + second_cos) ** 2
 
-    expected = amp**2 * np.exp(-0.5 * (sine_component + cot_cos_component) / ell**2)
+    expected = amp**2 * np.exp(
+        -0.5 * (sine_component + cot_cos_component) / ell**2
+    )  # NOQA
 
     result = kernel(r, s)
     assert np.allclose(result, expected), f"Expected {expected}, got {result}"
 
 
-def test_QuasiHarmonicPeriodicv():
+def test_QuasiHarmonicPeriodic() -> None:
     n, amp, ell_e, p, ell_p = 2, 1.0, 1.5, 2.0, 1.0
     r = np.array([0.5, 1.0, 1.5])
     s = np.array([0.25, 0.75, 1.25])
     kernel = QuasiHarmonicPeriodic(n, amp, ell_e, p, ell_p)
 
-    first_sin = np.sin((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
-    second_sin = np.sin((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    first_sin = (
+        np.sin((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    )  # NOQA
+    second_sin = (
+        np.sin((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    )  # NOQA
     sine_component = (first_sin - second_sin) ** 2
 
     first_cot = 0.5 / np.tan(np.pi * r / p)
-    first_cos = np.cos((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    first_cos = (
+        np.cos((n + 0.5) * 2 * np.pi * r / p) / 2 * np.sin(np.pi * r / p)
+    )  # NOQA
     second_cot = 0.5 / np.tan(np.pi * s / p)
-    second_cos = np.cos((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    second_cos = (
+        np.cos((n + 0.5) * 2 * np.pi * s / p) / 2 * np.sin(np.pi * s / p)
+    )  # NOQA
     cot_cos_component = (first_cot - first_cos - second_cot + second_cos) ** 2
 
     hp_kernel = np.exp(-0.5 * (sine_component + cot_cos_component) / ell_p**2)
