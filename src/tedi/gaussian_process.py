@@ -405,8 +405,8 @@ class CreateProcess:
                 initialization.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The 
-                predicted mean, standard deviation, and covariance matrix, 
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The
+                predicted mean, standard deviation, and covariance matrix,
                 and time used.
         """
         kernel = kernel if kernel else self.kernel

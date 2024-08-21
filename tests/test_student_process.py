@@ -12,7 +12,9 @@ y = np.sin(time)
 yerr = 0.1 * np.ones_like(y)
 
 # Initialize the Student-t process
-tp = CreateProcess(kernel=kernel, degrees=degrees, mean=mean, time=time, y=y, yerr=yerr)
+tp = CreateProcess(
+    kernel=kernel, degrees=degrees, mean=mean, time=time, y=y, yerr=yerr
+)  # NOQA
 
 
 def test_kernel_parameters():
@@ -25,7 +27,9 @@ def test_kernel_parameters():
 def test_kernel_matrix():
     kernel_matrix = tp._kernel_matrix(kernel, time)
     assert kernel_matrix.shape == (10, 10), "Kernel matrix shape mismatch"
-    assert np.all(kernel_matrix >= 0), "Kernel matrix should be positive semi-definite"
+    assert np.all(
+        kernel_matrix >= 0
+    ), "Kernel matrix should be positive semi-definite"  # NOQA
 
 
 def test_predict_kernel_matrix():
@@ -41,7 +45,9 @@ def test_predict_kernel_matrix():
 
 def test_mean_function():
     mean_values = tp._mean_function(mean, time)
-    assert mean_values.shape == time.shape, "Mean function values shape mismatch"
+    assert (
+        mean_values.shape == time.shape
+    ), "Mean function values shape mismatch"  # NOQA
     assert np.all(mean_values == 0), "Mean function values should be zeros"
 
 
@@ -50,13 +56,15 @@ def test_new_kernel():
     updated_kernel = tp.new_kernel(kernel, new_params)
     updated_params = tp._kernel_pars(updated_kernel)
     assert updated_params[0] == 2.0, "First parameter should be updated to 2.0"
-    assert updated_params[1] == 0.5, "Second parameter should be updated to 0.5"
+    assert updated_params[1] == 0.5, "Second parameter should be updated to 0.5"  # NOQA
 
 
 def test_compute_matrix():
     cov_matrix = tp.compute_matrix(kernel, time)
     assert cov_matrix.shape == (10, 10), "Covariance matrix shape mismatch"
-    assert np.all(cov_matrix >= 0), "Covariance matrix should be positive semi-definite"
+    assert np.all(
+        cov_matrix >= 0
+    ), "Covariance matrix should be positive semi-definite"  # NOQA
 
 
 def test_log_likelihood():
@@ -76,5 +84,10 @@ def test_prediction():
     )
     assert mean_pred.shape == time.shape, "Predicted mean shape mismatch"
     assert std_pred.shape == time.shape, "Predicted std shape mismatch"
-    assert cov_pred.shape == (10, 10), "Predicted covariance matrix shape mismatch"
-    assert np.all(std_pred >= 0), "Predicted standard deviation should be non-negative"
+    assert cov_pred.shape == (
+        10,
+        10,
+    ), "Predicted covariance matrix shape mismatch"  # NOQA
+    assert np.all(
+        std_pred >= 0
+    ), "Predicted standard deviation should be non-negative"  # NOQA

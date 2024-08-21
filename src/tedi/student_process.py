@@ -4,7 +4,6 @@ import numpy as np
 from scipy.linalg import LinAlgError, cho_factor, cho_solve
 from scipy.special import loggamma
 
-from src.tedi import kernels
 from src.tedi.utils.kernels import Product, Sum
 
 
@@ -268,8 +267,8 @@ class CreateProcess:
                 initialization.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The 
-                predicted mean, standard deviation, and covariance matrix, 
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The
+                predicted mean, standard deviation, and covariance matrix,
                 and time used.
         """
         kernel = kernel if kernel else self.kernel
