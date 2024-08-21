@@ -118,7 +118,7 @@ def _perrakis_error(
     nsamples: int = 1000,
     densityestimation: str = "histogram",
     errorestimation: bool = False,
-) -> float:
+) -> Union[float, Tuple[float, float]]:
     """
     Helper function to estimate the error of the Perrakis method.
 
@@ -181,6 +181,7 @@ def estimate_density(
             density_indexes > 0, density_indexes, density_indexes + 1
         )
         return density[density_indexes - 1]
+    return None
 
 
 def make_marginal_samples(

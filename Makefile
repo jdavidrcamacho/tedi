@@ -12,7 +12,7 @@ help:
 		@echo "	static-check		Runs format-check, lint and typing"
 		@echo "	static-fix			Runs format-fix, lint and typing"
 		@echo "	unit-test			Runs the unit tests"
-
+		@echo "	run-examples		runs the examples in the example folder."
 
 .PHONY: format-check
 format-check:
@@ -45,3 +45,7 @@ static-fix: format-fix lint-check type-check
 .PHONY: unit-test
 unit-test:
 	pytest --cov-report term-missing --cov=src/ -vv -W ignore::DeprecationWarning
+
+.PHONY: run-examples
+run-examples:
+	examples/run_examples.sh

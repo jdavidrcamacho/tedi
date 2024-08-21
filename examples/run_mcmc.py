@@ -22,10 +22,10 @@ y = 10 * np.sin(time)
 yerr = np.random.uniform(0, 0.5, time.size)
 
 # Covariance and mean functions
-kernel = Exponential(10, 1) + WhiteNoise(0.1)
+kern = Exponential(10, 1) + WhiteNoise(0.1)
 mean = Constant(0)
 
-gp = gaussian_process.CreateProcess(kernel, mean, time, y, yerr)
+gp = gaussian_process.CreateProcess(kern, mean, time, y, yerr)  # type: ignore
 
 
 # Priors

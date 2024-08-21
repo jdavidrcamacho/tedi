@@ -176,7 +176,7 @@ class CreateProcess:
             new_k2 = type(kernel.base_kernels[1])(*k2_params)
             return new_k1 * new_k2
         else:
-            return type(kernel)(*new_params)
+            return type(kernel)(*new_params)  # type: ignore
 
     def compute_covariance_matrix(
         self,
@@ -412,7 +412,7 @@ class CreateProcess:
         kernel = kernel if kernel else self.kernel
         mean = mean if mean else self.mean
         time = time if time is not None else self.time
-        residuals = self.y - mean(self.time) if mean else self.y
+        residuals = self.y - mean(self.time) if mean else self.y  # NOQA
         covariance_matrix = self._compute_kernel_matrix(
             kernel, self.time
         ) + np.diag(  # NOQA

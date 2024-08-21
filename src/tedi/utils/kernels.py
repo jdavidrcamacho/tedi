@@ -21,7 +21,7 @@ class Kernel(object):
         Args:
             *args (float): Variable number of hyperparameter values.
         """
-        self.pars: np.ndarray[float] = np.array(args, dtype=float)
+        self.pars: np.array[float] = np.array(args, dtype=float)  # type: ignore  # NOQA
 
     def __call__(self, r: np.ndarray) -> np.ndarray:  # type: ignore
         """
@@ -160,7 +160,7 @@ class CompositeKernel(Kernel, ABC):
                  and base kernels.
         """
         op = "+" if isinstance(self, Sum) else "*"
-        return op.join([{str(k)} for k in self.base_kernels])
+        return op.join([{str(k)} for k in self.base_kernels])  # type: ignore
 
 
 class Sum(CompositeKernel):
@@ -180,7 +180,7 @@ class Sum(CompositeKernel):
             k2 (Kernel): Second base kernel to be summed.
         """
         super().__init__(k1, k2)
-        self.params_number = sum(k.params_number for k in self.base_kernels)
+        self.params_number = sum(k.params_number for k in self.base_kernels)  # type: ignore  # NOQA
 
     def _operate(self, r: np.ndarray) -> np.ndarray:
         """
@@ -192,7 +192,7 @@ class Sum(CompositeKernel):
         Returns:
             numpy.ndarray: Sum of the evaluations of the base kernels at r.
         """
-        return sum(k(r) for k in self.base_kernels)
+        return sum(k(r) for k in self.base_kernels)  # type: ignore
 
     def __repr__(self) -> str:
         """
@@ -236,7 +236,7 @@ class Product(CompositeKernel):
             k2 (Kernel): Second base kernel to be multiplied.
         """
         super().__init__(k1, k2)
-        self.params_number = sum(k.params_number for k in self.base_kernels)
+        self.params_number = sum(k.params_number for k in self.base_kernels)  # type: ignore  # NOQA
 
     def _operate(self, r: np.ndarray) -> np.ndarray:
         """
@@ -248,7 +248,7 @@ class Product(CompositeKernel):
         Returns:
             numpy.ndarray: Product of the evaluations of the base kernels at r.
         """
-        return np.prod(k(r) for k in self)
+        return np.prod(k(r) for k in self)  # type: ignore
 
     def __repr__(self) -> str:
         """

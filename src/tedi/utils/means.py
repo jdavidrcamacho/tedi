@@ -127,7 +127,7 @@ class Sum(MeanModel):
         self.base_means: List[MeanModel] = [m1, m2]
 
     @property
-    def _parsize(self) -> int:
+    def _parsize(self) -> int:  # type: ignore
         """
         Returns the total number of parameters in the summed mean models.
 
@@ -137,7 +137,7 @@ class Sum(MeanModel):
         return self.base_means[0]._parsize + self.base_means[1]._parsize
 
     @property
-    def pars(self) -> List[float]:
+    def pars(self) -> List[float]:  # type: ignore
         """
         Returns the parameters of the summed mean models.
 
@@ -172,7 +172,7 @@ class Sum(MeanModel):
         Returns:
             np.ndarray: Sum of the two means evaluated at the input data.
         """
-        return self.base_means[0](t) + self.base_means[1](t)
+        return self.base_means[0](t) + self.base_means[1](t)  # type: ignore
 
 
 class Product(MeanModel):
@@ -195,7 +195,7 @@ class Product(MeanModel):
         self.base_means: List[MeanModel] = [m1, m2]
 
     @property
-    def _parsize(self) -> int:
+    def _parsize(self) -> int:  # type: ignore
         """
         Returns the total number of parameters in the multiplied mean models.
 
@@ -205,7 +205,7 @@ class Product(MeanModel):
         return self.base_means[0]._parsize + self.base_means[1]._parsize
 
     @property
-    def pars(self) -> List[float]:
+    def pars(self) -> List[float]:  # type: ignore
         """
         Returns the parameters of the multiplied mean models.
 
@@ -240,4 +240,4 @@ class Product(MeanModel):
         Returns:
             np.ndarray: Product of the two means evaluated at the input data.
         """
-        return self.base_means[0](t) * self.base_means[1](t)
+        return self.base_means[0](t) * self.base_means[1](t)  # type: ignore

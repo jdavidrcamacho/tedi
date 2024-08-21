@@ -5,7 +5,7 @@ from math import log
 from typing import Callable, Literal, Optional, Tuple
 
 import numpy as np
-import scipy as sp
+import scipy as sp  # type: ignore
 
 
 def multivariate_normal(

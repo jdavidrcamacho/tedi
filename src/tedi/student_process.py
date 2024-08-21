@@ -1,8 +1,8 @@
 from typing import Callable, Optional, Tuple
 
 import numpy as np
-from scipy.linalg import LinAlgError, cho_factor, cho_solve
-from scipy.special import loggamma
+from scipy.linalg import LinAlgError, cho_factor, cho_solve  # type: ignore
+from scipy.special import loggamma  # type: ignore
 
 from src.tedi.utils.kernels import Product, Sum
 
@@ -53,7 +53,7 @@ class CreateProcess:
         Returns:
             np.ndarray: The parameters of the kernel.
         """
-        return kernel.pars
+        return kernel.pars  # type: ignore
 
     def _kernel_matrix(
         self, kernel: Callable, time: Optional[np.ndarray] = None
@@ -133,7 +133,7 @@ class CreateProcess:
             new_k2 = type(kernel.base_kernels[1])(*k2_params)
             return new_k1 * new_k2
         else:
-            return type(kernel)(*new_pars)
+            return type(kernel)(*new_pars)  # type: ignore
 
     def compute_matrix(
         self,
@@ -170,8 +170,8 @@ class CreateProcess:
             K = (1 - nugget_value) * K + nugget_value * np.diag(np.diag(K))
         # shifting eigenvalues to avoid a ill-conditioned matrix
         if shift:
-            shift = 0.01  # might be too big
-            K = K + shift * np.identity(self.time.size)
+            shift_value = 0.01  # might be too big
+            K = K + shift_value * np.identity(self.time.size)
         return K
 
     def log_likelihood(
@@ -241,7 +241,7 @@ class CreateProcess:
         )
         cov = self.compute_matrix(kernel, time)
         z = np.random.multivariate_normal(mean, cov, 1)
-        sample = mean + z / np.sqrt(x)
+        sample = mean + z / np.sqrt(x)  # type: ignore
         return sample.flatten()
 
     def prediction(
