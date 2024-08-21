@@ -118,7 +118,6 @@ class CreateProcess:
             (
                 kernels.HarmonicPeriodic,
                 kernels.QuasiHarmonicPeriodic,
-                kernels.Unknown,
             ),
         ):
             r = time[:, None]
@@ -389,7 +388,6 @@ class CreateProcess:
         kernel: Optional[Callable[[np.ndarray, np.ndarray], np.ndarray]] = None,  # NOQA
         mean: Optional[Callable[[np.ndarray], np.ndarray]] = None,
         time: Optional[np.ndarray] = None,
-        return_std: bool = True,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Predict the conditional distribution of the Gaussian process at new
@@ -405,13 +403,11 @@ class CreateProcess:
             time (Optional[np.ndarray], default=None): The new time points for
                 prediction. If None, uses the time points provided during
                 initialization.
-            return_std (bool, default=True): Whether to return the standard
-                deviation.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray]: The predicted mean,
-                standard deviation (if `return_std` is True), and the time
-                points.
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The 
+                predicted mean, standard deviation, and covariance matrix, 
+                and time used.
         """
         kernel = kernel if kernel else self.kernel
         mean = mean if mean else self.mean
@@ -438,9 +434,6 @@ class CreateProcess:
         ]
         covariance_prediction = predictive_cov_matrix - np.array(kstarT_k_kstar)  # NOQA
         variance_prediction = np.diag(covariance_prediction)
-        std_deviation = (
-            np.sqrt(variance_prediction)
-            if return_std
-            else np.zeros_like(mean_prediction)
-        )
-        return mean_prediction, std_deviation, time
+        std_deviation = np.sqrt(variance_prediction)
+
+        return mean_prediction, std_deviation, covariance_prediction, time

@@ -7,7 +7,7 @@ from src.tedi.evidence import (
 )
 
 
-def test_compute_perrakis_estimate():
+def test_compute_perrakis_estimate() -> None:
     marginal_samples = np.random.normal(size=(100, 2))
 
     def mock_lnlike(x):
@@ -38,7 +38,7 @@ def test_compute_perrakis_estimate():
     ), "Second element should be a float."  # NOQA
 
 
-def test_perrakis_error():
+def test_perrakis_error() -> None:
     marginal_samples = np.random.normal(size=(100, 2))
 
     def mock_lnlike(x):
@@ -51,7 +51,7 @@ def test_perrakis_error():
     assert isinstance(result, float), "Expected result to be a float."
 
 
-def test_estimate_density_histogram():
+def test_estimate_density_histogram() -> None:
     data = np.random.normal(size=100)
 
     density = estimate_density(data, method="histogram", nbins=10)
@@ -60,7 +60,7 @@ def test_estimate_density_histogram():
     ), "Density shape should match input data shape."  # NOQA
 
 
-def test_estimate_density_kde():
+def test_estimate_density_kde() -> None:
     data = np.random.normal(size=100)
 
     density = estimate_density(data, method="kde")
@@ -69,7 +69,7 @@ def test_estimate_density_kde():
     ), "Density shape should match input data shape."  # NOQA
 
 
-def test_estimate_density_normal():
+def test_estimate_density_normal() -> None:
     data = np.random.normal(size=100)
 
     density = estimate_density(data, method="normal")
@@ -78,7 +78,7 @@ def test_estimate_density_normal():
     ), "Density shape should match input data shape."  # NOQA
 
 
-def test_estimate_density_invalid_method():
+def test_estimate_density_invalid_method() -> None:
     data = np.random.normal(size=100)
 
     try:

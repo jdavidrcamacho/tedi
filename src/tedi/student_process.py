@@ -5,7 +5,7 @@ from scipy.linalg import LinAlgError, cho_factor, cho_solve
 from scipy.special import loggamma
 
 from src.tedi import kernels
-from src.tedi.utils.kernels import Product
+from src.tedi.utils.kernels import Product, Sum
 
 
 class CreateProcess:
@@ -121,7 +121,7 @@ class CreateProcess:
         Returns:
             Callable: The updated kernel function.
         """
-        if isinstance(kernel, kernels.Sum):
+        if isinstance(kernel, Sum):
             k1_params = new_pars[: len(kernel.base_kernels[0].pars)]  # NOQA
             k2_params = new_pars[len(kernel.base_kernels[0].pars) :]  # NOQA
             new_k1 = type(kernel.base_kernels[0])(*k1_params)
@@ -268,8 +268,9 @@ class CreateProcess:
                 initialization.
 
         Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray]: The predicted mean,
-                standard deviation, and covariance matrix.
+            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The 
+                predicted mean, standard deviation, and covariance matrix, 
+                and time used.
         """
         kernel = kernel if kernel else self.kernel
         degrees = degrees if degrees is not None else self.degrees
@@ -292,6 +293,7 @@ class CreateProcess:
         y_cov = Kstarstar - np.array(kstarT_k_kstar)
         var1 = degrees - 2 + np.dot(r.T, sol)
         var2 = degrees - 2 + r.size
-        y_var = var1 * np.diag(y_cov) / var2
+        # To check np.abs, without it becomes negative
+        y_var = np.abs(var1 * np.diag(y_cov) / var2)
         y_std = np.sqrt(y_var)
         return y_mean, y_std, y_cov
