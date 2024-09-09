@@ -1,11 +1,10 @@
 """Computation of the evidence using the method of Perrakis et al. (2014)"""
 
-import random
 from math import log, sqrt
 from typing import Callable, Optional, Tuple, Union
 
 import numpy as np
-import scipy.stats
+import scipy.stats  # type: ignore
 
 from .utils.evidence import log_sum
 
@@ -106,8 +105,7 @@ def compute_perrakis_estimate(
                 )
             )
         stdErr = np.std(meanErr)
-        meanErr = np.mean(meanErr)
-        return perr, stdErr
+        return perr, float(stdErr)
     return perr
 
 
@@ -181,7 +179,7 @@ def estimate_density(
             density_indexes > 0, density_indexes, density_indexes + 1
         )
         return density[density_indexes - 1]
-    return None
+    raise ValueError("Invalid method specified for density estimation.")
 
 
 def make_marginal_samples(
@@ -199,11 +197,16 @@ def make_marginal_samples(
     Returns:
         np.ndarray: Samples from the marginal distribution of each parameter.
     """
-    if nsamples > len(joint_samples) or nsamples is None:
+    if nsamples is None:
+        nsamples = len(joint_samples)
+    if nsamples > len(joint_samples):
         nsamples = len(joint_samples)
     marginal_samples = joint_samples[-nsamples:, :].copy()
     number_parameters = marginal_samples.shape[-1]
     # Reshuffle joint posterior samples to obtain _marginal_ posterior samples
     for parameter_index in range(number_parameters):
-        random.shuffle(marginal_samples[:, parameter_index])
+
+        marginal_samples[:, parameter_index] = np.random.permutation(
+            marginal_samples[:, parameter_index]
+        )
     return marginal_samples

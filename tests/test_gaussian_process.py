@@ -15,7 +15,7 @@ gp = CreateProcess(kernel=kernel, mean=mean, time=time, y=y, yerr=yerr)
 
 
 def test_kernel_parameters() -> None:  # type: ignore
-    kernel_params = gp._kernel_parameters(kernel)
+    kernel_params = gp._kernel_parameters()
     assert len(kernel_params) == 2, "Kernel should have 2 parameters"
     assert kernel_params[0] == 1.0, "First parameter should be 1.0"
     assert kernel_params[1] == 1.0, "Second parameter should be 1.0"
@@ -31,8 +31,8 @@ def test_compute_kernel_matrix() -> None:  # type: ignore
 
 def test_update_kernel() -> None:  # type: ignore
     new_params = [2.0, 0.5]
-    updated_kernel = gp.update_kernel(kernel, new_params)
-    updated_params = gp._kernel_parameters(updated_kernel)
+    gp.update_kernel(new_params)
+    updated_params = gp._kernel_parameters()
     assert updated_params[0] == 2.0, "First parameter should be updated to 2.0"
     assert updated_params[1] == 0.5, "Second parameter should be updated to 0.5"  # NOQA
 

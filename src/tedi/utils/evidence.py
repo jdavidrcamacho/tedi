@@ -1,6 +1,5 @@
 """Functions for the evidence calculation."""
 
-import random
 from math import log
 from typing import Callable, Literal, Optional, Tuple
 
@@ -105,7 +104,7 @@ class MultivariateGaussian(sp.stats.rv_continuous):
                 mvg[s] = multivariate_normal(rr - self.mu, self.cov, method)
             return mvg
         if len(x.shape) == 1:
-            return multivariate_normal(x - self.mu, self.cov, method)
+            return np.array(multivariate_normal(x - self.mu, self.cov, method))
         raise ValueError("Input array must be 1- or 2-D.")
 
     def rvs(self, nsamples: int) -> np.ndarray:
@@ -135,7 +134,7 @@ def log_sum(log_summands: np.ndarray) -> float:
     x = log_summands.copy()
     while a == np.inf or a == -np.inf or np.isnan(a):
         a = x[0] + np.log(1 + np.sum(np.exp(x[1:] - x[0])))
-        random.shuffle(x)
+        x = np.random.permutation(x)  # Instead of random.shuffle(x)
     return a
 
 
@@ -176,6 +175,11 @@ def compute_harmonicmean(
         Kass & Raftery (1995), JASA vol. 90, N. 430, pp. 773-795
     """
     if len(lnlike_post) == 0 and posterior_sample is not None:
+        if lnlikefunc is None:
+            raise ValueError(
+                "Likelihood function must be provided if lnlike_post is empty."
+            )
+
         samplesize = kwargs.pop("size", len(posterior_sample))
         if samplesize < len(posterior_sample):
             posterior_subsample = np.random.choice(
@@ -190,6 +194,11 @@ def compute_harmonicmean(
         log_likelihood = np.random.choice(
             lnlike_post, size=samplesize, replace=False
         )  # NOQA
+    else:
+        raise ValueError(
+            "At least one of lnlike_post or posterior_sample must be provided."
+        )
+
     hme = -log_sum(-log_likelihood) + log(len(log_likelihood))
     return hme
 

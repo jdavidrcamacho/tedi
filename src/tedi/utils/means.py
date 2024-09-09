@@ -48,6 +48,23 @@ class MeanModel(object):
             self.__class__.__name__, ", ".join(map(str, self.pars))
         )
 
+    def __call__(self, r: np.ndarray) -> np.ndarray:
+        """
+        Compute the mean function.
+
+        Args:
+            t (numpy.ndarray): Time data points.
+
+        Returns:
+            numpy.ndarray: Mean value between the data points.
+
+
+        Raises:
+            NotImplementedError: Base class implementation doesn't define
+                                a specific mean function.
+        """
+        raise NotImplementedError
+
     @classmethod
     def initialize(cls) -> "MeanModel":
         """

@@ -39,7 +39,7 @@ def test_MultivariateGaussian_pdf_single_sample() -> None:
     x = np.array([1.0, 2.0])
     mvg = MultivariateGaussian(mu, cov)
     result = mvg.pdf(x)
-    assert isinstance(result, float)
+    assert isinstance(result, np.ndarray)
     assert np.isfinite(result)
 
 

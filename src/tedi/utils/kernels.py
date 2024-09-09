@@ -180,6 +180,7 @@ class Sum(CompositeKernel):
             k2 (Kernel): Second base kernel to be summed.
         """
         super().__init__(k1, k2)
+        self.pars = np.concatenate([k1.pars, k2.pars])
         self.params_number = sum(k.params_number for k in self.base_kernels)  # type: ignore  # NOQA
 
     def _operate(self, r: np.ndarray) -> np.ndarray:
@@ -236,6 +237,7 @@ class Product(CompositeKernel):
             k2 (Kernel): Second base kernel to be multiplied.
         """
         super().__init__(k1, k2)
+        self.pars = np.concatenate([k1.pars, k2.pars])
         self.params_number = sum(k.params_number for k in self.base_kernels)  # type: ignore  # NOQA
 
     def _operate(self, r: np.ndarray) -> np.ndarray:

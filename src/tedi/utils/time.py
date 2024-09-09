@@ -10,7 +10,7 @@ import datetime as dt
 from math import modf, trunc
 
 
-def mjd_to_jd(modified_julian_day):
+def mjd_to_jd(modified_julian_day: float) -> float:
     """Convert Modified Julian Day (MJD) to Julian Day (JD).
 
     Args:
@@ -22,7 +22,7 @@ def mjd_to_jd(modified_julian_day):
     return modified_julian_day + 2400000.5
 
 
-def jd_to_mjd(julian_day):
+def jd_to_mjd(julian_day: float) -> float:
     """Convert Julian Day (JD) to Modified Julian Day (MJD).
 
     Args:
@@ -34,7 +34,7 @@ def jd_to_mjd(julian_day):
     return julian_day - 2400000.5
 
 
-def date_to_jd(year, month, day):
+def date_to_jd(year: int, month: int, day: float) -> float:
     """Convert a date to Julian Day (JD).
 
     The algorithm is derived from 'Practical Astronomy with your Calculator
@@ -83,12 +83,12 @@ def date_to_jd(year, month, day):
 
     month_adjustment = trunc(30.6001 * (adjusted_month + 1))
     julian_day = gregorian_offset + leap_year_adjustment + month_adjustment
-    julian_day = julian_day + day + 1720994.5
+    julian_day = julian_day + day + 1720994.5  # type: ignore
 
     return julian_day
 
 
-def jd_to_date(julian_day):
+def jd_to_date(julian_day: float) -> tuple[int, int, float]:
     """Converts Julian Day (JD) to a date.
 
     The algorithm is derived from 'Practical Astronomy with your Calculator
@@ -143,7 +143,9 @@ def jd_to_date(julian_day):
     return year, month, day
 
 
-def hmsm_to_days(hour=0, minute=0, second=0, microsecond=0):
+def hmsm_to_days(
+    hour: int = 0, minute: int = 0, second: int = 0, microsecond: int = 0
+) -> float:
     """Convert hours, minutes, seconds, and microseconds to fractional days.
 
     Args:
@@ -165,7 +167,7 @@ def hmsm_to_days(hour=0, minute=0, second=0, microsecond=0):
     return total_hours / 24.0
 
 
-def days_to_hmsm(fractional_days):
+def days_to_hmsm(fractional_days: float) -> tuple[int, int, int, int]:
     """Converts fractional days to hours, minutes, seconds, and microseconds.
 
     Precision beyond microseconds is rounded to the nearest microsecond.
@@ -201,7 +203,7 @@ def days_to_hmsm(fractional_days):
     return int(hour), int(minute), int(second), int(microsecond)
 
 
-def datetime_to_jd(date):
+def datetime_to_jd(date: dt.datetime) -> float:
     """Convert a `datetime.datetime` object to Julian Day (JD).
 
     Args:
@@ -224,7 +226,7 @@ def datetime_to_jd(date):
     return date_to_jd(date.year, date.month, fractional_day)
 
 
-def jd_to_datetime(julian_day):
+def jd_to_datetime(julian_day: float) -> dt.datetime:
     """ConvertsJulian Day (JD) to `datetime.datetime` object.
 
     Args:
@@ -245,7 +247,7 @@ def jd_to_datetime(julian_day):
     return dt.datetime(year, month, day, hour, minute, second, microsecond)
 
 
-def timedelta_to_days(time_delta):
+def timedelta_to_days(time_delta: dt.timedelta) -> float:
     """Convert `datetime.timedelta` object to a total number of days.
 
     Args:
