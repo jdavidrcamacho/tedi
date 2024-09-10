@@ -811,7 +811,7 @@ class HarmonicPeriodic(Kernel):
         self.p: float = p
         self.params_number: int = 4
 
-    def __call__(self, r: np.ndarray, s: np.ndarray) -> np.ndarray:
+    def __call__(self, r: np.ndarray, s: np.ndarray) -> np.ndarray:  # type: ignore  # NOQA
         """
         Compute the HarmonicPeriodic kernel value for given input arrays.
 
@@ -889,7 +889,7 @@ class QuasiHarmonicPeriodic(Kernel):
         self.ell_p: float = ell_p
         self.params_number: int = 5
 
-    def __call__(self, r: np.ndarray, s: np.ndarray) -> np.ndarray:
+    def __call__(self, r: np.ndarray, s: np.ndarray) -> np.ndarray:  # type: ignore  # NOQA
         """
         Compute the QuasiHarmonicPeriodic kernel value for given input arrays.
 
