@@ -4,7 +4,8 @@ from multiprocessing import Pool
 
 import corner  # type: ignore
 import emcee  # type: ignore
-import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 import numpy as np
 from scipy import stats  # type: ignore
 
@@ -110,4 +111,4 @@ corner.corner(
     fill_contours=True,
     plot_datapoints=True,
 )
-plt.show()
+# plt.show()
