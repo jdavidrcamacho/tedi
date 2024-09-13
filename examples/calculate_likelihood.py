@@ -1,4 +1,4 @@
-"""Calculate log-likelihood example"""
+"""Calculate log-likelihood example."""
 
 import numpy as np
 

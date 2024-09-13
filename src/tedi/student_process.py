@@ -1,3 +1,5 @@
+"""Student-t process class."""
+
 from typing import Callable, Optional, Tuple
 
 import numpy as np
@@ -34,6 +36,7 @@ class CreateProcess:
         y: np.ndarray,
         yerr: Optional[np.ndarray] = None,
     ):  # NOQA
+        """Initialize Student-t process."""
         self.kernel = kernel
         self.degrees = degrees
         self.mean = mean
@@ -143,8 +146,7 @@ class CreateProcess:
         shift: bool = False,
     ) -> np.ndarray:  # NOQA
         """
-        Construct the covariance matrix used in the log marginal likelihood
-        calculation.
+        Construct the covariance matrix used in the log marginal likelihood.
 
         Args:
             kernel (Callable): The covariance kernel function.
@@ -252,8 +254,7 @@ class CreateProcess:
         time: Optional[np.ndarray] = None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Predict the conditional distribution of the Student-t process at new
-        time points.
+        Predict the conditional distribution of the Student-t.
 
         Args:
             kernel (Optional[Callable], default=None): The covariance function.

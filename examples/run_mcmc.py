@@ -1,4 +1,4 @@
-"""Run a MCMC example"""
+"""Run a MCMC example."""
 
 from multiprocessing import Pool
 
@@ -31,6 +31,7 @@ gp = gaussian_process.CreateProcess(kern, mean, time, y, yerr)  # type: ignore
 
 # Priors
 def priors():
+    """Prior function."""
     neta1 = stats.uniform(0, 50)
     neta2 = stats.uniform(0, 10)
     offset = stats.uniform(y.min(), y.max() - y.min())
@@ -46,6 +47,7 @@ def priors():
 
 
 def prior_transform():
+    """Prior transform function."""
     return np.array(
         [
             priors()[0].rvs(),
@@ -58,6 +60,7 @@ def prior_transform():
 
 # log_transform calculates our posterior
 def log_transform(theta):
+    """Calculate our posterior."""
     neta1, neta2, offset, jitter = theta
 
     logprior = priors()[0].logpdf(neta1)

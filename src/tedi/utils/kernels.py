@@ -41,7 +41,7 @@ class Kernel(object):
 
     def __repr__(self) -> str:
         """
-        String representation of the kernel.
+        Create string representation of the kernel.
 
         Returns:
             str: String representation of the kernel type and hyperparameters.
@@ -111,7 +111,7 @@ class CompositeKernel(Kernel, ABC):
 
     def __init__(self, *kernels: Kernel) -> None:
         """
-        Initializes the composite kernel with its base kernels.
+        Initialize the composite kernel with its base kernels.
 
         Args:
             *kernels (Kernel): Variable number of base kernel objects.
@@ -153,7 +153,7 @@ class CompositeKernel(Kernel, ABC):
 
     def __repr__(self) -> str:
         """
-        String representation of the composite kernel.
+        Create string representation of the composite kernel.
 
         Returns:
             str: String representation of the composite kernel type
@@ -173,7 +173,7 @@ class Sum(CompositeKernel):
 
     def __init__(self, k1: Kernel, k2: Kernel) -> None:
         """
-        Initializes the sum kernel with two base kernels.
+        Initialize the sum kernel with two base kernels.
 
         Args:
             k1 (Kernel): First base kernel to be summed.
@@ -197,7 +197,7 @@ class Sum(CompositeKernel):
 
     def __repr__(self) -> str:
         """
-        Returns a string representation of the composite kernel.
+        Return string representation of the composite kernel.
 
         Returns:
             str: String representation of the composite kernel type
@@ -207,7 +207,7 @@ class Sum(CompositeKernel):
 
     def __call__(self, r: np.ndarray) -> np.ndarray:
         """
-        Computes the kernel value based on the composite operation.
+        Compute the kernel value based on the composite operation.
 
         Args:
             r (numpy.ndarray): Difference between two data points.
@@ -230,7 +230,7 @@ class Product(CompositeKernel):
 
     def __init__(self, k1: Kernel, k2: Kernel) -> None:
         """
-        Initializes the product kernel with two base kernels.
+        Initialize the product kernel with two base kernels.
 
         Args:
             k1 (Kernel): First base kernel to be multiplied.
@@ -254,7 +254,7 @@ class Product(CompositeKernel):
 
     def __repr__(self) -> str:
         """
-        String representation of the composite kernel.
+        Create string representation of the composite kernel.
 
         Returns:
             str: String representation of the composite kernel type
@@ -264,7 +264,7 @@ class Product(CompositeKernel):
 
     def __call__(self, r: np.ndarray) -> np.ndarray:
         """
-        Computes the kernel value based on the composite operation.
+        Compute the kernel value based on the composite operation.
 
         Args:
             r (numpy.ndarray): Difference between two data points.

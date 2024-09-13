@@ -7,7 +7,7 @@ import numpy as np
 
 
 def array_input(f):
-    """Decorator to provide the __call__ methods with an array"""
+    """Define decorator to provide the __call__ methods with an array."""
 
     @wraps(f)
     def wrapped(self, t):
@@ -30,7 +30,7 @@ class MeanModel(object):
 
     def __init__(self, *pars: float) -> None:
         """
-        Initializes the mean model with given parameters.
+        Initialize the mean model with given parameters.
 
         Args:
             *pars (float): Variable length argument list of parameters.
@@ -39,7 +39,7 @@ class MeanModel(object):
 
     def __repr__(self) -> str:
         """
-        Returns a string representation of the instance.
+        Return a string representation of the instance.
 
         Returns:
             str: String representation of the instance.
@@ -68,7 +68,7 @@ class MeanModel(object):
     @classmethod
     def initialize(cls) -> "MeanModel":
         """
-        Initializes an instance of the class, setting all parameters to 0.
+        Initialize an instance of the class, setting all parameters to 0.
 
         Returns:
             MeanModel: An instance of the class with all parameters set to 0.
@@ -77,7 +77,7 @@ class MeanModel(object):
 
     def __add__(self, other: "MeanModel") -> "Sum":
         """
-        Adds two mean models together.
+        Add two mean models together.
 
         Args:
             other (MeanModel): Another mean model to add.
@@ -126,7 +126,7 @@ class MeanModel(object):
 
 class Sum(MeanModel):
     """
-    Represents the sum of two mean functions.
+    Represent the sum of two mean functions.
 
     Attributes:
         m1 (MeanModel): The first mean model.
@@ -135,7 +135,7 @@ class Sum(MeanModel):
 
     def __init__(self, m1: MeanModel, m2: MeanModel) -> None:
         """
-        Initializes the Sum instance with two mean models.
+        Initialize the Sum instance with two mean models.
 
         Args:
             m1 (MeanModel): The first mean model.
@@ -146,7 +146,7 @@ class Sum(MeanModel):
     @property
     def _parsize(self) -> int:  # type: ignore
         """
-        Returns the total number of parameters in the summed mean models.
+        Return the total number of parameters in the summed mean models.
 
         Returns:
             int: Total number of parameters.
@@ -156,7 +156,7 @@ class Sum(MeanModel):
     @property
     def pars(self) -> List[float]:  # type: ignore
         """
-        Returns the parameters of the summed mean models.
+        Return the parameters of the summed mean models.
 
         Returns:
             List[float]: List of parameters.
@@ -164,14 +164,12 @@ class Sum(MeanModel):
         return self.base_means[0].pars + self.base_means[1].pars
 
     def initialize(self):
-        """
-        Initializes the Sum instance.
-        """
+        """Initialize the Sum instance."""
         pass
 
     def __repr__(self) -> str:
         """
-        Returns a string representation of the Sum instance.
+        Return a string representation of the Sum instance.
 
         Returns:
             str: String representation of the Sum instance.
@@ -181,7 +179,7 @@ class Sum(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the sum of the two mean models at the given input.
+        Evaluate the sum of the two mean models at the given input.
 
         Args:
             t (np.ndarray): Input data.
@@ -194,7 +192,7 @@ class Sum(MeanModel):
 
 class Product(MeanModel):
     """
-    Represents the product of two mean functions.
+    Represent the product of two mean functions.
 
     Attributes:
         m1 (MeanModel): The first mean model.
@@ -203,7 +201,7 @@ class Product(MeanModel):
 
     def __init__(self, m1: MeanModel, m2: MeanModel) -> None:
         """
-        Initializes the Product instance with two mean models.
+        Initialize the Product instance with two mean models.
 
         Args:
             m1 (MeanModel): The first mean model.
@@ -232,14 +230,12 @@ class Product(MeanModel):
         return self.base_means[0].pars + self.base_means[1].pars
 
     def initialize(self):
-        """
-        Initializes the Product instance.
-        """
+        """Initialize the Product instance."""
         pass
 
     def __repr__(self) -> str:
         """
-        Returns a string representation of the Product instance.
+        Return a string representation of the Product instance.
 
         Returns:
             str: String representation of the Product instance.
@@ -249,7 +245,7 @@ class Product(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the product of the two mean models at the given input.
+        Evaluate the product of the two mean models at the given input.
 
         Args:
             t (np.ndarray): Input data.

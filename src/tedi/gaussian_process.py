@@ -1,3 +1,5 @@
+"""Gaussian process class."""
+
 from typing import Optional, Tuple, Union
 
 import numpy as np
@@ -32,6 +34,7 @@ class CreateProcess:
         y: np.ndarray,
         yerr: Optional[np.ndarray] = None,
     ):
+        """Initialize kernel."""
         self.kernel = kernel
         self.mean = mean
         self.time = time
@@ -175,8 +178,7 @@ class CreateProcess:
         add_shift: bool = False,
     ) -> np.ndarray:
         """
-        Construct the covariance matrix used in the log marginal likelihood
-            calculation.
+        Construct the covariance matrix used in the log marginal likelihood.
 
         Args:
             kernel (Kernel): The
@@ -381,8 +383,7 @@ class CreateProcess:
         time: Optional[np.ndarray] = None,
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
-        Predict the conditional distribution of the Gaussian process at new
-        time points.
+        Predict the conditional distribution of the Gaussian process.
 
         Args:
             kernel (Optional[Kernel], default=None): The covariance function.

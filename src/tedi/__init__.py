@@ -1,1 +1,1 @@
-"""Tedi folder"""
+"""Tedi folder."""

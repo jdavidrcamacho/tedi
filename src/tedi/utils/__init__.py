@@ -1,1 +1,1 @@
-"""Utils folder"""
+"""Utils folder."""

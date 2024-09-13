@@ -1,4 +1,4 @@
-"""Calculate log-likelihood and plot prediction example"""
+"""Calculate log-likelihood and plot prediction example."""
 
 import matplotlib.pyplot as plt
 import numpy as np

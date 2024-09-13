@@ -20,7 +20,7 @@ class Constant(MeanModel):
 
     def __init__(self, c: float) -> None:
         """
-        Initializes the constant mean function with a given offset.
+        Initialize the constant mean function with a given offset.
 
         Args:
             c (float): The constant offset value.
@@ -30,7 +30,7 @@ class Constant(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the constant mean function at the given input.
+        Evaluatenstant mean function at the given input.
 
         Args:
             t (np.ndarray): Input data.
@@ -43,7 +43,7 @@ class Constant(MeanModel):
 
 class Linear(MeanModel):
     """
-    Linear mean function
+    Linear mean function.
 
     This class models a mean function of the form:
         m(t) = slope * t + intercept.
@@ -56,7 +56,7 @@ class Linear(MeanModel):
 
     def __init__(self, slope: float, intercept: float) -> None:
         """
-        Initializes the linear mean function with a given slope and intercept.
+        Initialize the linear mean function with a given slope and intercept.
 
         Args:
             slope (float): The slope of the linear function.
@@ -67,7 +67,7 @@ class Linear(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the linear mean function at the given input.
+        Evaluate the linear mean function at the given input.
 
         Args:
             t (np.ndarray): Input data.
@@ -94,7 +94,7 @@ class Parabola(MeanModel):
 
     def __init__(self, quad: float, slope: float, intercept: float) -> None:
         """
-        Initializes the parabolic mean function.
+        Initializee parabolic mean function.
 
         Args:
             quad (float): The coefficient of the quadratic term.
@@ -106,7 +106,7 @@ class Parabola(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the parabolic mean function at the given input.
+        Evaluate the parabolic mean function at the given input.
 
         Args:
             t (np.ndarray): Input data.
@@ -134,7 +134,7 @@ class Cubic(MeanModel):
         self, cub: float, quad: float, slope: float, intercept: float
     ) -> None:  # NOQA
         """
-        Initializes the cubic mean function.
+        Initialize the cubic mean function.
 
         Args:
             cub (float): The coefficient of the cubic term.
@@ -147,7 +147,7 @@ class Cubic(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the cubic mean function at the given input.
+        Evaluate the cubic mean function at the given input.
 
         Args:
             t (np.ndarray): Input data.
@@ -173,7 +173,7 @@ class Sine(MeanModel):
 
     def __init__(self, amp: float, p: float, phi: float, d: float) -> None:
         """
-        Initializes the sinusoidal mean function.
+        Initializehe sinusoidal mean function.
 
         Args:
             amp (float): The amplitude of the sine wave.
@@ -186,7 +186,7 @@ class Sine(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the sinusoidal mean function at the given input.
+        Evaluate the sinusoidal mean function at the given input.
 
         Args:
             t (np.ndarray): Input data.
@@ -215,7 +215,7 @@ class Cosine(MeanModel):
 
     def __init__(self, amp: float, p: float, phi: float, d: float) -> None:
         """
-        Initializes the cosine mean function.
+        Initialize the cosine mean function.
 
         Args:
             amp (float): The amplitude of the cosine wave.
@@ -228,7 +228,7 @@ class Cosine(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Evaluates the cosine mean function at the given input.
+        Evaluate the cosine mean function at the given input.
 
         Args:
             t (np.ndarray): Input data.
@@ -279,9 +279,11 @@ class Keplerian(MeanModel):
     _parsize = 5
 
     def __init__(self, p, k, ecc, w, phi, offset) -> None:
+        """Initialize Keplerian."""
         super(Keplerian, self).__init__(p, k, ecc, w, phi, offset)
 
     def __call__(self, t):
+        """Calculate Keplerian."""
         p, k, ecc, w, phi, offset = self.pars
         t0 = t[0] - (p * phi) / (2.0 * np.pi)
         m0 = 2 * np.pi * (t - t0) / p  # first guess at M and E
@@ -334,7 +336,7 @@ class UdHO(MeanModel):
 
     def __init__(self, a: float, b: float, w: float, phi: float) -> None:
         """
-        Initializes the Underdamped Harmonic Oscillator mean function.
+        Initialize the Underdamped Harmonic Oscillator mean function.
 
         Args:
             a (float): Amplitude-like parameter that scales the oscillation.
@@ -350,7 +352,7 @@ class UdHO(MeanModel):
     @array_input
     def __call__(self, t: np.ndarray) -> np.ndarray:
         """
-        Computes the mean function for the given time array.
+        Compute the mean function for the given time array.
 
         Args:
             t (np.ndarray): Array of time values.

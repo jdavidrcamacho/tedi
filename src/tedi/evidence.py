@@ -1,4 +1,4 @@
-"""Computation of the evidence using the method of Perrakis et al. (2014)"""
+"""Computation of the evidence using the method of Perrakis et al. (2014)."""
 
 from math import log, sqrt
 from typing import Callable, Optional, Tuple, Union
@@ -21,7 +21,7 @@ def compute_perrakis_estimate(
     **kwargs
 ) -> Union[float, Tuple[float, float]]:
     """
-    Computes the Perrakis estimate of the Bayesian evidence.
+    Compute the Perrakis estimate of the Bayesian evidence.
 
     The estimation is based on `m` marginal posterior samples.
 
@@ -118,7 +118,7 @@ def _perrakis_error(
     errorestimation: bool = False,
 ) -> Union[float, Tuple[float, float]]:
     """
-    Helper function to estimate the error of the Perrakis method.
+    Estimate the error of the Perrakis method.
 
     Args:
         marginal_samples (np.ndarray): A sample from the parameter marginal
@@ -186,6 +186,8 @@ def make_marginal_samples(
     joint_samples: np.ndarray, nsamples: Optional[int] = None
 ) -> np.ndarray:  # NOQA
     """
+    Marginal Samples.
+
     Reshuffles samples from joint distribution to obtain samples from the
     marginal distribution of each parameter.
 

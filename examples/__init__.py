@@ -1,1 +1,1 @@
-"""Folder containing examples on how to run tedi"""
+"""Folder containing examples on how to run tedi."""

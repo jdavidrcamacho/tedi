@@ -464,6 +464,7 @@ class RQP(Kernel):
         self.params_number = 5
 
     def __call__(self, r):
+        """Calculate Kernel."""
         per_component = exp(
             -2 * sine(pi * abs(r) / self.p) ** 2 / self.ell_p**2
         )  # NOQA
@@ -613,8 +614,10 @@ class PiecewiseRQ(Kernel):
 
 class NewPeriodic(Kernel):
     """
-    Definition of a periodic kernel derived from mapping the Rational Quadratic
-    kernel to the 2D space defined by u(x) = (cos(x), sin(x)).
+    Definition of a periodic kernel.
+    
+    Derived from mapping the Rational Quadratic kernel to the 2D space 
+    defined by u(x) = (cos(x), sin(x)).
 
 
     Args:
@@ -661,9 +664,10 @@ class NewPeriodic(Kernel):
 
 class QuasiNewPeriodic(Kernel):
     """
-    Definition of a quasi-periodic kernel derived from mapping the Rational
-    Quadratic kernel to the 2D space u(x) = (cos(x), sin(x)) to then multiply
-    it by a Squared Exponential kernel.
+    Definition of a quasi-periodic kernel.
+    
+    Derived from mapping the Rational Quadratic kernel to the 2D space 
+    u(x) = (cos(x), sin(x)) to then multiply it by a Squared Exponential kernel.
 
 
     Args:
@@ -717,9 +721,10 @@ class QuasiNewPeriodic(Kernel):
 
 class NewRQP(Kernel):
     """
-    Definition of a new quasi-periodic kernel. Derived from mapping the
-    rational quadratic kernel to the 2D space u(x) = (cos x, sin x) to then
-    multiply it by a rational quadratic kernel
+    Definition of a new quasi-periodic kernel.
+    
+    Derived from mapping the rational quadratic kernel to the 2D space 
+    u(x) = (cos x, sin x) to then multiply it by a rational quadratic kernel.
 
     Args:
         amp  (float): Amplitude of the kernel.
@@ -784,8 +789,9 @@ class NewRQP(Kernel):
 
 class HarmonicPeriodic(Kernel):
     """
-    Definition of a periodic kernel that models a periodic signal with a
-    specified number of harmonics.
+    Definition of a periodic kernel.
+    
+    Models a periodic signal with a specified number of harmonics.
 
     Args:
         n (int): Number of harmonics in the periodic signal.
@@ -857,8 +863,9 @@ class HarmonicPeriodic(Kernel):
 
 class QuasiHarmonicPeriodic(Kernel):
     """
-    Definition of a quasi-periodic kernel that models periodic signals with a
-    specified number of harmonics.
+    Definition of a quasi-periodic kernel.
+    
+    Models periodic signals with a specified number of harmonics.
 
     Args:
         n (int): Number of harmonics in the periodic signal.

@@ -13,8 +13,7 @@ def multivariate_normal(
     method: Literal["cholesky", "solve"] = "cholesky",  # NOQA
 ) -> float:
     """
-    Computes the multivariate normal density for a given residual vector `r`
-    and covariance matrix `c`.
+    Compute the multivariate normal density.
 
     Args:
         r (np.ndarray): A 1-D array of shape (k,) representing the residual
@@ -66,6 +65,7 @@ class MultivariateGaussian(sp.stats.rv_continuous):
     """
 
     def __init__(self, mu: np.ndarray, cov: np.ndarray) -> None:
+        """Initialize multivariate gaussian distribution."""
         super().__init__()
         self.mu = mu
         self.cov = cov + 1e-10 * np.eye(len(mu))
@@ -75,8 +75,7 @@ class MultivariateGaussian(sp.stats.rv_continuous):
         self, x: np.ndarray, method: Literal["cholesky", "solve"] = "cholesky"
     ) -> np.ndarray:
         """
-        Computes the probability density function (PDF) of the multivariate
-        Gaussian distribution.
+        Compute the probability density function (PDF).
 
         Args:
             x (np.ndarray): Input data with shape (n, k) for n samples of k
@@ -109,7 +108,7 @@ class MultivariateGaussian(sp.stats.rv_continuous):
 
     def rvs(self, nsamples: int) -> np.ndarray:
         """
-        Generates random samples from the multivariate Gaussian distribution.
+        Generate random samples from the multivariate Gaussian distribution.
 
         Args:
             nsamples (int): Number of samples to generate.
@@ -146,7 +145,7 @@ def compute_harmonicmean(
     **kwargs
 ) -> float:
     """
-    Computes the harmonic mean estimate of the marginal likelihood.
+    Compute the harmonic mean estimate of the marginal likelihood.
 
     The estimation is based on n posterior samples (indexed by s, with s = 0,
     ..., n-1), but can be done directly if the log(likelihood) in this sample
@@ -207,7 +206,7 @@ def run_hme_mc(
     log_likelihood: np.ndarray, nmc: int, samplesize: int
 ) -> np.ndarray:  # NOQA
     """
-    Runs Monte Carlo simulations to compute the harmonic mean estimate.
+    Run Monte Carlo simulations to compute the harmonic mean estimate.
 
     Args:
         log_likelihood (np.ndarray): Array of log-likelihood values.

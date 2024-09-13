@@ -9,7 +9,7 @@ def semi_amplitude(
     period: float, m_planet: float, m_star: float, ecc: float
 ) -> float:  # NOQA
     """
-    Calculates the semi-amplitude (K) of a planet's radial velocity signal.
+    Calculate the semi-amplitude (K) of a planet's radial velocity signal.
 
     Args:
         period (float): Orbital period in years.
@@ -30,7 +30,7 @@ def semi_amplitude(
 
 def minimum_mass(p: float, k: float, ecc: float, m_star: float) -> np.ndarray:
     """
-    Calculates the minimum mass (m*sin(i)) of a planet.
+    Calculate the minimum mass (m*sin(i)) of a planet.
 
     Args:
         p (float): Orbital period in days.
@@ -58,7 +58,7 @@ def keplerian(
     t: Optional[np.ndarray] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Simulates the radial velocity signal of a planet in a Keplerian orbit.
+    Simulate the radial velocity signal of a planet in a Keplerian orbit.
 
     Args:
         p (float, optional): Orbital period in days.
@@ -123,7 +123,7 @@ def phase_folding(
     t: np.ndarray, y: np.ndarray, yerr: Optional[np.ndarray], period: float
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
-    Performs phase folding of the given data according to the specified period.
+    Perform phase folding of the given data according to the specified period.
 
     Args:
         t (np.ndarray): Time array.
@@ -148,7 +148,7 @@ def phase_folding(
 
 def rms(array: np.ndarray) -> float:
     """
-    Computes the root mean square (RMS) of an array of measurements.
+    Compute the root mean square (RMS) of an array of measurements.
 
     Args:
         array (np.ndarray): Array of measurements.
@@ -162,7 +162,7 @@ def rms(array: np.ndarray) -> float:
 
 def wrms(array: np.ndarray, weights: np.ndarray) -> float:
     """
-    Computes the weighted root mean square (WRMS) of an array of measurements.
+    Compute the weighted root mean square (WRMS) of an array of measurements.
 
     Args:
         array (np.ndarray): Array of measurements.

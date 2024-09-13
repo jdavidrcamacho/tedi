@@ -89,7 +89,7 @@ def date_to_jd(year: int, month: int, day: float) -> float:
 
 
 def jd_to_date(julian_day: float) -> tuple[int, int, float]:
-    """Converts Julian Day (JD) to a date.
+    """Convert Julian Day (JD) to a date.
 
     The algorithm is derived from 'Practical Astronomy with your Calculator
     or Spreadsheet', 4th ed., Duffett-Smith and Zwart, 2011.
@@ -168,7 +168,7 @@ def hmsm_to_days(
 
 
 def days_to_hmsm(fractional_days: float) -> tuple[int, int, int, int]:
-    """Converts fractional days to hours, minutes, seconds, and microseconds.
+    """Convert fractional days to hours, minutes, seconds, and microseconds.
 
     Precision beyond microseconds is rounded to the nearest microsecond.
 
@@ -227,7 +227,7 @@ def datetime_to_jd(date: dt.datetime) -> float:
 
 
 def jd_to_datetime(julian_day: float) -> dt.datetime:
-    """ConvertsJulian Day (JD) to `datetime.datetime` object.
+    """Convert Julian Day (JD) to `datetime.datetime` object.
 
     Args:
         julian_day (float): Julian Day.
