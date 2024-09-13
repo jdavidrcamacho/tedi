@@ -615,8 +615,8 @@ class PiecewiseRQ(Kernel):
 class NewPeriodic(Kernel):
     """
     Definition of a periodic kernel.
-    
-    Derived from mapping the Rational Quadratic kernel to the 2D space 
+
+    Derived from mapping the Rational Quadratic kernel to the 2D space
     defined by u(x) = (cos(x), sin(x)).
 
 
@@ -665,8 +665,8 @@ class NewPeriodic(Kernel):
 class QuasiNewPeriodic(Kernel):
     """
     Definition of a quasi-periodic kernel.
-    
-    Derived from mapping the Rational Quadratic kernel to the 2D space 
+
+    Derived from mapping the Rational Quadratic kernel to the 2D space
     u(x) = (cos(x), sin(x)) to then multiply it by a Squared Exponential kernel.
 
 
@@ -722,8 +722,8 @@ class QuasiNewPeriodic(Kernel):
 class NewRQP(Kernel):
     """
     Definition of a new quasi-periodic kernel.
-    
-    Derived from mapping the rational quadratic kernel to the 2D space 
+
+    Derived from mapping the rational quadratic kernel to the 2D space
     u(x) = (cos x, sin x) to then multiply it by a rational quadratic kernel.
 
     Args:
@@ -790,7 +790,7 @@ class NewRQP(Kernel):
 class HarmonicPeriodic(Kernel):
     """
     Definition of a periodic kernel.
-    
+
     Models a periodic signal with a specified number of harmonics.
 
     Args:
@@ -864,7 +864,7 @@ class HarmonicPeriodic(Kernel):
 class QuasiHarmonicPeriodic(Kernel):
     """
     Definition of a quasi-periodic kernel.
-    
+
     Models periodic signals with a specified number of harmonics.
 
     Args:
