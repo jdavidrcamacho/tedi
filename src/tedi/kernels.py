@@ -667,7 +667,7 @@ class QuasiNewPeriodic(Kernel):
     Definition of a quasi-periodic kernel.
 
     Derived from mapping the Rational Quadratic kernel to the 2D space
-    u(x) = (cos(x), sin(x)) to then multiply it by a Squared Exponential kernel.
+    u(x) = (cos(x), sin(x)) to multiply it by a Squared Exponential kernel.
 
 
     Args:
