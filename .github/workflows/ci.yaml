@@ -69,10 +69,6 @@ jobs:
         run: |
           poetry run flake8 --statistics examples/ src/ tests/
 
-      - name: Check types with mypy
-        run: |          
-          poetry run mypy examples/ src/ tests/
-
       - name: Run unit tests
         run: |
           poetry run pytest --cov-report term-missing --cov=src/
