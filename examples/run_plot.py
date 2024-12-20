@@ -47,4 +47,4 @@ std_min, std_max = mean - std, mean + std
 plt.plot(t, mean, "-g", alpha=0.75, label="Harmonic-periodic GP")
 plt.fill_between(tstar, std_max.T, std_min.T, color="green", alpha=0.25)
 
-# plt.show()
+plt.show()
