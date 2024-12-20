@@ -200,7 +200,7 @@ class CreateProcess:
             nugget_value = 0.01
             covariance_matrix = (
                 nugget_value * np.identity(time.size, dtype=np.float64)
-                + covariance_matrix  # NOQA
+                + covariance_matrix  # NOQA type: ignore
             )
         if add_shift:
             shift_value = 0.01
