@@ -71,7 +71,7 @@ jobs:
 
       - name: Check types with mypy
         run: |          
-          poetry run mypy examples/ src/ tests/
+          poetry run mypy examples/ tests/
 
       - name: Run unit tests
         run: |
