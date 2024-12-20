@@ -1,0 +1,46 @@
+[tool.isort]
+profile = "black"
+
+[tool.pytest.ini_options]
+testpaths = [
+    "tests",
+]
+
+[tool.coverage.run]
+omit = [
+    "tests/*"
+]
+
+[tool.poetry]
+name = "tedi"
+version = "3.0.0"
+description = "A python library for Gaussian or Student-t processes regression"
+authors = ["joao.camacho <joao.camacho@astro.up.pt>"]
+repository = "https://github.com/jdavidrcamacho/tedi/"
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+numpy = "^2.0.1"
+scipy = "^1.14.0"
+emcee = "^3.1.6"
+matplotlib = "^3.9.1"
+loguniform = "^2.0.1"
+corner = "^2.2.2"
+ipython = "^8.26.0"
+tqdm = "^4.66.5"
+
+[tool.poetry.group.dev.dependencies]
+black = "*"
+flake8 = "*"
+mypy = "*"
+pytest = "*"
+pytest-cov = "*"
+pydocstyle = "*"
+isort = "*"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
