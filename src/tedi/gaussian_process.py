@@ -199,11 +199,12 @@ class CreateProcess:
         if add_nugget:
             nugget_value = 0.01
             covariance_matrix = (
-                nugget_value * np.identity(self.time.size) + covariance_matrix
+                nugget_value * np.identity(self.time.size)
+                + covariance_matrix  # NOQA  type: ignore
             )
         if add_shift:
             shift_value = 0.01
-            covariance_matrix += shift_value * np.identity(self.time.size)
+            covariance_matrix += shift_value * np.identity(self.time.size)  # NOQA
         return covariance_matrix
 
     def log_marginal_likelihood(

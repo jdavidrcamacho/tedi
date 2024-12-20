@@ -13,7 +13,7 @@ omit = [
 
 [tool.poetry]
 name = "tedi"
-version = "3.0"
+version = "3.0.0"
 description = "A python library for Gaussian or Student-t processes regression"
 authors = ["joao.camacho <joao.camacho@astro.up.pt>"]
 repository = "https://github.com/jdavidrcamacho/tedi/"
