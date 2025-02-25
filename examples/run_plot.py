@@ -3,7 +3,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.tedi import gaussian_process, kernels, means
+from tedi import gaussian_process, kernels, means
 
 np.random.seed(23011990)
 

@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from src.tedi import gaussian_process, kernels, means, student_process
+from tedi import gaussian_process, kernels, means, student_process
 
 np.random.seed(23011990)
 

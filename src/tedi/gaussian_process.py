@@ -6,9 +6,9 @@ import numpy as np
 from scipy.linalg import LinAlgError, cho_factor, cho_solve  # type: ignore
 from scipy.stats import multivariate_normal, norm  # type: ignore
 
-from src.tedi import kernels
-from src.tedi.utils.kernels import Kernel, Product, Sum
-from src.tedi.utils.means import MeanModel
+from . import kernels
+from .utils.kernels import Kernel, Product, Sum
+from .utils.means import MeanModel
 
 
 class CreateProcess:
