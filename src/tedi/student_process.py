@@ -6,7 +6,7 @@ import numpy as np
 from scipy.linalg import LinAlgError, cho_factor, cho_solve  # type: ignore
 from scipy.special import loggamma  # type: ignore
 
-from src.tedi.utils.kernels import Product, Sum
+from .utils.kernels import Product, Sum
 
 
 class CreateProcess:

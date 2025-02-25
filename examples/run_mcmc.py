@@ -9,9 +9,9 @@ import emcee  # type: ignore
 import numpy as np
 from scipy import stats  # type: ignore
 
-from src.tedi import gaussian_process
-from src.tedi.kernels import Exponential, WhiteNoise
-from src.tedi.means import Constant
+from tedi import gaussian_process
+from tedi.kernels import Exponential, WhiteNoise  # type: ignore
+from tedi.means import Constant  # type: ignore
 
 np.random.seed(23011990)
 
