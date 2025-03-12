@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.tedi.gaussian_process &mdash; tedi 3.0.1 documentation</title>
+      <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html">
+            <img src="../../../_static/logo_tedi.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../src.tedi.html">src.tedi package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../src.tedi.utils.html">src.tedi.utils package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">tedi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>src.tedi.gaussian_process</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.tedi.gaussian_process</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Gaussian process class.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.linalg</span><span class="w"> </span><span class="kn">import</span> <span class="n">LinAlgError</span><span class="p">,</span> <span class="n">cho_factor</span><span class="p">,</span> <span class="n">cho_solve</span>  <span class="c1"># type: ignore</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="kn">import</span> <span class="n">multivariate_normal</span><span class="p">,</span> <span class="n">norm</span>  <span class="c1"># type: ignore</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.</span><span class="w"> </span><span class="kn">import</span> <span class="n">kernels</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Kernel</span><span class="p">,</span> <span class="n">Product</span><span class="p">,</span> <span class="n">Sum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils.means</span><span class="w"> </span><span class="kn">import</span> <span class="n">MeanModel</span>
+
+
+<div class="viewcode-block" id="CreateProcess"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">CreateProcess</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A class to represent a Gaussian Process (GP).</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        kernel (Kernel): The covariance function of the Gaussian process.</span>
+<span class="sd">        mean (MeanModel): The mean function of the Gaussian process.</span>
+<span class="sd">        time (np.ndarray): The time points at which the Gaussian process is</span>
+<span class="sd">            observed.</span>
+<span class="sd">        y (np.ndarray): The observed measurements.</span>
+<span class="sd">        yerr (Optional[np.ndarray]): The measurement errors. Defaults to a</span>
+<span class="sd">            small identity matrix if not provided.</span>
+<span class="sd">        yerr2 (np.ndarray): Squared measurement errors.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="n">MeanModel</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">yerr</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize kernel.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">time</span> <span class="o">=</span> <span class="n">time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">=</span> <span class="n">y</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yerr</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">yerr</span> <span class="k">if</span> <span class="n">yerr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="mf">1e-12</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># NOQA</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">yerr2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yerr</span><span class="o">**</span><span class="mi">2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_kernel_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Retrieve the parameters of the specified kernel.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: The parameters of the kernel.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">pars</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_kernel_matrix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the covariance matrix given a kernel and time array.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Kernel): The kernel function.</span>
+<span class="sd">            time (np.ndarray): The time points.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: The covariance matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Sum</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                <span class="p">(</span><span class="n">kernels</span><span class="o">.</span><span class="n">HarmonicPeriodic</span><span class="p">,</span> <span class="n">kernels</span><span class="o">.</span><span class="n">QuasiHarmonicPeriodic</span><span class="p">),</span>
+            <span class="p">):</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+                <span class="n">s</span> <span class="o">=</span> <span class="n">time</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="n">k1</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">time</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+                <span class="k">return</span> <span class="n">k1</span> <span class="o">+</span> <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">1</span><span class="p">](</span><span class="n">r</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">kernel</span><span class="p">,</span> <span class="p">(</span><span class="n">kernels</span><span class="o">.</span><span class="n">HarmonicPeriodic</span><span class="p">,</span> <span class="n">kernels</span><span class="o">.</span><span class="n">QuasiHarmonicPeriodic</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">time</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="n">time</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_predictive_kernel_matrix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the predictive kernel matrix for the specified kernel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Kernel): The kernel function.</span>
+<span class="sd">            time (np.ndarray): The time points for prediction.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: The predictive kernel matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Sum</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">kernels</span><span class="o">.</span><span class="n">WhiteNoise</span><span class="p">):</span>
+                <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">kernel</span><span class="p">,</span>
+            <span class="p">(</span>
+                <span class="n">kernels</span><span class="o">.</span><span class="n">HarmonicPeriodic</span><span class="p">,</span>
+                <span class="n">kernels</span><span class="o">.</span><span class="n">QuasiHarmonicPeriodic</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">):</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">s</span><span class="p">)</span>
+        <span class="n">r</span> <span class="o">=</span> <span class="n">time</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="p">:]</span>
+        <span class="k">return</span> <span class="n">kernel</span><span class="p">(</span><span class="n">r</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_compute_mean_function</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MeanModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the mean function values at the given time points.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mean (Optional[MeanModel], default=None): The mean function.</span>
+<span class="sd">                Defaults to the mean function provided during initialization.</span>
+<span class="sd">            time (Optional[np.ndarray], default=None): The time points.</span>
+<span class="sd">                Defaults to the time points provided during initialization.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: The mean function values.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">mean</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
+        <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="k">return</span> <span class="n">mean</span><span class="p">(</span><span class="n">time</span><span class="p">)</span> <span class="k">if</span> <span class="n">mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CreateProcess.update_kernel"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess.update_kernel">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">update_kernel</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">new_params</span><span class="p">:</span> <span class="nb">list</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the parameters of the given kernel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            new_params (list): The new hyperparameters for the kernel.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Sum</span><span class="p">):</span>
+            <span class="n">k1_params</span> <span class="o">=</span> <span class="n">new_params</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pars</span><span class="p">)]</span>  <span class="c1"># NOQA</span>
+            <span class="n">k2_params</span> <span class="o">=</span> <span class="n">new_params</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pars</span><span class="p">)</span> <span class="p">:]</span>  <span class="c1"># NOQA</span>
+            <span class="n">new_k1</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">])(</span><span class="o">*</span><span class="n">k1_params</span><span class="p">)</span>
+            <span class="n">new_k2</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">1</span><span class="p">])(</span><span class="o">*</span><span class="n">k2_params</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">new_k1</span> <span class="o">+</span> <span class="n">new_k2</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">,</span> <span class="n">Product</span><span class="p">):</span>
+            <span class="n">k1_params</span> <span class="o">=</span> <span class="n">new_params</span><span class="p">[:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pars</span><span class="p">)]</span>
+            <span class="n">k2_params</span> <span class="o">=</span> <span class="n">new_params</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pars</span><span class="p">)</span> <span class="p">:]</span>  <span class="c1"># NOQA</span>
+            <span class="n">new_k1</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">0</span><span class="p">])(</span><span class="o">*</span><span class="n">k1_params</span><span class="p">)</span>
+            <span class="n">new_k2</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="o">.</span><span class="n">base_kernels</span><span class="p">[</span><span class="mi">1</span><span class="p">])(</span><span class="o">*</span><span class="n">k2_params</span><span class="p">)</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="n">new_k1</span> <span class="o">*</span> <span class="n">new_k2</span>  <span class="c1"># type: ignore</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kernel</span><span class="p">)(</span><span class="o">*</span><span class="n">new_params</span><span class="p">)</span>  <span class="c1"># type: ignore</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span> <span class="o">=</span> <span class="n">k</span></div>
+
+<div class="viewcode-block" id="CreateProcess.compute_covariance_matrix"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess.compute_covariance_matrix">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">compute_covariance_matrix</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">add_nugget</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">add_shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Construct the covariance matrix used in the log marginal likelihood.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Kernel): The</span>
+<span class="sd">                covariance kernel function.</span>
+<span class="sd">            time (np.ndarray): The time points.</span>
+<span class="sd">            add_nugget (bool, default=False): Whether to add a nugget term to</span>
+<span class="sd">                the matrix to ensure positive definiteness.</span>
+<span class="sd">            add_shift (bool, default=False): Whether to shift the eigenvalues</span>
+<span class="sd">                to ensure positive definiteness.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: The covariance matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">))</span>
+        <span class="n">kernel_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_kernel_matrix</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+        <span class="n">diag_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">yerr2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="n">kernel_matrix</span> <span class="o">+</span> <span class="n">diag_matrix</span>
+        <span class="k">if</span> <span class="n">add_nugget</span><span class="p">:</span>
+            <span class="n">nugget_value</span> <span class="o">=</span> <span class="mf">0.01</span>
+            <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">nugget_value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">)</span>
+                <span class="o">+</span> <span class="n">covariance_matrix</span>  <span class="c1"># NOQA type: ignore</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">add_shift</span><span class="p">:</span>
+            <span class="n">shift_value</span> <span class="o">=</span> <span class="mf">0.01</span>
+            <span class="n">covariance_matrix</span> <span class="o">+=</span> <span class="n">shift_value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float64</span>
+            <span class="p">)</span>  <span class="c1"># NOQA</span>
+
+        <span class="k">return</span> <span class="n">covariance_matrix</span></div>
+
+<div class="viewcode-block" id="CreateProcess.log_marginal_likelihood"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess.log_marginal_likelihood">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">log_marginal_likelihood</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MeanModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">add_nugget</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">add_shift</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">return_separated</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the marginal log likelihood of the Gaussian process.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Optional[Kernel], default=None): The covariance function.</span>
+<span class="sd">                If None, uses the kernel provided during initialization.</span>
+<span class="sd">            mean (Optional[MeanModel], default=None): The mean function. If</span>
+<span class="sd">                None, uses the mean function provided during initialization.</span>
+<span class="sd">            add_nugget (bool, default=False): Whether to add a nugget term to</span>
+<span class="sd">                the covariance matrix.</span>
+<span class="sd">            add_shift (bool, default=False): Whether to shift the eigenvalues</span>
+<span class="sd">                of the covariance matrix.</span>
+<span class="sd">            return_separated (bool, default=False): Whether to return the</span>
+<span class="sd">                separated terms of the log likelihood.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Union[float, Tuple[float, float, float]]: The marginal log</span>
+<span class="sd">                likelihood, or a tuple of its separated terms if</span>
+<span class="sd">                `return_separated` is True.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span> <span class="k">if</span> <span class="n">kernel</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span>
+        <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_covariance_matrix</span><span class="p">(</span>
+            <span class="n">kernel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">,</span> <span class="n">add_nugget</span><span class="o">=</span><span class="n">add_nugget</span><span class="p">,</span> <span class="n">add_shift</span><span class="o">=</span><span class="n">add_shift</span>
+        <span class="p">)</span>
+        <span class="n">residuals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_mean_function</span><span class="p">(</span><span class="n">mean</span><span class="p">)</span> <span class="k">if</span> <span class="n">mean</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">cholesky_factor</span> <span class="o">=</span> <span class="n">cho_factor</span><span class="p">(</span>
+                <span class="n">covariance_matrix</span><span class="p">,</span>
+                <span class="n">overwrite_a</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="n">lower</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">check_finite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">return_separated</span><span class="p">:</span>
+                <span class="n">log_likelihood</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="o">-</span><span class="mf">0.5</span>
+                    <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span>
+                        <span class="n">residuals</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cho_solve</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">,</span> <span class="n">residuals</span><span class="p">)</span>
+                    <span class="p">),</span>  <span class="c1"># NOQA</span>
+                    <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">]))),</span>
+                    <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">residuals</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">),</span>
+                <span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">log_likelihood</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="o">-</span><span class="mf">0.5</span>
+                    <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">residuals</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">cho_solve</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">,</span> <span class="n">residuals</span><span class="p">))</span>  <span class="c1"># NOQA</span>
+                    <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+                    <span class="o">-</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">residuals</span><span class="o">.</span><span class="n">size</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">except</span> <span class="n">LinAlgError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">log_likelihood</span>  <span class="c1"># type: ignore</span></div>
+
+<div class="viewcode-block" id="CreateProcess.compute_marginal_likelihood_sample"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess.compute_marginal_likelihood_sample">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">compute_marginal_likelihood_sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MeanModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">jitter</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">output_file</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;results.txt&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the marginal likelihood by sampling.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Optional[Kernel], default=None): The covariance kernel</span>
+<span class="sd">                function. If None, uses the kernel provided during</span>
+<span class="sd">                initialization.</span>
+<span class="sd">            mean (Optional[MeanModel], default=None): The mean function. If</span>
+<span class="sd">                None, uses the mean function provided during initialization.</span>
+<span class="sd">            jitter (Optional[float], default=None): The jitter value to be</span>
+<span class="sd">                added to the measurement errors.</span>
+<span class="sd">            num_samples (int, default=1000): Number of samples to compute.</span>
+<span class="sd">            output_file (str, default=&quot;results.txt&quot;): File to write the</span>
+<span class="sd">                progress.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            float: The log of the estimated marginal likelihood.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_file</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">sample_mean</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_mean_function</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">)</span>
+            <span class="n">sample_error</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">jitter</span> <span class="k">if</span> <span class="n">jitter</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">yerr2</span>
+            <span class="p">)</span>  <span class="c1"># NOQA</span>
+            <span class="n">log_likelihood_sum</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_samples</span><span class="p">):</span>
+                <span class="n">sample</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="o">+</span> <span class="n">sample_mean</span>
+                <span class="n">norm_pdf</span> <span class="o">=</span> <span class="n">norm</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="n">sample</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">sample_error</span><span class="p">)</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">y</span><span class="p">)</span>
+                <span class="n">log_likelihood_sum</span> <span class="o">+=</span> <span class="n">norm_pdf</span><span class="o">.</span><span class="n">prod</span><span class="p">()</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">500</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">sigma_n</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">norm_pdf</span><span class="p">)</span>
+                    <span class="nb">print</span><span class="p">(</span>
+                        <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_likelihood_sum</span> <span class="o">/</span> <span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)),</span>
+                        <span class="n">sigma_n</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                        <span class="n">file</span><span class="o">=</span><span class="n">f</span><span class="p">,</span>
+                    <span class="p">)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">log_likelihood_sum</span> <span class="o">/</span> <span class="n">num_samples</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="CreateProcess.sample"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess.sample">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">add_nugget</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample from the Gaussian process given a kernel function.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Optional[Kernel], default=None): The covariance kernel</span>
+<span class="sd">                function. If None, uses the kernel provided during</span>
+<span class="sd">                initialization.</span>
+<span class="sd">            time (Optional[np.ndarray], default=None): The time points.</span>
+<span class="sd">                Defaults to the time points provided during initialization.</span>
+<span class="sd">            add_nugget (bool, default=False): Whether to add a nugget term to</span>
+<span class="sd">                the covariance matrix.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: A sample from the Gaussian process.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">kernel</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span>
+        <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="n">sample_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_kernel_matrix</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">add_nugget</span><span class="p">:</span>
+            <span class="n">nugget_value</span> <span class="o">=</span> <span class="mf">0.01</span>
+            <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="mi">1</span> <span class="o">-</span> <span class="n">nugget_value</span>
+            <span class="p">)</span> <span class="o">*</span> <span class="n">covariance_matrix</span> <span class="o">+</span> <span class="n">nugget_value</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">)</span>
+            <span class="p">)</span>  <span class="c1"># NOQA</span>
+        <span class="k">return</span> <span class="n">multivariate_normal</span><span class="p">(</span>
+            <span class="n">sample_mean</span><span class="p">,</span> <span class="n">covariance_matrix</span><span class="p">,</span> <span class="n">allow_singular</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">rvs</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="CreateProcess.posterior_sample"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess.posterior_sample">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">posterior_sample</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Kernel</span><span class="p">,</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="n">MeanModel</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sample from the posterior distribution of the Gaussian process.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Kernel): The covariance function.</span>
+<span class="sd">            mean (MeanModel): The mean function.</span>
+<span class="sd">            time (np.ndarray): The time points for sampling.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: A sample from the posterior distribution.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">predicted_mean</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">predicted_covariance</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prediction</span><span class="p">(</span>
+            <span class="n">kernel</span><span class="p">,</span> <span class="n">mean</span><span class="p">,</span> <span class="n">time</span>
+        <span class="p">)</span>  <span class="c1"># NOQA</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span>
+            <span class="n">predicted_mean</span><span class="p">,</span> <span class="n">predicted_covariance</span><span class="p">,</span> <span class="mi">1</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># NOQA</span></div>
+
+<div class="viewcode-block" id="CreateProcess.prediction"><a class="viewcode-back" href="../../../src.tedi.html#src.tedi.gaussian_process.CreateProcess.prediction">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">prediction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">kernel</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Kernel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">mean</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">MeanModel</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">time</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Predict the conditional distribution of the Gaussian process.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            kernel (Optional[Kernel], default=None): The covariance function.</span>
+<span class="sd">                If None, uses the kernel provided during initialization.</span>
+<span class="sd">            mean (Optional[MeanModel], default=None): The mean function. If</span>
+<span class="sd">                None, uses the mean function provided during initialization.</span>
+<span class="sd">            time (Optional[np.ndarray], default=None): The new time points for</span>
+<span class="sd">                prediction. If None, uses the time points provided during</span>
+<span class="sd">                initialization.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]: The</span>
+<span class="sd">                predicted mean, standard deviation, and covariance matrix,</span>
+<span class="sd">                and time used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kernel</span> <span class="o">=</span> <span class="n">kernel</span> <span class="k">if</span> <span class="n">kernel</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">kernel</span>
+        <span class="n">mean</span> <span class="o">=</span> <span class="n">mean</span> <span class="k">if</span> <span class="n">mean</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean</span>
+        <span class="n">time</span> <span class="o">=</span> <span class="n">time</span> <span class="k">if</span> <span class="n">time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="n">residuals</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span> <span class="o">-</span> <span class="n">mean</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">time</span><span class="p">)</span> <span class="k">if</span> <span class="n">mean</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">y</span>  <span class="c1"># NOQA</span>
+        <span class="n">covariance_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_kernel_matrix</span><span class="p">(</span>
+            <span class="n">kernel</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">time</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span>  <span class="c1"># NOQA</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">yerr2</span>
+        <span class="p">)</span>
+        <span class="n">cholesky_factor</span> <span class="o">=</span> <span class="n">cho_factor</span><span class="p">(</span><span class="n">covariance_matrix</span><span class="p">)</span>
+        <span class="n">solution</span> <span class="o">=</span> <span class="n">cho_solve</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">,</span> <span class="n">residuals</span><span class="p">)</span>
+        <span class="n">predictive_kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_predictive_kernel_matrix</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>  <span class="c1"># NOQA</span>
+        <span class="n">predictive_cov_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_kernel_matrix</span><span class="p">(</span><span class="n">kernel</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="n">mean_prediction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span>
+            <span class="n">predictive_kernel</span><span class="p">,</span> <span class="n">solution</span>
+        <span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_mean_function</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">time</span><span class="p">)</span>
+        <span class="n">kstarT_k_kstar</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span>
+                <span class="n">predictive_kernel</span><span class="p">,</span>
+                <span class="n">cho_solve</span><span class="p">(</span><span class="n">cholesky_factor</span><span class="p">,</span> <span class="n">predictive_kernel</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]),</span>  <span class="c1"># NOQA</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">covariance_prediction</span> <span class="o">=</span> <span class="n">predictive_cov_matrix</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kstarT_k_kstar</span><span class="p">)</span>  <span class="c1"># NOQA</span>
+        <span class="n">variance_prediction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">covariance_prediction</span><span class="p">)</span>
+        <span class="n">std_deviation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">variance_prediction</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">mean_prediction</span><span class="p">,</span> <span class="n">std_deviation</span><span class="p">,</span> <span class="n">covariance_prediction</span><span class="p">,</span> <span class="n">time</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, João Camacho.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

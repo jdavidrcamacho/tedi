@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.tedi.utils.evidence &mdash; tedi 3.0.1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html">
+            <img src="../../../../_static/logo_tedi.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../src.tedi.html">src.tedi package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../src.tedi.utils.html">src.tedi.utils package</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">tedi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.tedi.utils.evidence</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.tedi.utils.evidence</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Functions for the evidence calculation.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">log</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">sp</span>  <span class="c1"># type: ignore</span>
+
+
+<div class="viewcode-block" id="multivariate_normal"><a class="viewcode-back" href="../../../../src.tedi.utils.html#src.tedi.utils.evidence.multivariate_normal">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">multivariate_normal</span><span class="p">(</span>
+    <span class="n">r</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">c</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cholesky&quot;</span><span class="p">,</span> <span class="s2">&quot;solve&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cholesky&quot;</span><span class="p">,</span>  <span class="c1"># NOQA</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the multivariate normal density.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        r (np.ndarray): A 1-D array of shape (k,) representing the residual</span>
+<span class="sd">            vector.</span>
+<span class="sd">        c (np.ndarray): A 2-D array or matrix of shape (k, k) representing the</span>
+<span class="sd">            covariance matrix.</span>
+<span class="sd">        method (Literal[&quot;cholesky&quot;, &quot;solve&quot;], optional): The method used to</span>
+<span class="sd">            compute the multivariate density.</span>
+<span class="sd">                - &quot;cholesky&quot;: Uses Cholesky decomposition via</span>
+<span class="sd">                scipy.linalg.cho_factor` and `scipy.linalg.cho_solve`.</span>
+<span class="sd">                - &quot;solve&quot;: Uses `np.linalg.solve` and `np.linalg.slogdet`.</span>
+<span class="sd">            Default is &quot;cholesky&quot;.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: The multivariate density value at the residual vector `r`.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If the specified method is invalid.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># Compute normalization factor used for all methods.</span>
+    <span class="n">normalization_factor</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">r</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+
+    <span class="c1"># Use Cholesky decomposition of covariance.</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;cholesky&quot;</span><span class="p">:</span>
+        <span class="n">cho</span><span class="p">,</span> <span class="n">lower</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cho_factor</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">cho_solve</span><span class="p">((</span><span class="n">cho</span><span class="p">,</span> <span class="n">lower</span><span class="p">),</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span>
+            <span class="n">normalization_factor</span>
+            <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span>
+            <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">cho</span><span class="p">)))</span>  <span class="c1"># NOQA</span>
+        <span class="p">)</span>
+    <span class="c1"># Use slogdet and solve</span>
+    <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;solve&quot;</span><span class="p">:</span>
+        <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">d</span><span class="p">)</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">slogdet</span><span class="p">(</span><span class="n">c</span><span class="p">)</span>
+        <span class="n">alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">solve</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">r</span><span class="p">)</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">normalization_factor</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">alpha</span><span class="p">)</span> <span class="o">+</span> <span class="n">d</span><span class="p">)</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid method. Choose either &#39;cholesky&#39; or &#39;solve&#39;.&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultivariateGaussian"><a class="viewcode-back" href="../../../../src.tedi.utils.html#src.tedi.utils.evidence.MultivariateGaussian">[docs]</a><span class="k">class</span><span class="w"> </span><span class="nc">MultivariateGaussian</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">rv_continuous</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Multivariate Gaussian distribution.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mu (np.ndarray): Mean vector of shape (k,) for the multivariate</span>
+<span class="sd">            Gaussian distribution.</span>
+<span class="sd">        cov (np.ndarray): Covariance matrix of shape (k, k) for the</span>
+<span class="sd">            multivariate Gaussian distribution.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mu</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">cov</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize multivariate gaussian distribution.&quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu</span> <span class="o">=</span> <span class="n">mu</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cov</span> <span class="o">=</span> <span class="n">cov</span> <span class="o">+</span> <span class="mf">1e-10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimensions</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">mu</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MultivariateGaussian.pdf"><a class="viewcode-back" href="../../../../src.tedi.utils.html#src.tedi.utils.evidence.MultivariateGaussian.pdf">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">pdf</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">&quot;cholesky&quot;</span><span class="p">,</span> <span class="s2">&quot;solve&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cholesky&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the probability density function (PDF).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            x (np.ndarray): Input data with shape (n, k) for n samples of k</span>
+<span class="sd">                dimensions, or (k,) for a single sample.</span>
+<span class="sd">            method (Literal[&quot;cholesky&quot;, &quot;solve&quot;], optional): Method to use for</span>
+<span class="sd">                computation. Defaults to &quot;cholesky&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: Probability density function values for the input data.</span>
+<span class="sd">                Shape will be (n,) if `x` is 2D, otherwise (1,).</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the input array `x` is not 1-D or 2-D, or if the</span>
+<span class="sd">                dimensions do not match the covariance matrix.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="mi">1</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Input array not aligned with covariance. &quot;</span>
+                    <span class="s2">&quot;It must have dimensions (n x k), where k is &quot;</span>
+                    <span class="s2">&quot;the dimension of the multivariate Gaussian.&quot;</span>
+                <span class="p">)</span>
+            <span class="n">mvg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">s</span><span class="p">,</span> <span class="n">rr</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+                <span class="n">mvg</span><span class="p">[</span><span class="n">s</span><span class="p">]</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="p">(</span><span class="n">rr</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">mvg</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">x</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">,</span> <span class="n">method</span><span class="p">))</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input array must be 1- or 2-D.&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MultivariateGaussian.rvs"><a class="viewcode-back" href="../../../../src.tedi.utils.html#src.tedi.utils.evidence.MultivariateGaussian.rvs">[docs]</a>    <span class="k">def</span><span class="w"> </span><span class="nf">rvs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nsamples</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate random samples from the multivariate Gaussian distribution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nsamples (int): Number of samples to generate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            np.ndarray: Random samples with shape (nsamples, k).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mu</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">cov</span><span class="p">,</span> <span class="n">nsamples</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="log_sum"><a class="viewcode-back" href="../../../../src.tedi.utils.html#src.tedi.utils.evidence.log_sum">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">log_sum</span><span class="p">(</span><span class="n">log_summands</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the logarithm of the sum of exponentials of input elements.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_summands (np.ndarray): Array of log values to sum.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Logarithm of the sum of exponentials of the input elements.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">log_summands</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+    <span class="k">while</span> <span class="n">a</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="ow">or</span> <span class="n">a</span> <span class="o">==</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">a</span><span class="p">):</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span> <span class="o">-</span> <span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])))</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>  <span class="c1"># Instead of random.shuffle(x)</span>
+    <span class="k">return</span> <span class="n">a</span></div>
+
+
+<div class="viewcode-block" id="compute_harmonicmean"><a class="viewcode-back" href="../../../../src.tedi.utils.html#src.tedi.utils.evidence.compute_harmonicmean">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">compute_harmonicmean</span><span class="p">(</span>
+    <span class="n">lnlike_post</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="n">posterior_sample</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lnlikefunc</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">lnlikeargs</span><span class="p">:</span> <span class="n">Tuple</span> <span class="o">=</span> <span class="p">(),</span>
+    <span class="o">**</span><span class="n">kwargs</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compute the harmonic mean estimate of the marginal likelihood.</span>
+
+<span class="sd">    The estimation is based on n posterior samples (indexed by s, with s = 0,</span>
+<span class="sd">    ..., n-1), but can be done directly if the log(likelihood) in this sample</span>
+<span class="sd">    is passed.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        lnlike_post (np.ndarray): Log-likelihood computed over a posterior</span>
+<span class="sd">            sample. 1-D array of length n. If an empty array is given, then</span>
+<span class="sd">            compute from posterior sample.</span>
+<span class="sd">        posterior_sample (Optional[np.ndarray], optional): A sample from the</span>
+<span class="sd">            parameter posterior distribution. Dimensions are (n x k), where k</span>
+<span class="sd">            is the number of parameters. If None, the computation is done using</span>
+<span class="sd">            the log(likelihood) obtained from the posterior sample.</span>
+<span class="sd">        lnlikefunc (Optional[Callable[[np.ndarray], np.ndarray]], optional):</span>
+<span class="sd">            Function to compute ln(likelihood) on the marginal samples.</span>
+<span class="sd">        lnlikeargs (Tuple, optional): Extra arguments passed to the likelihood</span>
+<span class="sd">            function.</span>
+<span class="sd">        **kwargs: Additional parameters. The `size` parameter is expected to</span>
+<span class="sd">            specify the size of the sample used for computation. If none is</span>
+<span class="sd">            given, use the size of the given array or posterior sample.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: The harmonic mean estimate of the marginal likelihood.</span>
+
+<span class="sd">    References:</span>
+<span class="sd">        Kass &amp; Raftery (1995), JASA vol. 90, N. 430, pp. 773-795</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">lnlike_post</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">posterior_sample</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">lnlikefunc</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Likelihood function must be provided if lnlike_post is empty.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">samplesize</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">posterior_sample</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">samplesize</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">posterior_sample</span><span class="p">):</span>
+            <span class="n">posterior_subsample</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+                <span class="n">posterior_sample</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">samplesize</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">posterior_subsample</span> <span class="o">=</span> <span class="n">posterior_sample</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="c1"># Compute log likelihood in posterior sample.</span>
+        <span class="n">log_likelihood</span> <span class="o">=</span> <span class="n">lnlikefunc</span><span class="p">(</span><span class="n">posterior_subsample</span><span class="p">,</span> <span class="o">*</span><span class="n">lnlikeargs</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">lnlike_post</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">samplesize</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;size&quot;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">lnlike_post</span><span class="p">))</span>
+        <span class="n">log_likelihood</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+            <span class="n">lnlike_post</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">samplesize</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span>  <span class="c1"># NOQA</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;At least one of lnlike_post or posterior_sample must be provided.&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">hme</span> <span class="o">=</span> <span class="o">-</span><span class="n">log_sum</span><span class="p">(</span><span class="o">-</span><span class="n">log_likelihood</span><span class="p">)</span> <span class="o">+</span> <span class="n">log</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">log_likelihood</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">hme</span></div>
+
+
+<div class="viewcode-block" id="run_hme_mc"><a class="viewcode-back" href="../../../../src.tedi.utils.html#src.tedi.utils.evidence.run_hme_mc">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">run_hme_mc</span><span class="p">(</span>
+    <span class="n">log_likelihood</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">nmc</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">samplesize</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>  <span class="c1"># NOQA</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run Monte Carlo simulations to compute the harmonic mean estimate.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        log_likelihood (np.ndarray): Array of log-likelihood values.</span>
+<span class="sd">        nmc (int): Number of Monte Carlo simulations.</span>
+<span class="sd">        samplesize (int): Size of the sample used in each simulation.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        np.ndarray: Array of harmonic mean estimates from each simulation.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">hme</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">nmc</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">nmc</span><span class="p">):</span>
+        <span class="n">hme</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">compute_harmonicmean</span><span class="p">(</span><span class="n">log_likelihood</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="n">samplesize</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">hme</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, João Camacho.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
