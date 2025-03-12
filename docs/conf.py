@@ -22,23 +22,38 @@ release = '3.0.1'
 
 
 # -- General configuration ---------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
-templates_path = ['_templates']
-exclude_patterns = ['_build', 'Thumbs.db', '.DS_Store']
+# Add any Sphinx extension module names here, as strings. They can be
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# ones.
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.napoleon',
+    'sphinx.ext.autosummary',
+    'sphinxcontrib.autodoc_pydantic'
+]
 
+# Add any paths that contain templates here, relative to this directory.
+# templates_path = ['_templates']
 
-extensions = ['sphinx.ext.autodoc',
-              'sphinx.ext.viewcode',
-              'sphinx.ext.napoleon']
+# List of patterns, relative to source directory, that match files and
+# directories to ignore when looking for source files.
+exclude_patterns = ['_build', '.DS_Store']
 
 # -- Options for HTML output -------------------------------------------------
-# https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_logo = "figures/logo_tedi.png"
+html_logo = "_images/logo_tedi.png"
 html_theme_options = {
     'logo_only': True,
     'display_version': True,
 }
+
+# -- Extension configuration -------------------------------------------------
+
+# Enable parsing of both Google and NumPy-style docstrings
+napoleon_google_docstring = True
+napoleon_numpy_docstring = True
+autosummary_generate = True
