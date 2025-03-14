@@ -192,7 +192,7 @@ class CreateProcess:
         Returns:
             np.ndarray: The covariance matrix.
         """
-        covariance_matrix = np.zeros((time.size, time.size))
+        covariance_matrix: np.ndarray = np.zeros((time.size, time.size))
         kernel_matrix = self._compute_kernel_matrix(kernel, self.time)
         diag_matrix = self.yerr2 * np.identity(self.time.size)
         covariance_matrix = kernel_matrix + diag_matrix
@@ -200,7 +200,7 @@ class CreateProcess:
             nugget_value = 0.01
             covariance_matrix = (
                 nugget_value * np.identity(time.size, dtype=np.float64)
-                + covariance_matrix  # NOQA type: ignore
+                + covariance_matrix
             )
         if add_shift:
             shift_value = 0.01

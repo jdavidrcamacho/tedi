@@ -1,9 +1,9 @@
 """Calculate log-likelihood and plot prediction example."""
 
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
 
-from tedi import gaussian_process, kernels, means
+from tedi import gaussian_process, kernels, means  # type: ignore
 
 np.random.seed(23011990)
 

@@ -9,7 +9,7 @@ import emcee  # type: ignore
 import numpy as np
 from scipy import stats  # type: ignore
 
-from tedi import gaussian_process
+from tedi import gaussian_process  # type: ignore
 from tedi.kernels import Exponential, WhiteNoise  # type: ignore
 from tedi.means import Constant  # type: ignore
 
