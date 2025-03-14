@@ -45,7 +45,7 @@ exclude_patterns = ['_build', '.DS_Store']
 
 html_theme = 'sphinx_rtd_theme'
 html_static_path = ['_static']
-html_logo = "_images/logo_tedi.png"
+html_logo = "images/logo_tedi.png"
 html_theme_options = {
     'logo_only': True,
     'display_version': True,

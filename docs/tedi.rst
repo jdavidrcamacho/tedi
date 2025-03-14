@@ -1,5 +1,7 @@
-src.tedi package
+Tedi main
 ================
+
+Welcome
 
 Gaussian Process
 ---------------------------------
@@ -16,7 +18,6 @@ Student-t Process
    :members:
    :undoc-members:
    :show-inheritance:
-
 
 Kernels
 -----------------------

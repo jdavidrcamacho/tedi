@@ -1,5 +1,7 @@
-src.tedi.utils package
+Tedi utils
 ======================
+
+Welcome
 
 Kernels
 -----------------------------
@@ -25,6 +27,14 @@ Time
    :undoc-members:
    :show-inheritance:
 
+Evidence
+------------------------------
+
+.. automodule:: src.tedi.utils.evidence
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Functions
 ------------------------------
 
@@ -33,10 +43,4 @@ Functions
    :undoc-members:
    :show-inheritance:
 
-Evidence
-------------------------------
 
-.. automodule:: src.tedi.utils.evidence
-   :members:
-   :undoc-members:
-   :show-inheritance:
