@@ -45,18 +45,6 @@ jobs:
           echo "key=mypy-${{ env.MYPY_CACHE_VERSION }}-$mypy_version-${{
             env.HA_SHORT_VERSION }}-$(date -u '+%Y-%m-%dT%H:%M:%s')" >> $GITHUB_OUTPUT
 
-      - name: Restore mypy cache
-        uses: actions/cache@v3.3.1
-        with:
-          path: .mypy_cache
-          key: >-
-            ${{ runner.os }}-${{ steps.python.outputs.python-version }}-${{
-            steps.mypy-cache-key.outputs.key }}
-          restore-keys: |
-            ${{ runner.os }}-${{ steps.python.outputs.python-version }}-mypy-${{
-            env.MYPY_CACHE_VERSION }}-${{ steps.mypy-cache-key.outputs.version }}-${{
-            env.HA_SHORT_VERSION }}-
-
       - name: Check syntax with black
         run: |
           poetry run black --check examples/ src/ tests/
