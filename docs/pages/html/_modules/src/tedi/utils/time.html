@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>src.tedi.utils.time &mdash; tedi 3.0.1 documentation</title>
+      <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/autodoc_pydantic.css" type="text/css" />
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html">
+            <img src="../../../../_static/logo_tedi.png" class="logo" alt="Logo"/>
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tedi.html">Tedi main</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../tedi.utils.html">Tedi utils</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">tedi</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>src.tedi.utils.time</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for src.tedi.utils.time</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Functions for converting dates to/from JD and MJD.</span>
+
+<span class="sd">Note: Python datetime module assumes an infinitely valid Gregorian calendar.</span>
+<span class="sd">      The Gregorian calendar took effect after 10-15-1582 and the dates 10-05</span>
+<span class="sd">      through 10-14-1582 never occurred. Python datetime objects will produce</span>
+<span class="sd">      incorrect time deltas if one date is from before 10-15-1582.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">dt</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">math</span><span class="w"> </span><span class="kn">import</span> <span class="n">modf</span><span class="p">,</span> <span class="n">trunc</span>
+
+
+<div class="viewcode-block" id="mjd_to_jd"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.mjd_to_jd">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">mjd_to_jd</span><span class="p">(</span><span class="n">modified_julian_day</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert Modified Julian Day (MJD) to Julian Day (JD).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        modified_julian_day (float): Modified Julian Day.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Julian Day.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">modified_julian_day</span> <span class="o">+</span> <span class="mf">2400000.5</span></div>
+
+
+<div class="viewcode-block" id="jd_to_mjd"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.jd_to_mjd">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">jd_to_mjd</span><span class="p">(</span><span class="n">julian_day</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert Julian Day (JD) to Modified Julian Day (MJD).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        julian_day (float): Julian Day.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Modified Julian Day.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">julian_day</span> <span class="o">-</span> <span class="mf">2400000.5</span></div>
+
+
+<div class="viewcode-block" id="date_to_jd"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.date_to_jd">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">date_to_jd</span><span class="p">(</span><span class="n">year</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">month</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">day</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a date to Julian Day (JD).</span>
+
+<span class="sd">    The algorithm is derived from &#39;Practical Astronomy with your Calculator</span>
+<span class="sd">    or Spreadsheet&#39;, 4th ed., Duffet-Smith and Zwart, 2011.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        year (int): Year as integer. Years preceding 1 A.D. should be 0 or</span>
+<span class="sd">            negative. For example, the year before 1 A.D. is 0, and 10 B.C.</span>
+<span class="sd">            is year -9.</span>
+<span class="sd">        month (int): Month as integer, where January = 1, February = 2, etc.</span>
+<span class="sd">        day (float): Day as float, may include a fractional part.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Julian Day.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        Convert 6 a.m., February 17, 1985 to Julian Day:</span>
+
+<span class="sd">        $ date_to_jd(1985, 2, 17.25)</span>
+<span class="sd">        2446113.75</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">or</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">adjusted_year</span> <span class="o">=</span> <span class="n">year</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="n">adjusted_month</span> <span class="o">=</span> <span class="n">month</span> <span class="o">+</span> <span class="mi">12</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">adjusted_year</span> <span class="o">=</span> <span class="n">year</span>
+        <span class="n">adjusted_month</span> <span class="o">=</span> <span class="n">month</span>
+
+    <span class="c1"># Determine if date is before or after the start of the Gregorian calendar</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="p">(</span><span class="n">year</span> <span class="o">&lt;</span> <span class="mi">1582</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="p">(</span><span class="n">year</span> <span class="o">==</span> <span class="mi">1582</span> <span class="ow">and</span> <span class="n">month</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="p">(</span><span class="n">year</span> <span class="o">==</span> <span class="mi">1582</span> <span class="ow">and</span> <span class="n">month</span> <span class="o">==</span> <span class="mi">10</span> <span class="ow">and</span> <span class="n">day</span> <span class="o">&lt;</span> <span class="mi">15</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="c1"># Before the start of the Gregorian calendar</span>
+        <span class="n">gregorian_offset</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># After the start of the Gregorian calendar</span>
+        <span class="n">century</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="n">adjusted_year</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">)</span>
+        <span class="n">gregorian_offset</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">-</span> <span class="n">century</span> <span class="o">+</span> <span class="n">trunc</span><span class="p">(</span><span class="n">century</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">adjusted_year</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">leap_year_adjustment</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">((</span><span class="mf">365.25</span> <span class="o">*</span> <span class="n">adjusted_year</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.75</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">leap_year_adjustment</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="mf">365.25</span> <span class="o">*</span> <span class="n">adjusted_year</span><span class="p">)</span>
+
+    <span class="n">month_adjustment</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="mf">30.6001</span> <span class="o">*</span> <span class="p">(</span><span class="n">adjusted_month</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+    <span class="n">julian_day</span> <span class="o">=</span> <span class="n">gregorian_offset</span> <span class="o">+</span> <span class="n">leap_year_adjustment</span> <span class="o">+</span> <span class="n">month_adjustment</span>
+    <span class="n">julian_day</span> <span class="o">=</span> <span class="n">julian_day</span> <span class="o">+</span> <span class="n">day</span> <span class="o">+</span> <span class="mf">1720994.5</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">return</span> <span class="n">julian_day</span></div>
+
+
+<div class="viewcode-block" id="jd_to_date"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.jd_to_date">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">jd_to_date</span><span class="p">(</span><span class="n">julian_day</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert Julian Day (JD) to a date.</span>
+
+<span class="sd">    The algorithm is derived from &#39;Practical Astronomy with your Calculator</span>
+<span class="sd">    or Spreadsheet&#39;, 4th ed., Duffett-Smith and Zwart, 2011.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        julian_day (float): Julian Day.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            year (int): Year as integer. Years preceding 1 A.D. should be 0 or</span>
+<span class="sd">                negative. For example, the year before 1 A.D. is 0, and</span>
+<span class="sd">                10 B.C. is year -9.</span>
+<span class="sd">            month (int): Month as integer, with January = 1, February = 2, etc.</span>
+<span class="sd">            day (float): Day as float, may include a fractional part.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        Convert Julian Day 2446113.75 to year, month, and day:</span>
+
+<span class="sd">        $ jd_to_date(2446113.75)</span>
+<span class="sd">        (1985, 2, 17.25)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">julian_day</span> <span class="o">+=</span> <span class="mf">0.5</span>
+    <span class="n">fractional_day</span><span class="p">,</span> <span class="n">integer_day</span> <span class="o">=</span> <span class="n">modf</span><span class="p">(</span><span class="n">julian_day</span><span class="p">)</span>
+    <span class="n">integer_day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">integer_day</span><span class="p">)</span>
+    <span class="n">gregorian_offset</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">((</span><span class="n">integer_day</span> <span class="o">-</span> <span class="mf">1867216.25</span><span class="p">)</span> <span class="o">/</span> <span class="mf">36524.25</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">integer_day</span> <span class="o">&gt;</span> <span class="mi">2299160</span><span class="p">:</span>
+        <span class="n">corrected_day</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">integer_day</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">gregorian_offset</span> <span class="o">-</span> <span class="n">trunc</span><span class="p">(</span><span class="n">gregorian_offset</span> <span class="o">/</span> <span class="mf">4.0</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">corrected_day</span> <span class="o">=</span> <span class="n">integer_day</span>
+
+    <span class="n">intermediate_day</span> <span class="o">=</span> <span class="n">corrected_day</span> <span class="o">+</span> <span class="mi">1524</span>
+    <span class="n">year_day_fraction</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">((</span><span class="n">intermediate_day</span> <span class="o">-</span> <span class="mf">122.1</span><span class="p">)</span> <span class="o">/</span> <span class="mf">365.25</span><span class="p">)</span>
+    <span class="n">integer_days_in_year</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">(</span><span class="mf">365.25</span> <span class="o">*</span> <span class="n">year_day_fraction</span><span class="p">)</span>
+    <span class="n">adjusted_month</span> <span class="o">=</span> <span class="n">trunc</span><span class="p">((</span><span class="n">intermediate_day</span> <span class="o">-</span> <span class="n">integer_days_in_year</span><span class="p">)</span> <span class="o">/</span> <span class="mf">30.6001</span><span class="p">)</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="n">intermediate_day</span> <span class="o">-</span> <span class="n">integer_days_in_year</span> <span class="o">+</span> <span class="n">fractional_day</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="n">day</span> <span class="o">-</span> <span class="n">trunc</span><span class="p">(</span><span class="mf">30.6001</span> <span class="o">*</span> <span class="n">adjusted_month</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">adjusted_month</span> <span class="o">&lt;</span> <span class="mf">13.5</span><span class="p">:</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="n">adjusted_month</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">month</span> <span class="o">=</span> <span class="n">adjusted_month</span> <span class="o">-</span> <span class="mi">13</span>
+
+    <span class="k">if</span> <span class="n">month</span> <span class="o">&gt;</span> <span class="mf">2.5</span><span class="p">:</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">year_day_fraction</span> <span class="o">-</span> <span class="mi">4716</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">year</span> <span class="o">=</span> <span class="n">year_day_fraction</span> <span class="o">-</span> <span class="mi">4715</span>
+
+    <span class="k">return</span> <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span></div>
+
+
+<div class="viewcode-block" id="hmsm_to_days"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.hmsm_to_days">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">hmsm_to_days</span><span class="p">(</span>
+    <span class="n">hour</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">minute</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">second</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">microsecond</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert hours, minutes, seconds, and microseconds to fractional days.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        hour (int, optional): Hour. Defaults to 0.</span>
+<span class="sd">        minute (int, optional): Minute. Defaults to 0.</span>
+<span class="sd">        second (int, optional): Second. Defaults to 0.</span>
+<span class="sd">        microsecond (int, optional): Microsecond. Defaults to 0.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Fractional days.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        $ hmsm_to_days(hour=6)</span>
+<span class="sd">        0.25</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">total_seconds</span> <span class="o">=</span> <span class="n">second</span> <span class="o">+</span> <span class="p">(</span><span class="n">microsecond</span> <span class="o">/</span> <span class="mf">1.0e6</span><span class="p">)</span>
+    <span class="n">total_minutes</span> <span class="o">=</span> <span class="n">minute</span> <span class="o">+</span> <span class="p">(</span><span class="n">total_seconds</span> <span class="o">/</span> <span class="mf">60.0</span><span class="p">)</span>
+    <span class="n">total_hours</span> <span class="o">=</span> <span class="n">hour</span> <span class="o">+</span> <span class="p">(</span><span class="n">total_minutes</span> <span class="o">/</span> <span class="mf">60.0</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">total_hours</span> <span class="o">/</span> <span class="mf">24.0</span></div>
+
+
+<div class="viewcode-block" id="days_to_hmsm"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.days_to_hmsm">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">days_to_hmsm</span><span class="p">(</span><span class="n">fractional_days</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert fractional days to hours, minutes, seconds, and microseconds.</span>
+
+<span class="sd">    Precision beyond microseconds is rounded to the nearest microsecond.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        fractional_days (float): Number of days. Must be less than 1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        tuple: A tuple containing:</span>
+<span class="sd">            hour (int): Hour.</span>
+<span class="sd">            minute (int): Minute.</span>
+<span class="sd">            second (int): Second.</span>
+<span class="sd">            microsecond (int): Microsecond.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ValueError: If `fractional_days` is &gt;= 1.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        $ days_to_hmsm(0.1)</span>
+<span class="sd">        (2, 24, 0, 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">fractional_days</span> <span class="o">&gt;=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Input &#39;fractional_days&#39; must be less than 1.&quot;</span><span class="p">)</span>
+
+    <span class="n">total_hours</span> <span class="o">=</span> <span class="n">fractional_days</span> <span class="o">*</span> <span class="mf">24.0</span>
+    <span class="n">fractional_hours</span><span class="p">,</span> <span class="n">hour</span> <span class="o">=</span> <span class="n">modf</span><span class="p">(</span><span class="n">total_hours</span><span class="p">)</span>
+    <span class="n">total_minutes</span> <span class="o">=</span> <span class="n">fractional_hours</span> <span class="o">*</span> <span class="mf">60.0</span>
+    <span class="n">fractional_minutes</span><span class="p">,</span> <span class="n">minute</span> <span class="o">=</span> <span class="n">modf</span><span class="p">(</span><span class="n">total_minutes</span><span class="p">)</span>
+    <span class="n">total_seconds</span> <span class="o">=</span> <span class="n">fractional_minutes</span> <span class="o">*</span> <span class="mf">60.0</span>
+    <span class="n">fractional_seconds</span><span class="p">,</span> <span class="n">second</span> <span class="o">=</span> <span class="n">modf</span><span class="p">(</span><span class="n">total_seconds</span><span class="p">)</span>
+    <span class="n">microsecond</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">fractional_seconds</span> <span class="o">*</span> <span class="mf">1.0e6</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">hour</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">minute</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">second</span><span class="p">),</span> <span class="nb">int</span><span class="p">(</span><span class="n">microsecond</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="datetime_to_jd"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.datetime_to_jd">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">datetime_to_jd</span><span class="p">(</span><span class="n">date</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert a `datetime.datetime` object to Julian Day (JD).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        date (datetime.datetime): `datetime.datetime` instance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Julian Day.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        $ d = datetime.datetime(1985, 2, 17, 6)</span>
+<span class="sd">        $ d</span>
+<span class="sd">        datetime.datetime(1985, 2, 17, 6, 0)</span>
+<span class="sd">        $ datetime_to_jd(d)</span>
+<span class="sd">        2446113.75</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">fractional_day</span> <span class="o">=</span> <span class="n">date</span><span class="o">.</span><span class="n">day</span> <span class="o">+</span> <span class="n">hmsm_to_days</span><span class="p">(</span>
+        <span class="n">date</span><span class="o">.</span><span class="n">hour</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">minute</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">second</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">microsecond</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">date_to_jd</span><span class="p">(</span><span class="n">date</span><span class="o">.</span><span class="n">year</span><span class="p">,</span> <span class="n">date</span><span class="o">.</span><span class="n">month</span><span class="p">,</span> <span class="n">fractional_day</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="jd_to_datetime"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.jd_to_datetime">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">jd_to_datetime</span><span class="p">(</span><span class="n">julian_day</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert Julian Day (JD) to `datetime.datetime` object.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        julian_day (float): Julian Day.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        datetime.datetime: `datetime.datetime` object equivalent to Julian Day.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        $ jd_to_datetime(2446113.75)</span>
+<span class="sd">        datetime.datetime(1985, 2, 17, 6, 0)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span> <span class="o">=</span> <span class="n">jd_to_date</span><span class="p">(</span><span class="n">julian_day</span><span class="p">)</span>
+    <span class="n">fractional_days</span><span class="p">,</span> <span class="n">day</span> <span class="o">=</span> <span class="n">modf</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
+    <span class="n">day</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">day</span><span class="p">)</span>
+    <span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="n">microsecond</span> <span class="o">=</span> <span class="n">days_to_hmsm</span><span class="p">(</span><span class="n">fractional_days</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="p">(</span><span class="n">year</span><span class="p">,</span> <span class="n">month</span><span class="p">,</span> <span class="n">day</span><span class="p">,</span> <span class="n">hour</span><span class="p">,</span> <span class="n">minute</span><span class="p">,</span> <span class="n">second</span><span class="p">,</span> <span class="n">microsecond</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="timedelta_to_days"><a class="viewcode-back" href="../../../../tedi.utils.html#src.tedi.utils.time.timedelta_to_days">[docs]</a><span class="k">def</span><span class="w"> </span><span class="nf">timedelta_to_days</span><span class="p">(</span><span class="n">time_delta</span><span class="p">:</span> <span class="n">dt</span><span class="o">.</span><span class="n">timedelta</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert `datetime.timedelta` object to a total number of days.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        time_delta (datetime.timedelta): `datetime.timedelta` instance.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        float: Total number of days in the `datetime.timedelta` object.</span>
+
+<span class="sd">    Examples:</span>
+<span class="sd">        $ td = datetime.timedelta(4.5)</span>
+<span class="sd">        $ td</span>
+<span class="sd">        datetime.timedelta(4, 43200)</span>
+<span class="sd">        $ timedelta_to_days(td)</span>
+<span class="sd">        4.5</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">seconds</span> <span class="o">=</span> <span class="mf">24.0</span> <span class="o">*</span> <span class="mf">3600.0</span>
+    <span class="n">total_days</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">time_delta</span><span class="o">.</span><span class="n">days</span>
+        <span class="o">+</span> <span class="p">(</span><span class="n">time_delta</span><span class="o">.</span><span class="n">seconds</span> <span class="o">+</span> <span class="p">(</span><span class="n">time_delta</span><span class="o">.</span><span class="n">microseconds</span> <span class="o">/</span> <span class="mf">1.0e6</span><span class="p">))</span> <span class="o">/</span> <span class="n">seconds</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">total_days</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, João Camacho.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
