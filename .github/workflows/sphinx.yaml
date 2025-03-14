@@ -22,6 +22,11 @@ jobs:
         python -m pip install --upgrade pip
         pip install git+https://github.com/mansenfranzen/autodoc_pydantic.git  # Install directly from GitHub
 
+    - name: Build Sphinx documentation
+      run: |
+        sudo apt-get install -y make
+        make -C docs html
+
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
       with:
@@ -33,4 +38,4 @@ jobs:
       if: github.ref == 'refs/heads/main'
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: docs/_build/html
+        publish_dir: docs/pages/html/
